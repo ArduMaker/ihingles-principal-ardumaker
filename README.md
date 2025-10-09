@@ -1,73 +1,199 @@
-# Welcome to your Lovable project
+# Valle's Systems - Academia de Inglés
 
-## Project info
+Plataforma web educativa para profesionales latinoamericanos que buscan dominar el inglés de forma estratégica y gamificada.
 
-**URL**: https://lovable.dev/projects/c6bfb383-bc1a-4d82-8240-fc02c4d9b9f5
+## 🎯 Descripción del Proyecto
 
-## How can I edit this code?
+Valle's Systems es una academia de inglés online diseñada específicamente para profesionales ambiciosos de América Latina. La plataforma ofrece un método único llamado "The Kingdom of Words" que combina progresión estratégica, enfoque en conversación real y orgullo cultural.
 
-There are several ways of editing your application.
+## 🏗️ Arquitectura del Proyecto
 
-**Use Lovable**
+### Páginas Principales
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c6bfb383-bc1a-4d82-8240-fc02c4d9b9f5) and start prompting.
+- **`/`** - Landing page pública (NO requiere autenticación)
+- **`/dashboard`** - Panel principal del estudiante (requiere auth)
+- **`/unidades`** - Lista de unidades de aprendizaje (requiere auth)
+- **`/progreso`** - Visualización de progreso del estudiante (requiere auth)
+- **`/biblioteca`** - Recursos y materiales (requiere auth)
+- **`/facturación`** - Gestión de pagos y suscripciones (requiere auth)
+- **`/vocabulario`** - Práctica de vocabulario (requiere auth)
+- **`/modulo/{id_modulo}`** - Vista detallada de módulo específico (requiere auth)
+- **`/perfil`** - Perfil del usuario (requiere auth)
 
-Changes made via Lovable will be committed automatically to this repo.
+### Estructura de Carpetas
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+src/
+├── components/
+│   ├── landing/          # Componentes de la landing page
+│   │   ├── Header.tsx
+│   │   ├── Hero.tsx
+│   │   ├── MethodSection.tsx
+│   │   ├── LexoSection.tsx
+│   │   ├── StatsSection.tsx
+│   │   ├── JourneySection.tsx
+│   │   ├── TestimonialsSection.tsx
+│   │   ├── CommunitySection.tsx
+│   │   └── Footer.tsx
+│   └── ui/               # Componentes UI reutilizables (shadcn)
+├── data/                 # Datos mock para desarrollo
+│   └── landing.ts
+├── hooks/                # Custom hooks
+│   └── useApiState.ts    # Hook para gestión de estados de API
+├── lib/
+│   ├── api.ts           # Configuración y utilidades de API
+│   └── utils.ts         # Utilidades generales
+├── pages/               # Páginas de la aplicación
+│   ├── Index.tsx        # Landing page
+│   └── NotFound.tsx     # 404
+├── types/               # Definiciones de TypeScript
+│   └── index.ts         # Interfaces globales
+└── index.css            # Estilos globales y design system
 ```
 
-**Edit a file directly in GitHub**
+## 🎨 Sistema de Diseño
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Colores (HSL)
 
-**Use GitHub Codespaces**
+```css
+--primary: 145 97% 28%        /* Verde principal #028C3C */
+--primary-hover: 147 100% 16%  /* Verde oscuro #005326 */
+--primary-light: 145 97% 95%   /* Verde claro para backgrounds */
+--background: 0 0% 100%        /* Blanco */
+--foreground: 0 0% 15%         /* Texto principal */
+--heading-color: 0 0% 10%      /* Títulos */
+--text-color: 0 0% 25%         /* Texto cuerpo */
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Tipografía
 
-## What technologies are used for this project?
+- **Fuente Principal**: Playfair Display (Google Fonts)
+- **Títulos (H1-H6)**: Playfair Display Bold (700) - 60px en hero principal
+- **Párrafos**: Playfair Display Regular (400) - 20px
+- **Responsive**: Se ajusta automáticamente con clamp() para diferentes dispositivos
 
-This project is built with:
+### Componentes
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Se utilizan componentes de **shadcn/ui** como base, personalizados con el design system de Valle's.
 
-## How can I deploy this project?
+## 📡 Gestión de APIs
 
-Simply open [Lovable](https://lovable.dev/projects/c6bfb383-bc1a-4d82-8240-fc02c4d9b9f5) and click on Share -> Publish.
+### Configuración Base
 
-## Can I connect a custom domain to my Lovable project?
+```typescript
+// src/lib/api.ts
+export const API_BASE_URL = 'https://api.vallesystems.com'
+export const AUTH_COOKIE_NAME = 'Autenticacion'
+```
 
-Yes, you can!
+### Método de Llamadas
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Todas las llamadas al backend siguen este patrón:
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```typescript
+const data = await api<ResponseType>('/endpoint', {
+  method: 'POST',
+  body: JSON.stringify(payload)
+});
+```
+
+El método `api()`:
+- Agrega automáticamente la cookie de autenticación
+- Maneja errores de forma consistente
+- Muestra mensajes de error claros al usuario
+- Retorna tipos seguros con TypeScript
+
+### Hook de Estados
+
+```typescript
+const { isLoading, error, executeApi } = useApiState();
+
+const result = await executeApi(() => api<Data>('/endpoint'));
+```
+
+Este hook:
+- Gestiona estados de carga automáticamente
+- Captura y muestra errores
+- Proporciona feedback visual al usuario
+
+## 🔒 Autenticación
+
+- Cookie: `Autenticacion`
+- Se incluye automáticamente en todas las peticiones
+- Si expira o falla: redirección a `/` con mensaje
+
+## 🗂️ Datos Mock
+
+Durante desarrollo, las respuestas de API se simulan en `src/data/*.ts`:
+
+```typescript
+// src/data/landing.ts
+export const mockFeatures: Feature[] = [...]
+export const mockStats: Stat[] = [...]
+```
+
+## 📝 Reglas de Programación
+
+### Límites y Modularización
+- ✅ Máximo 150 líneas por archivo
+- ✅ Componentes pequeños y reutilizables
+- ✅ Sin repetición de código
+- ✅ Un solo archivo de interfaces (`src/types/index.ts`)
+
+### APIs
+- ✅ URL base en variable global
+- ✅ Cookie de autenticación automática
+- ✅ Mensajes de error claros y no técnicos
+- ✅ Gestión centralizada de estados de carga
+
+### Estilos
+- ✅ Todo en el design system (index.css)
+- ✅ Colores semánticos (NO `text-white`, `bg-white`)
+- ✅ Solo colores HSL
+- ✅ Variantes de componentes bien definidas
+
+## 🚀 Tecnologías
+
+- **Framework**: React 18 + TypeScript
+- **Build**: Vite
+- **Estilos**: Tailwind CSS
+- **Componentes**: shadcn/ui
+- **Router**: React Router v6
+- **Queries**: TanStack Query
+- **Icons**: Lucide React
+
+## 🛠️ Instalación y Desarrollo
+
+```bash
+# Instalar dependencias
+npm install
+
+# Servidor de desarrollo
+npm run dev
+
+# Build para producción
+npm run build
+
+# Preview de producción
+npm run preview
+```
+
+## 📋 Estado Actual
+
+✅ Landing page (`/`) completamente implementada
+⏳ Páginas internas pendientes
+⏳ Sistema de autenticación pendiente
+⏳ Integración con API real pendiente
+
+## 🔄 Próximos Pasos
+
+1. Implementar sistema de autenticación
+2. Crear layout compartido para páginas protegidas
+3. Desarrollar dashboard
+4. Conectar con API real
+5. Implementar sistema de progreso
+6. Agregar funcionalidad de módulos y unidades
+
+---
+
+**Desarrollado con** ❤️ **para profesionales latinoamericanos ambiciosos**
