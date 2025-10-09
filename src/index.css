@@ -63,13 +63,29 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    color: hsl(var(--heading-color));
+  /* Landing page usa Playfair */
+  .landing-page {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+  
+  .landing-page h1, 
+  .landing-page h2, 
+  .landing-page h3, 
+  .landing-page h4, 
+  .landing-page h5, 
+  .landing-page h6 {
     font-family: 'Playfair Display', Georgia, serif;
     font-weight: 700;
+  }
+
+  /* Internal app usa Inter */
+  h1, h2, h3, h4, h5, h6 {
+    color: hsl(var(--heading-color));
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
   }
 
   p {

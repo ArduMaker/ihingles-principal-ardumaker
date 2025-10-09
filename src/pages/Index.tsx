@@ -10,7 +10,7 @@ import { Footer } from '@/components/landing/Footer';
 
 const Index = () => {
   return (
-    <div className="min-h-screen">
+    <div className="landing-page min-h-screen">
       <Header />
       <Hero />
       <MethodSection />

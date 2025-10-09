@@ -1,45 +1,46 @@
 import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Menu, X } from 'lucide-react';
-import logoVerde from '@/assets/logo_verde.svg';
-import dashboardIcon from '@/assets/icons/panes.svg';
-import unidadesIcon from '@/assets/icons/bock.svg';
-import bibliotecaIcon from '@/assets/icons/ion_library.svg';
-import vocabularioIcon from '@/assets/icons/lavios.svg';
-import habilidadesIcon from '@/assets/icons/rame.svg';
-import productosIcon from '@/assets/icons/paquete.svg';
-import planesIcon from '@/assets/icons/panes.svg';
-import perfilIcon from '@/assets/icons/user.svg';
-import exitIcon from '@/assets/icons/exit.svg';
+import {
+  DashboardIcon,
+  UnidadesIcon,
+  BibliotecaIcon,
+  VocabularioIcon,
+  HabilidadesIcon,
+  ProductosIcon,
+  PlanesIcon,
+  PerfilIcon,
+  ExitIcon
+} from './SidebarIcons';
 
 interface MenuItem {
   label: string;
   path: string;
-  icon: string;
+  icon: React.FC<{ className?: string; active?: boolean }>;
 }
 
 const menuItems: { section: string; items: MenuItem[] }[] = [
   {
     section: 'APRENDIZAJE',
     items: [
-      { label: 'Dashboard', path: '/dashboard', icon: dashboardIcon },
-      { label: 'Unidades', path: '/unidades', icon: unidadesIcon },
-      { label: 'Biblioteca', path: '/biblioteca', icon: bibliotecaIcon },
-      { label: 'Vocabulario', path: '/vocabulario', icon: vocabularioIcon },
+      { label: 'Dashboard', path: '/dashboard', icon: DashboardIcon },
+      { label: 'Unidades', path: '/unidades', icon: UnidadesIcon },
+      { label: 'Biblioteca', path: '/biblioteca', icon: BibliotecaIcon },
+      { label: 'Vocabulario', path: '/vocabulario', icon: VocabularioIcon },
     ],
   },
   {
     section: 'GAMIFICACIÓN',
     items: [
-      { label: 'Habilidades', path: '/progreso', icon: habilidadesIcon },
+      { label: 'Habilidades', path: '/progreso', icon: HabilidadesIcon },
     ],
   },
   {
     section: 'CONFIGURACIÓN',
     items: [
-      { label: 'Productos', path: '/productos', icon: productosIcon },
-      { label: 'Planes', path: '/facturacion', icon: planesIcon },
+      { label: 'Productos', path: '/productos', icon: ProductosIcon },
+      { label: 'Planes', path: '/facturacion', icon: PlanesIcon },
     ],
   },
 ];
@@ -47,6 +48,7 @@ const menuItems: { section: string; items: MenuItem[] }[] = [
 export const MobileSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { logout } = useAuth();
+  const location = useLocation();
 
   const closeSidebar = () => setIsOpen(false);
 
@@ -70,8 +72,10 @@ export const MobileSidebar = () => {
           <aside className="absolute left-0 top-0 bottom-0 w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
             <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
               <div>
-                <img src={logoVerde} alt="Valle's Systems" className="w-32" />
-                <p className="text-xs mt-2 text-sidebar-foreground font-medium">
+                <p className="text-xl font-semibold text-sidebar-foreground italic" style={{ fontFamily: 'Playfair Display, serif' }}>
+                  valles
+                </p>
+                <p className="text-[11px] mt-0.5 text-sidebar-foreground font-medium">
                   System Formulas
                 </p>
               </div>
@@ -90,23 +94,25 @@ export const MobileSidebar = () => {
                     {group.section}
                   </p>
                   <div className="space-y-1">
-                    {group.items.map((item) => (
-                      <NavLink
-                        key={item.path}
-                        to={item.path}
-                        onClick={closeSidebar}
-                        className={({ isActive }) =>
-                          `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                    {group.items.map((item) => {
+                      const isActive = location.pathname === item.path;
+                      const Icon = item.icon;
+                      return (
+                        <NavLink
+                          key={item.path}
+                          to={item.path}
+                          onClick={closeSidebar}
+                          className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                             isActive
                               ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
                               : 'text-sidebar-foreground hover:bg-sidebar-accent/10'
-                          }`
-                        }
-                      >
-                        <img src={item.icon} alt={item.label} className="w-5 h-5" />
-                        <span>{item.label}</span>
-                      </NavLink>
-                    ))}
+                          }`}
+                        >
+                          <Icon className="w-5 h-5 flex-shrink-0" active={isActive} />
+                          <span>{item.label}</span>
+                        </NavLink>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -116,15 +122,13 @@ export const MobileSidebar = () => {
               <NavLink
                 to="/perfil"
                 onClick={closeSidebar}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded ${
-                    isActive
-                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                      : 'text-sidebar-foreground hover:bg-sidebar-accent/10'
-                  }`
-                }
+                className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors rounded ${
+                  location.pathname === '/perfil'
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'text-sidebar-foreground hover:bg-sidebar-accent/10'
+                }`}
               >
-                <img src={perfilIcon} alt="Perfil" className="w-5 h-5" />
+                <PerfilIcon className="w-5 h-5 flex-shrink-0" active={location.pathname === '/perfil'} />
                 <span>Perfil de usuario</span>
               </NavLink>
 
@@ -132,7 +136,7 @@ export const MobileSidebar = () => {
                 onClick={logout}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-sidebar-foreground hover:bg-destructive/10 transition-colors rounded mt-1"
               >
-                <img src={exitIcon} alt="Salir" className="w-5 h-5" />
+                <ExitIcon className="w-5 h-5 flex-shrink-0" />
                 <span>Salir</span>
               </button>
             </div>
