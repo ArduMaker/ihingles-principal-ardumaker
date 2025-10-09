@@ -25,6 +25,11 @@ Valle's Systems es una academia de inglés online diseñada específicamente par
 ```
 src/
 ├── components/
+│   ├── internal/          # Componentes del layout interno
+│   │   ├── InternalLayout.tsx
+│   │   ├── InternalNavbar.tsx
+│   │   ├── InternalSidebar.tsx
+│   │   └── MobileSidebar.tsx
 │   ├── landing/          # Componentes de la landing page
 │   │   ├── Header.tsx
 │   │   ├── Hero.tsx
@@ -37,17 +42,30 @@ src/
 │   │   └── Footer.tsx
 │   └── ui/               # Componentes UI reutilizables (shadcn)
 ├── data/                 # Datos mock para desarrollo
-│   └── landing.ts
+│   ├── landing.ts
+│   └── auth.ts          # Mock de autenticación
 ├── hooks/                # Custom hooks
-│   └── useApiState.ts    # Hook para gestión de estados de API
+│   ├── useApiState.ts   # Hook para gestión de estados de API
+│   └── useAuth.ts       # Hook de autenticación
 ├── lib/
 │   ├── api.ts           # Configuración y utilidades de API
 │   └── utils.ts         # Utilidades generales
 ├── pages/               # Páginas de la aplicación
 │   ├── Index.tsx        # Landing page
-│   └── NotFound.tsx     # 404
+│   ├── Dashboard.tsx
+│   ├── Unidades.tsx
+│   ├── Biblioteca.tsx
+│   ├── Vocabulario.tsx
+│   ├── Progreso.tsx
+│   ├── Productos.tsx
+│   ├── Facturacion.tsx
+│   ├── Perfil.tsx
+│   ├── Modulo.tsx
+│   ├── Terms.tsx
+│   └── NotFound.tsx
 ├── types/               # Definiciones de TypeScript
-│   └── index.ts         # Interfaces globales
+│   ├── index.ts         # Interfaces globales
+│   └── auth.ts          # Tipos de autenticación
 └── index.css            # Estilos globales y design system
 ```
 
@@ -59,6 +77,18 @@ src/
 --primary: 145 97% 28%        /* Verde principal #028C3C */
 --primary-hover: 147 100% 16%  /* Verde oscuro #005326 */
 --primary-light: 145 97% 95%   /* Verde claro para backgrounds */
+
+/* Colores del área interna (Dashboard, etc.) */
+--sidebar: 120 25% 93%            /* Verde claro sidebar */
+--sidebar-foreground: 0 0% 29%    /* Texto del sidebar */
+--sidebar-accent: 46 100% 44%     /* Amarillo para items activos */
+--sidebar-accent-foreground: 0 0% 100%  /* Texto sobre amarillo */
+--sidebar-border: 120 15% 85%     /* Bordes del sidebar */
+
+--navbar: 0 0% 100%               /* Blanco navbar */
+--navbar-foreground: 0 0% 15%     /* Texto navbar */
+--navbar-border: 0 0% 90%         /* Bordes navbar */
+
 --background: 0 0% 100%        /* Blanco */
 --foreground: 0 0% 15%         /* Texto principal */
 --heading-color: 0 0% 10%      /* Títulos */
@@ -118,9 +148,38 @@ Este hook:
 
 ## 🔒 Autenticación
 
+### Sistema Mock Actual (Desarrollo)
+
+En modo desarrollo, el sistema crea automáticamente una cookie de autenticación mock para facilitar las pruebas:
+
 - Cookie: `Autenticacion`
-- Se incluye automáticamente en todas las peticiones
-- Si expira o falla: redirección a `/` con mensaje
+- Se crea automáticamente en desarrollo si no existe
+- Datos de usuario simulados (Alberto González)
+- Al hacer logout, se elimina la cookie y redirige a `/`
+
+### Flujo de Autenticación
+
+1. Al cargar cualquier página protegida, `useAuth()` verifica la cookie
+2. Si no existe cookie (y no está en desarrollo), redirige a `/` con mensaje
+3. Si existe, carga datos del usuario (actualmente mock)
+4. El `InternalLayout` valida la autenticación antes de renderizar
+
+### Integración Futura con API
+
+```typescript
+// src/hooks/useAuth.ts
+const checkAuth = async () => {
+  const authCookie = Cookies.get(AUTH_COOKIE_NAME);
+  if (!authCookie) return;
+  
+  try {
+    const userData = await api<User>('/auth/verify');
+    setUser(userData);
+  } catch {
+    logout();
+  }
+};
+```
 
 ## 🗂️ Datos Mock
 
@@ -181,18 +240,128 @@ npm run preview
 ## 📋 Estado Actual
 
 ✅ Landing page (`/`) completamente implementada
-⏳ Páginas internas pendientes
-⏳ Sistema de autenticación pendiente
+✅ Layout interno con navbar y sidebar implementado
+✅ Sistema de autenticación mock implementado
+✅ Todas las páginas internas creadas (estructura base)
+⏳ Contenido específico de cada página pendiente
 ⏳ Integración con API real pendiente
+⏳ Funcionalidad completa de módulos y unidades pendiente
+
+## 🎨 Layout Interno
+
+### Estructura del Layout
+
+El `InternalLayout` envuelve todas las páginas protegidas y proporciona:
+
+#### 1. Navbar Superior (InternalNavbar)
+- **Altura fija**: 64px (h-16)
+- **Elementos**:
+  - Logo de Valle's Systems (izquierda)
+  - Botón de menú móvil (< 1024px)
+  - Información del usuario:
+    - Nombre completo
+    - Subtítulo/nivel (ej: "Level Maestro del Río de la Escritura")
+    - Avatar circular
+    - Escudo/badge (opcional)
+- **Responsive**: Oculta texto del usuario en móviles pequeños
+
+#### 2. Sidebar Lateral (InternalSidebar)
+- **Ancho fijo**: 192px (w-48)
+- **Solo visible en desktop** (>= 1024px)
+- **Secciones**:
+  - **APRENDIZAJE**:
+    - Dashboard
+    - Unidades (con icono de libro amarillo)
+    - Biblioteca
+    - Vocabulario
+  - **GAMIFICACIÓN**:
+    - Habilidades
+  - **CONFIGURACIÓN**:
+    - Productos
+    - Planes
+- **Footer fijo**:
+  - Perfil de usuario
+  - Botón de Salir
+- **Estados**:
+  - Item activo: Fondo amarillo (`bg-sidebar-accent`)
+  - Hover: Fondo amarillo translúcido
+
+#### 3. Sidebar Móvil (MobileSidebar)
+- **Visible solo en móvil/tablet** (< 1024px)
+- **Tipo**: Overlay lateral deslizable
+- **Activación**: Botón hamburguesa en navbar
+- **Ancho**: 256px (w-64)
+- **Backdrop**: Semi-transparente con click para cerrar
+- **Auto-cierre**: Al navegar a otra página
+
+#### 4. Área de Contenido Principal
+- **Comportamiento de scroll**:
+  - El layout NO hace scroll
+  - Solo el contenido (`main`) tiene scroll interno
+  - Ocupa toda la altura restante de la ventana
+- **Padding**: Manejado por cada página individual
+- **Background**: Blanco (`bg-background`)
+
+### Colores del Layout Interno
+
+```css
+/* Sidebar */
+--sidebar: 120 25% 93%                  /* Verde menta claro */
+--sidebar-foreground: 0 0% 29%          /* Gris oscuro para texto */
+--sidebar-accent: 46 100% 44%           /* Amarillo dorado */
+--sidebar-accent-foreground: 0 0% 100%  /* Blanco sobre amarillo */
+--sidebar-border: 120 15% 85%           /* Verde muy claro */
+
+/* Navbar */
+--navbar: 0 0% 100%                     /* Blanco puro */
+--navbar-foreground: 0 0% 15%           /* Gris muy oscuro */
+--navbar-border: 0 0% 90%               /* Gris muy claro */
+```
+
+### Breakpoints Responsive
+
+```css
+/* Mobile first approach */
+< 640px   (sm)  → Sidebar móvil, navbar compacto
+640-1024px (md/lg) → Sidebar móvil, navbar normal
+>= 1024px (lg)  → Sidebar fijo, layout completo
+```
+
+### Uso del Layout
+
+Todas las páginas protegidas deben usar el `InternalLayout`:
+
+```typescript
+import { InternalLayout } from '@/components/internal/InternalLayout';
+
+const MiPagina = () => {
+  return (
+    <InternalLayout>
+      <div className="p-8">
+        {/* Contenido de la página */}
+      </div>
+    </InternalLayout>
+  );
+};
+```
+
+### Protección de Rutas
+
+El `InternalLayout` maneja automáticamente:
+- ✅ Verificación de autenticación
+- ✅ Loading state durante verificación
+- ✅ Redirección a `/` si no hay sesión
+- ✅ Toast de error explicativo
+- ✅ Bloqueo de renderizado sin auth
 
 ## 🔄 Próximos Pasos
 
-1. Implementar sistema de autenticación
-2. Crear layout compartido para páginas protegidas
-3. Desarrollar dashboard
+1. ~~Implementar sistema de autenticación~~ ✅ (Mock implementado)
+2. ~~Crear layout compartido para páginas protegidas~~ ✅
+3. Desarrollar contenido específico de dashboard
 4. Conectar con API real
-5. Implementar sistema de progreso
-6. Agregar funcionalidad de módulos y unidades
+5. Implementar sistema de progreso completo
+6. Agregar funcionalidad completa de módulos y unidades
 
 ---
 

@@ -42,6 +42,17 @@ All colors MUST be HSL.
 
     --heading-color: 0 0% 10%;
     --text-color: 0 0% 30%;
+
+    /* Internal app colors */
+    --sidebar: 120 25% 93%;
+    --sidebar-foreground: 0 0% 29%;
+    --sidebar-accent: 46 100% 44%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 120 15% 85%;
+    
+    --navbar: 0 0% 100%;
+    --navbar-foreground: 0 0% 15%;
+    --navbar-border: 0 0% 90%;
   }
 }
 
