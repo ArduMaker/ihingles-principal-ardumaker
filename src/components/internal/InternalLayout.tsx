@@ -15,7 +15,7 @@ export const InternalLayout = ({ children }: InternalLayoutProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && false) {
       toast.error('Tu sesión ha expirado', {
         description: 'Por favor, inicia sesión nuevamente'
       });
