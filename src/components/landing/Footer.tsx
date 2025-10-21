@@ -47,7 +47,7 @@ export const Footer = () => {
               <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
                 <GraduationCap className="w-6 h-6 text-primary-foreground" />
               </div>
-              <span className="font-bold text-xl">Valle's Systems</span>
+              <span className="font-bold text-xl">IH Ingles Academy</span>
             </div>
             <p className="text-sm text-gray-300 leading-relaxed">
               {t.description}
@@ -117,7 +117,7 @@ export const Footer = () => {
         
         <div className="pt-8 border-t border-white/20 text-center">
           <p className="text-sm text-gray-400">
-            © {currentYear} Valle's Systems. {t.rights}
+            © {currentYear} IH Ingles Academy. {t.rights}
           </p>
         </div>
       </div>

@@ -1,10 +1,10 @@
-# Valle's Systems - Academia de Inglés
+# IH Ingles Academy - Academia de Inglés
 
 Plataforma web educativa para profesionales latinoamericanos que buscan dominar el inglés de forma estratégica y gamificada.
 
 ## 🎯 Descripción del Proyecto
 
-Valle's Systems es una academia de inglés online diseñada específicamente para profesionales ambiciosos de América Latina. La plataforma ofrece un método único llamado "The Kingdom of Words" que combina progresión estratégica, enfoque en conversación real y orgullo cultural.
+IH Ingles Academy es una academia de inglés online diseñada específicamente para profesionales ambiciosos de América Latina. La plataforma ofrece un método único llamado "The Kingdom of Words" que combina progresión estratégica, enfoque en conversación real y orgullo cultural.
 
 ## 🏗️ Arquitectura del Proyecto
 
@@ -256,7 +256,7 @@ El `InternalLayout` envuelve todas las páginas protegidas y proporciona:
 #### 1. Navbar Superior (InternalNavbar)
 - **Altura fija**: 64px (h-16)
 - **Elementos**:
-  - Logo de Valle's Systems (izquierda)
+  - Logo de IH Ingles Academy (izquierda)
   - Botón de menú móvil (< 1024px)
   - Información del usuario:
     - Nombre completo

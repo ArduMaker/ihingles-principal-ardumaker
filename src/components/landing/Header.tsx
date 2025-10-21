@@ -15,7 +15,7 @@ export const Header = () => {
           <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
             <img src={logo} alt="Shield" className="w-6 h-6 brightness-0 invert" />
           </div>
-          <span className="font-bold text-xl">Valle's Systems</span>
+          <span className="font-bold text-xl">IH Ingles Academy</span>
         </div>
         
         <nav className="hidden md:flex items-center gap-8">

@@ -6,10 +6,12 @@ export const InternalNavbar = () => {
   const { user } = useAuth();
 
   return (
-    <div className="w-full flex items-center justify-between">
-      <img src={logo} alt="Valle's Systems" className="h-8 lg:h-9" />
-      
-      <div className="flex items-center gap-2 lg:gap-3">
+    <div className="w-[100vw] flex items-center justify-between">
+
+
+      <img src="/logo.png" alt="IH Ingles Academy" className="h-8 lg:h-9 pl-2" />
+
+      <div className="flex items-center gap-2 lg:gap-3 pr-10">
         <div className="text-right hidden sm:block">
           <p className="text-xs lg:text-sm font-semibold text-navbar-foreground">
             {user?.name}
@@ -39,6 +41,7 @@ export const InternalNavbar = () => {
           )}
         </div>
       </div>
+
     </div>
   );
 };

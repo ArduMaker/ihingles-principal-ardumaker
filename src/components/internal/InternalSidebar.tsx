@@ -121,10 +121,7 @@ export const InternalSidebar = () => {
     <aside className="w-48 h-full bg-sidebar border-r border-sidebar-border flex flex-col">
       <div className="p-4 border-b border-sidebar-border">
         <p className="text-lg font-semibold text-sidebar-foreground italic" style={{ fontFamily: 'Playfair Display, serif' }}>
-          valles
-        </p>
-        <p className="text-[11px] mt-0.5 text-sidebar-foreground font-medium">
-          System Formulas
+          IH Ingles
         </p>
       </div>
 
@@ -148,7 +145,7 @@ export const InternalSidebar = () => {
                         : 'text-sidebar-foreground hover:bg-sidebar-accent/10'
                     }`}
                   >
-                    <Icon className="w-5 h-5 flex-shrink-0" active={isActive} />
+                    <Icon className="w-5 h-5 flex-shrink-0"  />
                     <span>{item.label}</span>
                   </NavLink>
                 );
