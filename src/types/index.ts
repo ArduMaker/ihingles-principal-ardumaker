@@ -81,3 +81,34 @@ export interface PendingExercise {
   type: 'grammar' | 'listening' | 'reading';
   timeAgo: string;
 }
+
+// Unidades interfaces
+export interface Unit {
+  id: string;
+  number: number;
+  title: string;
+  description: string;
+  status: 'completed' | 'in-progress' | 'locked';
+}
+
+export interface LevelProgress {
+  levelId: string;
+  levelName: string;
+  levelImage: string;
+  levelDescription: string;
+  units: Unit[];
+  totalUnits: number;
+  completedUnits: number;
+  isLocked: boolean;
+}
+
+export interface OverallProgress {
+  totalCompleted: number;
+  totalUnits: number;
+  percentage: number;
+  levelProgress: {
+    levelName: string;
+    completed: number;
+    total: number;
+  }[];
+}
