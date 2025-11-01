@@ -5,6 +5,9 @@ import { BibliotecaSearchBar } from '@/components/biblioteca/BibliotecaSearchBar
 import { BibliotecaSidebar } from '@/components/biblioteca/BibliotecaSidebar';
 import { BibliotecaDocumentCard } from '@/components/biblioteca/BibliotecaDocumentCard';
 import { BibliotecaUnitFilter } from '@/components/biblioteca/BibliotecaUnitFilter';
+import { BibliotecaResultsHeader } from '@/components/biblioteca/BibliotecaResultsHeader';
+import { BibliotecaResultCard } from '@/components/biblioteca/BibliotecaResultCard';
+import { BibliotecaPagination } from '@/components/biblioteca/BibliotecaPagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApiState } from '@/hooks/useApiState';
 import { get_biblioteca_documents, get_biblioteca_units, toggle_document_favorite } from '@/data/biblioteca';
@@ -19,6 +22,10 @@ const Biblioteca = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUnit, setSelectedUnit] = useState('all');
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['all']);
+  const [showResults, setShowResults] = useState(false);
+  const [sortBy, setSortBy] = useState('recent');
+  const [currentPage, setCurrentPage] = useState(1);
+  const resultsPerPage = 5;
 
   useEffect(() => {
     loadData();
@@ -39,6 +46,8 @@ const Biblioteca = () => {
 
   const handleSearch = () => {
     applyFilters();
+    setShowResults(true);
+    setCurrentPage(1);
   };
 
   const handleTypeToggle = (type: string) => {
@@ -74,7 +83,26 @@ const Biblioteca = () => {
       filtered = filtered.filter(doc => selectedTypes.includes(doc.type));
     }
 
+    // Apply sorting
+    filtered = sortDocuments(filtered, sortBy);
+
     setFilteredDocuments(filtered);
+    setShowResults(true);
+    setCurrentPage(1);
+  };
+
+  const sortDocuments = (docs: BibliotecaDocument[], sortType: string) => {
+    const sorted = [...docs];
+    switch (sortType) {
+      case 'recent':
+        return sorted.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+      case 'oldest':
+        return sorted.sort((a, b) => a.updatedAt.localeCompare(b.updatedAt));
+      case 'name':
+        return sorted.sort((a, b) => a.title.localeCompare(b.title));
+      default:
+        return sorted;
+    }
   };
 
   const handleClearFilters = () => {
@@ -82,6 +110,19 @@ const Biblioteca = () => {
     setSelectedTypes(['all']);
     setSearchQuery('');
     setFilteredDocuments(documents);
+    setShowResults(false);
+    setCurrentPage(1);
+  };
+
+  const handleBackToSearch = () => {
+    setShowResults(false);
+    setCurrentPage(1);
+  };
+
+  const handleSortChange = (value: string) => {
+    setSortBy(value);
+    const sorted = sortDocuments(filteredDocuments, value);
+    setFilteredDocuments(sorted);
   };
 
   const handleToggleFavorite = async (documentId: string) => {
@@ -99,64 +140,113 @@ const Biblioteca = () => {
     );
   };
 
+  // Pagination
+  const totalPages = Math.ceil(filteredDocuments.length / resultsPerPage);
+  const startIndex = (currentPage - 1) * resultsPerPage;
+  const paginatedDocuments = filteredDocuments.slice(startIndex, startIndex + resultsPerPage);
+
+  const selectedUnitName = units.find(u => u.id === selectedUnit)?.name || 'Todos las Unidades';
+
   return (
     <InternalLayout>
       <div className="p-8">
-        <BibliotecaHero />
-        
-        <BibliotecaSearchBar
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onSearch={handleSearch}
-        />
+        {!showResults ? (
+          <>
+            <BibliotecaHero />
+            
+            <BibliotecaSearchBar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              onSearch={handleSearch}
+            />
 
-        <div className="flex gap-6">
-          <BibliotecaSidebar
-            units={units}
-            selectedUnit={selectedUnit}
-            selectedTypes={selectedTypes}
-            onUnitChange={setSelectedUnit}
-            onTypeToggle={handleTypeToggle}
-            onApplyFilters={applyFilters}
-            onClearFilters={handleClearFilters}
-          />
+            <div className="flex gap-6">
+              <BibliotecaSidebar
+                units={units}
+                selectedUnit={selectedUnit}
+                selectedTypes={selectedTypes}
+                onUnitChange={setSelectedUnit}
+                onTypeToggle={handleTypeToggle}
+                onApplyFilters={applyFilters}
+                onClearFilters={handleClearFilters}
+              />
 
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-heading">Documentos Recientes</h3>
-              <a href="#" className="text-[#009A47] hover:text-[#007A37] font-semibold">
-                Ver todos
-              </a>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-heading">Documentos Recientes</h3>
+                  <a href="#" className="text-[#009A47] hover:text-[#007A37] font-semibold">
+                    Ver todos
+                  </a>
+                </div>
+
+                {isLoading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {[1, 2, 3, 4].map(i => (
+                      <Skeleton key={i} className="h-48" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {documents.slice(0, 4).map(doc => (
+                      <BibliotecaDocumentCard
+                        key={doc.id}
+                        document={doc}
+                        onToggleFavorite={handleToggleFavorite}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                <BibliotecaUnitFilter
+                  units={units}
+                  selectedUnit={selectedUnit}
+                  onUnitSelect={(unitId) => {
+                    setSelectedUnit(unitId);
+                    applyFilters();
+                  }}
+                />
+              </div>
             </div>
+          </>
+        ) : (
+          <>
+            <BibliotecaResultsHeader
+              unitName={selectedUnitName}
+              documentCount={filteredDocuments.length}
+              onBack={handleBackToSearch}
+              sortBy={sortBy}
+              onSortChange={handleSortChange}
+            />
 
             {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[1, 2, 3, 4].map(i => (
-                  <Skeleton key={i} className="h-48" />
+              <div className="space-y-6">
+                {[1, 2, 3].map(i => (
+                  <Skeleton key={i} className="h-64" />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {filteredDocuments.map(doc => (
-                  <BibliotecaDocumentCard
-                    key={doc.id}
-                    document={doc}
-                    onToggleFavorite={handleToggleFavorite}
-                  />
-                ))}
-              </div>
-            )}
+              <>
+                <div className="space-y-6">
+                  {paginatedDocuments.map(doc => (
+                    <BibliotecaResultCard
+                      key={doc.id}
+                      document={doc}
+                      onToggleFavorite={handleToggleFavorite}
+                    />
+                  ))}
+                </div>
 
-            <BibliotecaUnitFilter
-              units={units}
-              selectedUnit={selectedUnit}
-              onUnitSelect={(unitId) => {
-                setSelectedUnit(unitId);
-                applyFilters();
-              }}
-            />
-          </div>
-        </div>
+                {totalPages > 1 && (
+                  <BibliotecaPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                )}
+              </>
+            )}
+          </>
+        )}
       </div>
     </InternalLayout>
   );
