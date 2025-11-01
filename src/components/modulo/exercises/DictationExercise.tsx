@@ -110,11 +110,11 @@ export const DictationExerciseComponent = ({ exercise }: DictationExerciseCompon
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* Audio Player */}
-      <div className="bg-card rounded-lg p-6 border">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full overflow-hidden shrink-0">
+      <div className="bg-card rounded-lg p-4 md:p-6 border">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="w-12 h-12 md:w-16 md:h-16 rounded-full overflow-hidden shrink-0">
             <img 
               src={exercise.audioImage}
               alt="Audio"
@@ -123,15 +123,15 @@ export const DictationExerciseComponent = ({ exercise }: DictationExerciseCompon
           </div>
 
           <div className="flex-1 space-y-2">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
               <button
                 onClick={togglePlay}
-                className="w-12 h-12 rounded-full bg-primary hover:bg-primary/90 flex items-center justify-center transition-colors"
+                className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary hover:bg-primary/90 flex items-center justify-center transition-colors"
               >
                 {isPlaying ? (
-                  <Pause className="h-5 w-5 text-primary-foreground" />
+                  <Pause className="h-4 w-4 md:h-5 md:w-5 text-primary-foreground" />
                 ) : (
-                  <Play className="h-5 w-5 text-primary-foreground ml-0.5" />
+                  <Play className="h-4 w-4 md:h-5 md:w-5 text-primary-foreground ml-0.5" />
                 )}
               </button>
 
@@ -163,7 +163,7 @@ export const DictationExerciseComponent = ({ exercise }: DictationExerciseCompon
       </div>
 
       {/* Questions Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
         {exercise.questions.map((question) => {
           const isIncorrect = incorrectAnswers.has(question.id);
           const hasAnswer = answers[question.id]?.trim();
@@ -171,8 +171,8 @@ export const DictationExerciseComponent = ({ exercise }: DictationExerciseCompon
           return (
             <div key={question.id} className="space-y-2">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full bg-[#D4AF37] flex items-center justify-center shrink-0">
-                  <span className="text-white font-bold">{question.questionNumber}</span>
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#D4AF37] flex items-center justify-center shrink-0">
+                  <span className="text-white font-bold text-sm md:text-base">{question.questionNumber}</span>
                 </div>
                 <div className="relative flex-1">
                   <Input
@@ -180,7 +180,7 @@ export const DictationExerciseComponent = ({ exercise }: DictationExerciseCompon
                     value={answers[question.id] || ''}
                     onChange={(e) => handleAnswerChange(question.id, e.target.value)}
                     disabled={isVerified}
-                    className={`pr-10 ${
+                    className={`pr-10 text-sm md:text-base ${
                       isVerified && isIncorrect
                         ? 'border-red-500 bg-red-50 dark:bg-red-950/20'
                         : isVerified && hasAnswer
@@ -189,7 +189,7 @@ export const DictationExerciseComponent = ({ exercise }: DictationExerciseCompon
                     }`}
                   />
                   <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-muted rounded transition-colors">
-                    <Mic className="h-4 w-4" />
+                    <Mic className="h-3 w-3 md:h-4 md:w-4" />
                   </button>
                 </div>
               </div>
@@ -209,7 +209,7 @@ export const DictationExerciseComponent = ({ exercise }: DictationExerciseCompon
         <div className="flex justify-center pt-4">
           <Button
             onClick={handleVerify}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg font-semibold"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 md:px-8 py-4 md:py-6 text-base md:text-lg font-semibold w-full md:w-auto"
           >
             Verificar ✓
           </Button>

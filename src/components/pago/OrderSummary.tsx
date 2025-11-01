@@ -28,10 +28,10 @@ export const OrderSummary = ({ plan }: OrderSummaryProps) => {
   };
 
   return (
-    <div className="space-y-6 sticky top-8">
+    <div className="space-y-4 md:space-y-6 lg:sticky lg:top-8">
       {/* Order Summary */}
-      <Card className="p-6 bg-[#C8D5B9]">
-        <h3 className="text-2xl font-bold text-[#2C4A2C] mb-6">Resumen del pedido</h3>
+      <Card className="p-4 md:p-6 bg-[#C8D5B9]">
+        <h3 className="text-xl md:text-2xl font-bold text-[#2C4A2C] mb-4 md:mb-6">Resumen del pedido</h3>
 
         <div className="space-y-3 mb-4">
           <div className="flex justify-between text-sm">
@@ -84,8 +84,8 @@ export const OrderSummary = ({ plan }: OrderSummaryProps) => {
       </Card>
 
       {/* Skills Included */}
-      <Card className="p-6 bg-[#C8D5B9]">
-        <h3 className="text-xl font-bold text-[#2C4A2C] mb-4">Resumen del pedido</h3>
+      <Card className="p-4 md:p-6 bg-[#C8D5B9]">
+        <h3 className="text-lg md:text-xl font-bold text-[#2C4A2C] mb-4">Resumen del pedido</h3>
         <div className="space-y-3">
           {plan.skills.map((skill) => (
             <div key={skill.id} className="flex items-center justify-between">

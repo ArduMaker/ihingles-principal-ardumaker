@@ -19,14 +19,14 @@ const Pago = () => {
 
   return (
     <InternalLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
         {/* Header */}
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-heading mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-heading mb-2">
               Detalles del {plan.name}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm md:text-base text-muted-foreground">
               Revisa los detalles de tu plan seleccionado antes de continuar
             </p>
           </div>

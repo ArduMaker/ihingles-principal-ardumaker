@@ -17,9 +17,9 @@ export const PaymentForm = ({ plan }: PaymentFormProps) => {
   const [sameAddress, setSameAddress] = useState(false);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Payment Method Card */}
-      <Card className="p-6 bg-[#C8D5B9]">
+      <Card className="p-4 md:p-6 bg-[#C8D5B9]">
         <h2 className="text-2xl font-bold text-[#2C4A2C] mb-6">{plan.name}</h2>
 
         {/* Payment Method */}
@@ -123,8 +123,8 @@ export const PaymentForm = ({ plan }: PaymentFormProps) => {
       </Card>
 
       {/* Billing Address Card */}
-      <Card className="p-6 bg-[#C8D5B9]">
-        <h3 className="text-2xl font-bold text-[#2C4A2C] mb-6">Dirección de Facturación</h3>
+      <Card className="p-4 md:p-6 bg-[#C8D5B9]">
+        <h3 className="text-xl md:text-2xl font-bold text-[#2C4A2C] mb-4 md:mb-6">Dirección de Facturación</h3>
 
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

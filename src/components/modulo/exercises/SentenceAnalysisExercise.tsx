@@ -95,24 +95,24 @@ export const SentenceAnalysisExerciseComponent = ({ exercise }: SentenceAnalysis
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* Subtitle */}
-      <h3 className="text-xl font-semibold text-heading">
+      <h3 className="text-lg md:text-xl font-semibold text-heading">
         Sujeto Verbo y Complementos
       </h3>
 
       {/* Column Headers */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="border rounded-lg p-3 text-center">
-          <span className="font-medium text-foreground">GRUPO SINTÁCTICO</span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        <div className="border rounded-lg p-2 md:p-3 text-center">
+          <span className="font-medium text-foreground text-sm md:text-base">GRUPO SINTÁCTICO</span>
         </div>
-        <div className="border rounded-lg p-3 text-center">
-          <span className="font-medium text-foreground">FUNCIÓN en la ORACIÓN</span>
+        <div className="border rounded-lg p-2 md:p-3 text-center">
+          <span className="font-medium text-foreground text-sm md:text-base">FUNCIÓN en la ORACIÓN</span>
         </div>
       </div>
 
       {/* Sentence with parts */}
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
         {exercise.parts.map((part, index) => {
           const isIncorrect = incorrectParts.has(part.id);
           const hasAnswer = answers[part.id]?.syntacticGroup || answers[part.id]?.sentenceFunction;
@@ -120,7 +120,7 @@ export const SentenceAnalysisExerciseComponent = ({ exercise }: SentenceAnalysis
           return (
             <div key={part.id} className="space-y-2">
               {/* Sentence with highlighted part */}
-              <div className="text-lg leading-relaxed">
+              <div className="text-base md:text-lg leading-relaxed">
                 {index === 0 && (
                   <>
                     <span className={`${getPartHighlight(part)} px-1 rounded`}>
@@ -176,17 +176,17 @@ export const SentenceAnalysisExerciseComponent = ({ exercise }: SentenceAnalysis
               </div>
 
               {/* Selection buttons */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <Select
                   value={answers[part.id]?.syntacticGroup}
                   onValueChange={(value) => handleSyntacticGroupChange(part.id, value)}
                   disabled={isVerified}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full text-sm md:text-base">
                     <SelectValue placeholder="Seleccionar" />
                     <ChevronRight className="h-4 w-4 ml-auto" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white z-50">
                     {exercise.syntacticOptions.slice(1).map((option) => (
                       <SelectItem key={option} value={option}>
                         {option}
@@ -200,11 +200,11 @@ export const SentenceAnalysisExerciseComponent = ({ exercise }: SentenceAnalysis
                   onValueChange={(value) => handleFunctionChange(part.id, value)}
                   disabled={isVerified}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full text-sm md:text-base">
                     <SelectValue placeholder="Seleccionar" />
                     <ChevronRight className="h-4 w-4 ml-auto" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white z-50">
                     {exercise.functionOptions.slice(1).map((option) => (
                       <SelectItem key={option} value={option}>
                         {option}
@@ -234,7 +234,7 @@ export const SentenceAnalysisExerciseComponent = ({ exercise }: SentenceAnalysis
         <div className="flex justify-center pt-4">
           <Button
             onClick={handleVerify}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg font-semibold"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 md:px-8 py-4 md:py-6 text-base md:text-lg font-semibold w-full md:w-auto"
           >
             Verificar ✓
           </Button>

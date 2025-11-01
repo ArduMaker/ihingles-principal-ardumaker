@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { UserProfileHeader } from './UserProfileHeader';
 import {
   DashboardIcon,
   UnidadesIcon,
@@ -47,11 +48,7 @@ export const InternalSidebar = () => {
 
   return (
     <aside className="w-48 h-full bg-sidebar border-r border-sidebar-border flex flex-col">
-      <div className="p-4 border-b border-sidebar-border">
-        <p className="text-lg font-semibold text-sidebar-foreground">
-          IH Ingles
-        </p>
-      </div>
+      <UserProfileHeader />
 
       <nav className="flex-1 overflow-y-auto py-4">
         {menuItems.map((group) => (

@@ -31,32 +31,32 @@ export const PlanCard = ({ plan }: PlanCardProps) => {
       </div>
 
       {/* Content */}
-      <div className="bg-[#E8E4D9] p-6">
-        <h4 className={`text-2xl font-bold mb-2 ${plan.textColor}`}>
+      <div className="bg-[#E8E4D9] p-4 md:p-6">
+        <h4 className={`text-xl md:text-2xl font-bold mb-2 ${plan.textColor}`}>
           {plan.nivel}
         </h4>
-        <h5 className="text-xl font-semibold mb-3 text-gray-800">
+        <h5 className="text-lg md:text-xl font-semibold mb-2 md:mb-3 text-gray-800">
           {plan.name}
         </h5>
-        <p className="text-sm text-gray-700 mb-6">
+        <p className="text-xs md:text-sm text-gray-700 mb-4 md:mb-6">
           {plan.description}
         </p>
 
         {/* Skills grid */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-3 gap-2 md:gap-4 mb-4 md:mb-6">
           {plan.skills.map((skill) => (
             <div key={skill.id} className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 mb-2 flex items-center justify-center">
+              <div className="w-12 h-12 md:w-16 md:h-16 mb-1 md:mb-2 flex items-center justify-center">
                 <img
                   src={skill.icon}
                   alt={skill.name}
                   className="w-full h-full object-contain"
                 />
               </div>
-              <p className="text-xs font-semibold text-gray-800 mb-1">
+              <p className="text-[10px] md:text-xs font-semibold text-gray-800 mb-0.5 md:mb-1">
                 {skill.name}
               </p>
-              <p className="text-[10px] text-gray-600">
+              <p className="text-[8px] md:text-[10px] text-gray-600">
                 {skill.level}
               </p>
             </div>
@@ -75,7 +75,7 @@ export const PlanCard = ({ plan }: PlanCardProps) => {
         {/* Button */}
         <Button
           onClick={handleSelectPlan}
-          className={`w-full ${plan.buttonColor} hover:opacity-90 text-${plan.id === 'maestro' ? 'black' : 'white'} font-semibold py-6`}
+          className={`w-full ${plan.buttonColor} hover:opacity-90 text-${plan.id === 'maestro' ? 'black' : 'white'} font-semibold py-4 md:py-6 text-sm md:text-base`}
         >
           Seleccionar plan
         </Button>

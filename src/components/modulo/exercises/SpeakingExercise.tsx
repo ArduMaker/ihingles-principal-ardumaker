@@ -38,23 +38,23 @@ export const SpeakingExerciseComponent = ({ exercise }: SpeakingExerciseComponen
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* Phrases List */}
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
         {exercise.phrases.map((phrase) => {
           const isRecording = recordingPhraseId === phrase.id;
           const isCompleted = completedPhrases.has(phrase.id);
 
           return (
-            <div key={phrase.id} className="flex items-center gap-4">
+            <div key={phrase.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
               {/* Phrase Number */}
-              <div className="w-10 h-10 rounded-full bg-[#D4AF37] flex items-center justify-center shrink-0">
-                <span className="text-white font-bold">{phrase.phraseNumber}</span>
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#D4AF37] flex items-center justify-center shrink-0">
+                <span className="text-white font-bold text-sm md:text-base">{phrase.phraseNumber}</span>
               </div>
 
               {/* Phrase Text */}
               <div className="flex-1">
-                <p className="text-base font-medium text-foreground">{phrase.text}</p>
+                <p className="text-sm md:text-base font-medium text-foreground">{phrase.text}</p>
               </div>
 
               {/* Action Button */}
@@ -62,7 +62,7 @@ export const SpeakingExerciseComponent = ({ exercise }: SpeakingExerciseComponen
                 onClick={() => handleMicPress(phrase.id)}
                 disabled={isRecording || isVerified}
                 className={`
-                  min-w-[280px] h-12 rounded-lg font-medium text-sm
+                  w-full sm:min-w-[200px] md:min-w-[280px] h-10 md:h-12 rounded-lg font-medium text-xs md:text-sm
                   ${isRecording 
                     ? 'bg-red-600 hover:bg-red-700 text-white' 
                     : isCompleted
@@ -79,7 +79,7 @@ export const SpeakingExerciseComponent = ({ exercise }: SpeakingExerciseComponen
                 onClick={() => handleMicPress(phrase.id)}
                 disabled={isRecording || isVerified}
                 className={`
-                  w-14 h-14 rounded-full flex items-center justify-center shrink-0 transition-all
+                  w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center shrink-0 transition-all
                   ${isRecording
                     ? 'bg-red-600 animate-pulse'
                     : isCompleted
@@ -89,7 +89,7 @@ export const SpeakingExerciseComponent = ({ exercise }: SpeakingExerciseComponen
                   ${isVerified ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 `}
               >
-                <Mic className={`h-6 w-6 ${isRecording || isCompleted ? 'text-white' : 'text-white'}`} />
+                <Mic className={`h-5 w-5 md:h-6 md:w-6 ${isRecording || isCompleted ? 'text-white' : 'text-white'}`} />
               </button>
             </div>
           );
@@ -101,7 +101,7 @@ export const SpeakingExerciseComponent = ({ exercise }: SpeakingExerciseComponen
         <div className="flex justify-center pt-4">
           <Button
             onClick={handleVerify}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg font-semibold"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 md:px-8 py-4 md:py-6 text-base md:text-lg font-semibold w-full md:w-auto"
           >
             Verificar ✓
           </Button>
