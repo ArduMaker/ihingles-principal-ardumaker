@@ -53,6 +53,13 @@ All colors MUST be HSL.
     --navbar: 0 0% 100%;
     --navbar-foreground: 0 0% 15%;
     --navbar-border: 0 0% 90%;
+
+    /* Chart colors */
+    --chart-1: 145 97% 28%;
+    --chart-2: 120 30% 70%;
+    --chart-3: 120 40% 25%;
+    --chart-4: 46 100% 44%;
+    --chart-5: 120 25% 93%;
   }
 }
 

@@ -51,3 +51,33 @@ export interface CommunityBenefit {
   description: string;
   icon: string;
 }
+
+// Dashboard interfaces
+export interface DashboardStat {
+  id: string;
+  label: string;
+  value: string;
+  change: string;
+  subtitle: string;
+  icon: string;
+}
+
+export interface SkillProgress {
+  id: string;
+  name: string;
+  userProgress: number;
+  averageProgress: number;
+}
+
+export interface RecentUnit {
+  id: string;
+  name: string;
+  progress: number;
+}
+
+export interface PendingExercise {
+  id: string;
+  title: string;
+  type: 'grammar' | 'listening' | 'reading';
+  timeAgo: string;
+}
