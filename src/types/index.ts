@@ -118,3 +118,28 @@ export interface UnitDetail extends Unit {
   caseImage: string;
   progress: number;
 }
+
+// Biblioteca interfaces
+export interface BibliotecaDocument {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  type: 'pdf' | 'word' | 'image' | 'ppt';
+  unitId: string;
+  unitName: string;
+  updatedAt: string;
+  isFavorite: boolean;
+}
+
+export interface BibliotecaUnit {
+  id: string;
+  name: string;
+  documentCount: number;
+}
+
+export interface BibliotecaFilters {
+  unitId: string;
+  documentTypes: string[];
+  searchQuery: string;
+}
