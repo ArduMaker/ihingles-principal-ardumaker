@@ -3,6 +3,7 @@ import { MultipleChoiceExerciseComponent } from './exercises/MultipleChoiceExerc
 import { ListeningExerciseComponent } from './exercises/ListeningExercise';
 import { ReadingExerciseComponent } from './exercises/ReadingExercise';
 import { DictationExerciseComponent } from './exercises/DictationExercise';
+import { SpeakingExerciseComponent } from './exercises/SpeakingExercise';
 
 interface ExerciseRouterProps {
   exercise: Exercise;
@@ -21,6 +22,9 @@ export const ExerciseRouter = ({ exercise }: ExerciseRouterProps) => {
     
     case 'dictation':
       return <DictationExerciseComponent exercise={exercise} />;
+    
+    case 'speaking':
+      return <SpeakingExerciseComponent exercise={exercise} />;
     
     // Add more exercise types here as they are implemented
     // case 'fill-blank':

@@ -1,4 +1,4 @@
-import { Exercise, MultipleChoiceExercise, ListeningExercise, ReadingExercise, DictationExercise } from '@/types/ejercicio';
+import { Exercise, MultipleChoiceExercise, ListeningExercise, ReadingExercise, DictationExercise, SpeakingExercise } from '@/types/ejercicio';
 
 // Mock exercise data
 const mockExercises: Record<string, Exercise> = {
@@ -231,7 +231,27 @@ const mockExercises: Record<string, Exercise> = {
       { id: 'd11', questionNumber: 11, correctAnswer: 'exercise' },
       { id: 'd12', questionNumber: 12, correctAnswer: 'complete' }
     ]
-  } as DictationExercise
+  } as DictationExercise,
+  '5': {
+    id: '5',
+    type: 'speaking',
+    title: 'Pronunciation Exercise 3: Speaking',
+    heroImage: '/ejercicio/principal5.png',
+    totalExercises: 23,
+    currentExercise: 2,
+    category: 'Speaking',
+    categoryProgress: '2/23',
+    instructions: 'Presiona el micrófono y repite cada frase con claridad. El sistema evaluará tu pronunciación.',
+    phrases: [
+      { id: 'sp1', phraseNumber: 1, text: 'Hi, I am looking for a shirt' },
+      { id: 'sp2', phraseNumber: 2, text: 'Sure, I can help you with that' },
+      { id: 'sp3', phraseNumber: 3, text: 'What kind of shirt are you looking for?' },
+      { id: 'sp4', phraseNumber: 4, text: 'Do you have a colour in mind?' },
+      { id: 'sp5', phraseNumber: 5, text: 'I am looking for something casual' },
+      { id: 'sp6', phraseNumber: 6, text: 'Here are a few that you might like' },
+      { id: 'sp7', phraseNumber: 7, text: 'This shirt looks very nice on you' }
+    ]
+  } as SpeakingExercise
 };
 
 export const get_exercise = async (id: string): Promise<Exercise | null> => {
