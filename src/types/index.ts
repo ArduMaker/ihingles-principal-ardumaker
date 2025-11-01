@@ -112,3 +112,9 @@ export interface OverallProgress {
     total: number;
   }[];
 }
+
+// Unidad detail interfaces
+export interface UnitDetail extends Unit {
+  caseImage: string;
+  progress: number;
+}
