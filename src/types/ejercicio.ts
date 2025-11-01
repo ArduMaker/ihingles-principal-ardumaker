@@ -1,6 +1,6 @@
 // Exercise types and interfaces
 
-export type ExerciseType = 'multiple-choice' | 'listening' | 'fill-blank' | 'matching' | 'reading' | 'true-false';
+export type ExerciseType = 'multiple-choice' | 'listening' | 'fill-blank' | 'matching' | 'reading' | 'true-false' | 'dictation' | 'speaking' | 'sentence-analysis';
 
 export interface BaseExercise {
   id: string;
@@ -61,7 +61,49 @@ export interface ReadingExercise extends BaseExercise {
   questions: TrueFalseQuestion[];
 }
 
-export type Exercise = MultipleChoiceExercise | ListeningExercise | ReadingExercise;
+export interface DictationQuestion {
+  id: string;
+  questionNumber: number;
+  correctAnswer: string;
+}
+
+export interface DictationExercise extends BaseExercise {
+  type: 'dictation';
+  audioUrl: string;
+  audioImage: string;
+  audioDuration: string;
+  adviceText?: string;
+  questions: DictationQuestion[];
+}
+
+export interface SpeakingPhrase {
+  id: string;
+  phraseNumber: number;
+  text: string;
+  audioUrl?: string;
+}
+
+export interface SpeakingExercise extends BaseExercise {
+  type: 'speaking';
+  phrases: SpeakingPhrase[];
+}
+
+export interface SentencePart {
+  id: string;
+  text: string;
+  syntacticGroup: string;
+  sentenceFunction: string;
+}
+
+export interface SentenceAnalysisExercise extends BaseExercise {
+  type: 'sentence-analysis';
+  sentence: string;
+  parts: SentencePart[];
+  syntacticOptions: string[];
+  functionOptions: string[];
+}
+
+export type Exercise = MultipleChoiceExercise | ListeningExercise | ReadingExercise | DictationExercise | SpeakingExercise | SentenceAnalysisExercise;
 
 export interface ExerciseAnswer {
   optionId: string;

@@ -1,4 +1,4 @@
-import { Exercise, MultipleChoiceExercise, ListeningExercise, ReadingExercise } from '@/types/ejercicio';
+import { Exercise, MultipleChoiceExercise, ListeningExercise, ReadingExercise, DictationExercise, SpeakingExercise, SentenceAnalysisExercise } from '@/types/ejercicio';
 
 // Mock exercise data
 const mockExercises: Record<string, Exercise> = {
@@ -202,7 +202,108 @@ const mockExercises: Record<string, Exercise> = {
         correctAnswer: false
       }
     ]
-  } as ReadingExercise
+  } as ReadingExercise,
+  '4': {
+    id: '4',
+    type: 'dictation',
+    title: 'Ejercicio de pronunciación',
+    heroImage: '/ejercicio/principal4.png',
+    totalExercises: 23,
+    currentExercise: 2,
+    category: 'Pronunciation',
+    categoryProgress: '2/23',
+    instructions: 'Escucha con atención el dictado de palabras. Luego, escríbelas en orden en los campos inferiores.',
+    audioUrl: '/audio/dictation.mp3',
+    audioImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
+    audioDuration: '0:14',
+    adviceText: 'Intenta hacer una primera vez cada listening. Si cometes fallos, lee el script e intenta entender todo lo que está escrito en él.',
+    questions: [
+      { id: 'd1', questionNumber: 1, correctAnswer: 'hello' },
+      { id: 'd2', questionNumber: 2, correctAnswer: 'world' },
+      { id: 'd3', questionNumber: 3, correctAnswer: 'beautiful' },
+      { id: 'd4', questionNumber: 4, correctAnswer: 'morning' },
+      { id: 'd5', questionNumber: 5, correctAnswer: 'sunshine' },
+      { id: 'd6', questionNumber: 6, correctAnswer: 'happy' },
+      { id: 'd7', questionNumber: 7, correctAnswer: 'learning' },
+      { id: 'd8', questionNumber: 8, correctAnswer: 'english' },
+      { id: 'd9', questionNumber: 9, correctAnswer: 'practice' },
+      { id: 'd10', questionNumber: 10, correctAnswer: 'student' },
+      { id: 'd11', questionNumber: 11, correctAnswer: 'exercise' },
+      { id: 'd12', questionNumber: 12, correctAnswer: 'complete' }
+    ]
+  } as DictationExercise,
+  '5': {
+    id: '5',
+    type: 'speaking',
+    title: 'Pronunciation Exercise 3: Speaking',
+    heroImage: '/ejercicio/principal5.png',
+    totalExercises: 23,
+    currentExercise: 2,
+    category: 'Speaking',
+    categoryProgress: '2/23',
+    instructions: 'Presiona el micrófono y repite cada frase con claridad. El sistema evaluará tu pronunciación.',
+    phrases: [
+      { id: 'sp1', phraseNumber: 1, text: 'Hi, I am looking for a shirt' },
+      { id: 'sp2', phraseNumber: 2, text: 'Sure, I can help you with that' },
+      { id: 'sp3', phraseNumber: 3, text: 'What kind of shirt are you looking for?' },
+      { id: 'sp4', phraseNumber: 4, text: 'Do you have a colour in mind?' },
+      { id: 'sp5', phraseNumber: 5, text: 'I am looking for something casual' },
+      { id: 'sp6', phraseNumber: 6, text: 'Here are a few that you might like' },
+      { id: 'sp7', phraseNumber: 7, text: 'This shirt looks very nice on you' }
+    ]
+  } as SpeakingExercise,
+  '6': {
+    id: '6',
+    type: 'sentence-analysis',
+    title: 'Conocimientos Elementales: función de cada parte de una oración',
+    heroImage: '/ejercicio/principal6.png',
+    totalExercises: 23,
+    currentExercise: 2,
+    category: 'Gramar',
+    categoryProgress: '2/23',
+    instructions: 'Indicar qué función hace cada parte marcada en la oración',
+    sentence: 'El perro ha dado un mordisco al niño en el parque esta mañana.',
+    syntacticOptions: ['GRUPO SINTÁCTICO', 'Sujeto', 'Predicado', 'Complemento Directo', 'Complemento Indirecto'],
+    functionOptions: ['FUNCIÓN en la ORACIÓN', 'Núcleo del sujeto', 'Núcleo del predicado', 'Objeto directo', 'Objeto indirecto', 'Complemento circunstancial'],
+    parts: [
+      {
+        id: 'p1',
+        text: 'El perro',
+        syntacticGroup: 'Sujeto',
+        sentenceFunction: 'Núcleo del sujeto'
+      },
+      {
+        id: 'p2',
+        text: 'ha dado',
+        syntacticGroup: 'Predicado',
+        sentenceFunction: 'Núcleo del predicado'
+      },
+      {
+        id: 'p3',
+        text: 'un mordisco',
+        syntacticGroup: 'Complemento Directo',
+        sentenceFunction: 'Objeto directo'
+      },
+      {
+        id: 'p4',
+        text: 'al niño',
+        syntacticGroup: 'Complemento Indirecto',
+        sentenceFunction: 'Objeto indirecto'
+      },
+      {
+        id: 'p5',
+        text: 'en el parque',
+        syntacticGroup: 'Complemento Directo',
+        sentenceFunction: 'Complemento circunstancial'
+      },
+      {
+        id: 'p6',
+        text: 'esta mañana',
+        syntacticGroup: 'Complemento Directo',
+        sentenceFunction: 'Complemento circunstancial'
+      }
+    ]
+  } as SentenceAnalysisExercise
 };
 
 export const get_exercise = async (id: string): Promise<Exercise | null> => {
