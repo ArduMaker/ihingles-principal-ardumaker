@@ -68,3 +68,87 @@ export const get_overall_progress = async (): Promise<OverallProgress> => {
     ]
   };
 };
+
+// Mock async function to get all units for a specific level
+export const get_units_by_level_id = async (levelId: string): Promise<{
+  levelName: string;
+  levelImage: string;
+  description: string;
+  totalUnits: number;
+  completedUnits: number;
+  units: import('@/types').UnitDetail[];
+}> => {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const caseImages = [
+    '/basico/case1.png',
+    '/basico/case2.png',
+    '/basico/case3.png',
+    '/basico/case4.png',
+    '/basico/case5.png',
+    '/basico/case6.png',
+    '/basico/case7.png',
+    '/basico/case8.png',
+    '/basico/case9.png',
+    '/basico/case11.png',
+    '/basico/case12.png',
+    '/basico/case13.png',
+    '/basico/principal.png'
+  ];
+
+  // Generate 23 units with random images
+  const units = Array.from({ length: 23 }, (_, i) => {
+    const unitNumber = i + 1;
+    let status: 'completed' | 'in-progress' | 'locked' = 'locked';
+    let progress = 0;
+    
+    if (levelId === 'explorador') {
+      if (unitNumber <= 8) {
+        status = 'completed';
+        progress = 100;
+      } else if (unitNumber === 9) {
+        status = 'in-progress';
+        progress = 45;
+      }
+    }
+    
+    return {
+      id: `${levelId}-${unitNumber}`,
+      number: unitNumber,
+      title: 'Saludos y Presentaciones',
+      description: 'Aprende a presentarte y saludar en inglés',
+      status,
+      progress,
+      caseImage: caseImages[i % caseImages.length]
+    };
+  });
+
+  const levelConfig: Record<string, any> = {
+    explorador: {
+      levelName: 'Explorador',
+      levelImage: '/basico/principal.png',
+      description: 'Explora las 23 unidades para dominar el inglés Básico.',
+      totalUnits: 23,
+      completedUnits: 8
+    },
+    cualificado: {
+      levelName: 'Cualificado',
+      levelImage: '/calificado.png',
+      description: 'Mejora tus habilidades con las 23 unidades del nivel Cualificado.',
+      totalUnits: 23,
+      completedUnits: 0
+    },
+    maestro: {
+      levelName: 'Maestro',
+      levelImage: '/experto.png',
+      description: 'Domina el inglés avanzado con las 23 unidades del nivel Maestro.',
+      totalUnits: 23,
+      completedUnits: 0
+    }
+  };
+
+  return {
+    ...levelConfig[levelId],
+    units
+  };
+};
