@@ -39,32 +39,6 @@ export const SpeakingExerciseComponent = ({ exercise }: SpeakingExerciseComponen
 
   return (
     <div className="space-y-8">
-      {/* Hero Image */}
-      <div className="relative h-48 rounded-lg overflow-hidden">
-        <img 
-          src={exercise.heroImage}
-          alt={exercise.title}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.currentTarget.src = '/placeholder.svg';
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-          <div className="p-6 w-full">
-            <h1 className="text-4xl font-bold text-white">speaking</h1>
-          </div>
-        </div>
-      </div>
-
-      {/* Title */}
-      <div>
-        <h2 className="text-2xl font-bold text-heading mb-2">{exercise.title}</h2>
-        <p className="text-sm text-muted-foreground">Ejercicios: {exercise.currentExercise}/{exercise.totalExercises}</p>
-      </div>
-
-      {/* Instructions */}
-      <p className="text-base text-foreground">{exercise.instructions}</p>
-
       {/* Phrases List */}
       <div className="space-y-4">
         {exercise.phrases.map((phrase) => {

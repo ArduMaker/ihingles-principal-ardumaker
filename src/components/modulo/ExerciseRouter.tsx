@@ -4,6 +4,7 @@ import { ListeningExerciseComponent } from './exercises/ListeningExercise';
 import { ReadingExerciseComponent } from './exercises/ReadingExercise';
 import { DictationExerciseComponent } from './exercises/DictationExercise';
 import { SpeakingExerciseComponent } from './exercises/SpeakingExercise';
+import { SentenceAnalysisExerciseComponent } from './exercises/SentenceAnalysisExercise';
 
 interface ExerciseRouterProps {
   exercise: Exercise;
@@ -25,6 +26,9 @@ export const ExerciseRouter = ({ exercise }: ExerciseRouterProps) => {
     
     case 'speaking':
       return <SpeakingExerciseComponent exercise={exercise} />;
+    
+    case 'sentence-analysis':
+      return <SentenceAnalysisExerciseComponent exercise={exercise} />;
     
     // Add more exercise types here as they are implemented
     // case 'fill-blank':

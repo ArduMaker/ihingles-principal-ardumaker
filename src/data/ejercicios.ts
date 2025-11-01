@@ -1,4 +1,4 @@
-import { Exercise, MultipleChoiceExercise, ListeningExercise, ReadingExercise, DictationExercise, SpeakingExercise } from '@/types/ejercicio';
+import { Exercise, MultipleChoiceExercise, ListeningExercise, ReadingExercise, DictationExercise, SpeakingExercise, SentenceAnalysisExercise } from '@/types/ejercicio';
 
 // Mock exercise data
 const mockExercises: Record<string, Exercise> = {
@@ -251,7 +251,59 @@ const mockExercises: Record<string, Exercise> = {
       { id: 'sp6', phraseNumber: 6, text: 'Here are a few that you might like' },
       { id: 'sp7', phraseNumber: 7, text: 'This shirt looks very nice on you' }
     ]
-  } as SpeakingExercise
+  } as SpeakingExercise,
+  '6': {
+    id: '6',
+    type: 'sentence-analysis',
+    title: 'Conocimientos Elementales: función de cada parte de una oración',
+    heroImage: '/ejercicio/principal6.png',
+    totalExercises: 23,
+    currentExercise: 2,
+    category: 'Gramar',
+    categoryProgress: '2/23',
+    instructions: 'Indicar qué función hace cada parte marcada en la oración',
+    sentence: 'El perro ha dado un mordisco al niño en el parque esta mañana.',
+    syntacticOptions: ['GRUPO SINTÁCTICO', 'Sujeto', 'Predicado', 'Complemento Directo', 'Complemento Indirecto'],
+    functionOptions: ['FUNCIÓN en la ORACIÓN', 'Núcleo del sujeto', 'Núcleo del predicado', 'Objeto directo', 'Objeto indirecto', 'Complemento circunstancial'],
+    parts: [
+      {
+        id: 'p1',
+        text: 'El perro',
+        syntacticGroup: 'Sujeto',
+        sentenceFunction: 'Núcleo del sujeto'
+      },
+      {
+        id: 'p2',
+        text: 'ha dado',
+        syntacticGroup: 'Predicado',
+        sentenceFunction: 'Núcleo del predicado'
+      },
+      {
+        id: 'p3',
+        text: 'un mordisco',
+        syntacticGroup: 'Complemento Directo',
+        sentenceFunction: 'Objeto directo'
+      },
+      {
+        id: 'p4',
+        text: 'al niño',
+        syntacticGroup: 'Complemento Indirecto',
+        sentenceFunction: 'Objeto indirecto'
+      },
+      {
+        id: 'p5',
+        text: 'en el parque',
+        syntacticGroup: 'Complemento Directo',
+        sentenceFunction: 'Complemento circunstancial'
+      },
+      {
+        id: 'p6',
+        text: 'esta mañana',
+        syntacticGroup: 'Complemento Directo',
+        sentenceFunction: 'Complemento circunstancial'
+      }
+    ]
+  } as SentenceAnalysisExercise
 };
 
 export const get_exercise = async (id: string): Promise<Exercise | null> => {
