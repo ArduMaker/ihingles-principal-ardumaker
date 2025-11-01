@@ -12,6 +12,7 @@ import Biblioteca from "./pages/Biblioteca";
 import Vocabulario from "./pages/Vocabulario";
 import Progreso from "./pages/Progreso";
 import Facturacion from "./pages/Facturacion";
+import Pago from "./pages/Pago";
 import Perfil from "./pages/Perfil";
 import Modulo from "./pages/Modulo";
 import Unidad from "./pages/Unidad";
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/vocabulario" element={<Vocabulario />} />
             <Route path="/progreso" element={<Progreso />} />
             <Route path="/facturacion" element={<Facturacion />} />
+            <Route path="/facturacion/pago/:planId" element={<Pago />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/modulo/:id" element={<Modulo />} />
             <Route path="/unidad/:levelId" element={<Unidad />} />
