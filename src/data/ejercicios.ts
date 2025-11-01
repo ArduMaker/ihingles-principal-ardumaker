@@ -1,4 +1,4 @@
-import { Exercise, MultipleChoiceExercise, ListeningExercise, ReadingExercise } from '@/types/ejercicio';
+import { Exercise, MultipleChoiceExercise, ListeningExercise, ReadingExercise, DictationExercise } from '@/types/ejercicio';
 
 // Mock exercise data
 const mockExercises: Record<string, Exercise> = {
@@ -202,7 +202,36 @@ const mockExercises: Record<string, Exercise> = {
         correctAnswer: false
       }
     ]
-  } as ReadingExercise
+  } as ReadingExercise,
+  '4': {
+    id: '4',
+    type: 'dictation',
+    title: 'Ejercicio de pronunciación',
+    heroImage: '/ejercicio/principal4.png',
+    totalExercises: 23,
+    currentExercise: 2,
+    category: 'Pronunciation',
+    categoryProgress: '2/23',
+    instructions: 'Escucha con atención el dictado de palabras. Luego, escríbelas en orden en los campos inferiores.',
+    audioUrl: '/audio/dictation.mp3',
+    audioImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
+    audioDuration: '0:14',
+    adviceText: 'Intenta hacer una primera vez cada listening. Si cometes fallos, lee el script e intenta entender todo lo que está escrito en él.',
+    questions: [
+      { id: 'd1', questionNumber: 1, correctAnswer: 'hello' },
+      { id: 'd2', questionNumber: 2, correctAnswer: 'world' },
+      { id: 'd3', questionNumber: 3, correctAnswer: 'beautiful' },
+      { id: 'd4', questionNumber: 4, correctAnswer: 'morning' },
+      { id: 'd5', questionNumber: 5, correctAnswer: 'sunshine' },
+      { id: 'd6', questionNumber: 6, correctAnswer: 'happy' },
+      { id: 'd7', questionNumber: 7, correctAnswer: 'learning' },
+      { id: 'd8', questionNumber: 8, correctAnswer: 'english' },
+      { id: 'd9', questionNumber: 9, correctAnswer: 'practice' },
+      { id: 'd10', questionNumber: 10, correctAnswer: 'student' },
+      { id: 'd11', questionNumber: 11, correctAnswer: 'exercise' },
+      { id: 'd12', questionNumber: 12, correctAnswer: 'complete' }
+    ]
+  } as DictationExercise
 };
 
 export const get_exercise = async (id: string): Promise<Exercise | null> => {
