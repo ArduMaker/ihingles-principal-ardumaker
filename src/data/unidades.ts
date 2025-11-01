@@ -80,21 +80,58 @@ export const get_units_by_level_id = async (levelId: string): Promise<{
 }> => {
   await new Promise(resolve => setTimeout(resolve, 500));
   
-  const caseImages = [
-    '/basico/case1.png',
-    '/basico/case2.png',
-    '/basico/case3.png',
-    '/basico/case4.png',
-    '/basico/case5.png',
-    '/basico/case6.png',
-    '/basico/case7.png',
-    '/basico/case8.png',
-    '/basico/case9.png',
-    '/basico/case11.png',
-    '/basico/case12.png',
-    '/basico/case13.png',
-    '/basico/principal.png'
-  ];
+  // Define image sets for each level
+  const imagesByLevel: Record<string, string[]> = {
+    explorador: [
+      '/basico/case1.png',
+      '/basico/case2.png',
+      '/basico/case3.png',
+      '/basico/case4.png',
+      '/basico/case5.png',
+      '/basico/case6.png',
+      '/basico/case7.png',
+      '/basico/case8.png',
+      '/basico/case9.png',
+      '/basico/case11.png',
+      '/basico/case12.png',
+      '/basico/case13.png',
+      '/basico/principal.png'
+    ],
+    cualificado: [
+      '/calificado/case1.png',
+      '/calificado/case2.png',
+      '/calificado/case3.png',
+      '/calificado/case4.png',
+      '/calificado/case5.png',
+      '/calificado/case6.png',
+      '/calificado/case7.png',
+      '/calificado/case8.png',
+      '/calificado/case9.png',
+      '/calificado/case10.png',
+      '/calificado/case11.png',
+      '/calificado/case12.png',
+      '/calificado/case13.png',
+      '/calificado/case14.png',
+      '/calificado/case15.png',
+      '/calificado/case16.png',
+      '/calificado/principal.png'
+    ],
+    maestro: [
+      '/experto/case1.png',
+      '/experto/case2.png',
+      '/experto/case3.png',
+      '/experto/case4.png',
+      '/experto/case5.png',
+      '/experto/case6.png',
+      '/experto/case7.png',
+      '/experto/case8.png',
+      '/experto/case9.png',
+      '/experto/case10.png',
+      '/experto/principal.png'
+    ]
+  };
+
+  const caseImages = imagesByLevel[levelId] || imagesByLevel.explorador;
 
   // Generate 23 units with random images
   const units = Array.from({ length: 23 }, (_, i) => {
@@ -133,14 +170,14 @@ export const get_units_by_level_id = async (levelId: string): Promise<{
     },
     cualificado: {
       levelName: 'Cualificado',
-      levelImage: '/calificado.png',
+      levelImage: '/calificado/principal.png',
       description: 'Mejora tus habilidades con las 23 unidades del nivel Cualificado.',
       totalUnits: 23,
       completedUnits: 0
     },
     maestro: {
       levelName: 'Maestro',
-      levelImage: '/experto.png',
+      levelImage: '/experto/principal.png',
       description: 'Domina el inglés avanzado con las 23 unidades del nivel Maestro.',
       totalUnits: 23,
       completedUnits: 0
