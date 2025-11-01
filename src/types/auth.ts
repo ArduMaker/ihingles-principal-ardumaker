@@ -5,6 +5,21 @@ export interface User {
   avatar?: string;
   shield?: string;
   subtitle?: string;
+  phone?: string;
+  country?: string;
+  city?: string;
+}
+
+export interface LearningSkill {
+  skill: string;
+  value: number;
+}
+
+export interface UserProfile extends User {
+  skills: LearningSkill[];
+  unitsCompleted: number;
+  totalUnits: number;
+  consecutiveDays: number;
 }
 
 export interface AuthResponse {
