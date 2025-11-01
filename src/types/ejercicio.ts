@@ -1,6 +1,6 @@
 // Exercise types and interfaces
 
-export type ExerciseType = 'multiple-choice' | 'fill-blank' | 'matching' | 'listening' | 'reading';
+export type ExerciseType = 'multiple-choice' | 'listening' | 'fill-blank' | 'matching' | 'reading';
 
 export interface BaseExercise {
   id: string;
@@ -26,7 +26,29 @@ export interface MultipleChoiceExercise extends BaseExercise {
   options: MultipleChoiceOption[];
 }
 
-export type Exercise = MultipleChoiceExercise;
+export interface ListeningQuestion {
+  id: string;
+  questionNumber: number;
+  text: string;
+  options: string[];
+  correctOptionIndex: number;
+}
+
+export interface ListeningExercise extends BaseExercise {
+  type: 'listening';
+  audioUrl: string;
+  audioImage: string;
+  audioDuration: string;
+  attachedFile?: {
+    name: string;
+    url: string;
+  };
+  adviceText: string;
+  pronunciationTitle: string;
+  questions: ListeningQuestion[];
+}
+
+export type Exercise = MultipleChoiceExercise | ListeningExercise;
 
 export interface ExerciseAnswer {
   optionId: string;

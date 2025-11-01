@@ -1,5 +1,6 @@
 import { Exercise } from '@/types/ejercicio';
 import { MultipleChoiceExerciseComponent } from './exercises/MultipleChoiceExercise';
+import { ListeningExerciseComponent } from './exercises/ListeningExercise';
 
 interface ExerciseRouterProps {
   exercise: Exercise;
@@ -9,6 +10,9 @@ export const ExerciseRouter = ({ exercise }: ExerciseRouterProps) => {
   switch (exercise.type) {
     case 'multiple-choice':
       return <MultipleChoiceExerciseComponent exercise={exercise} />;
+    
+    case 'listening':
+      return <ListeningExerciseComponent exercise={exercise} />;
     
     // Add more exercise types here as they are implemented
     // case 'fill-blank':
@@ -20,7 +24,7 @@ export const ExerciseRouter = ({ exercise }: ExerciseRouterProps) => {
       return (
         <div className="text-center py-12">
           <p className="text-muted-foreground">
-            Tipo de ejercicio no implementado: {exercise.type}
+            Tipo de ejercicio no implementado: {(exercise as Exercise).type}
           </p>
         </div>
       );

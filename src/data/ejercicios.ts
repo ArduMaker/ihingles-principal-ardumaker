@@ -1,4 +1,4 @@
-import { Exercise, MultipleChoiceExercise } from '@/types/ejercicio';
+import { Exercise, MultipleChoiceExercise, ListeningExercise } from '@/types/ejercicio';
 
 // Mock exercise data
 const mockExercises: Record<string, Exercise> = {
@@ -68,7 +68,85 @@ const mockExercises: Record<string, Exercise> = {
         isCorrect: true
       }
     ]
-  } as MultipleChoiceExercise
+  } as MultipleChoiceExercise,
+  '2': {
+    id: '2',
+    type: 'listening',
+    title: 'Listening 2: Multiple Choice',
+    heroImage: '/ejercicio/principal2.png',
+    totalExercises: 23,
+    currentExercise: 2,
+    category: 'Listening',
+    categoryProgress: '2/23',
+    instructions: 'Escucha el audio y escoge la respuesta de entre las alternativas ofrecidas en cada apartado.',
+    audioUrl: '/audio/sample.mp3',
+    audioImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
+    audioDuration: '0:14',
+    attachedFile: {
+      name: 'Resumen Situaciones Laborales PPT - Unidad 4',
+      url: '/files/resumen.pdf'
+    },
+    adviceText: 'Intenta hacer una primera vez cada listening. Si cometes fallos, lee el script e intenta entender todo lo que está escrito en él. Vuelve a hacer el listening sin mirar el script. Usa esta metodología hasta que tu capacidad de entender sea casi total en cada listening',
+    pronunciationTitle: 'Pronunciación',
+    questions: [
+      {
+        id: 'q1',
+        questionNumber: 1,
+        text: "What is the boy's name?",
+        options: ['John', 'James', 'Jack', 'Jake'],
+        correctOptionIndex: 1
+      },
+      {
+        id: 'q2',
+        questionNumber: 2,
+        text: 'Where does he come from?',
+        options: ['London', 'Manchester', 'Liverpool', 'Birmingham'],
+        correctOptionIndex: 0
+      },
+      {
+        id: 'q3',
+        questionNumber: 3,
+        text: 'How about the girl? What is her name?',
+        options: ['Sarah', 'Sophie', 'Susan', 'Samantha'],
+        correctOptionIndex: 2
+      },
+      {
+        id: 'q4',
+        questionNumber: 4,
+        text: 'Where does she come from?',
+        options: ['Paris', 'Lyon', 'Marseille', 'Nice'],
+        correctOptionIndex: 1
+      },
+      {
+        id: 'q5',
+        questionNumber: 5,
+        text: 'Which course are they both doing?',
+        options: ['Business', 'Engineering', 'Medicine', 'Law'],
+        correctOptionIndex: 0
+      },
+      {
+        id: 'q6',
+        questionNumber: 6,
+        text: 'Whose class is Alfred in?',
+        options: ['Dr. Smith', 'Prof. Johnson', 'Mr. Brown', 'Ms. Davis'],
+        correctOptionIndex: 3
+      },
+      {
+        id: 'q7',
+        questionNumber: 7,
+        text: 'Whose class is Janet in?',
+        options: ['Dr. Smith', 'Prof. Johnson', 'Mr. Brown', 'Ms. Davis'],
+        correctOptionIndex: 0
+      },
+      {
+        id: 'q8',
+        questionNumber: 8,
+        text: "What time does Alfredo's class finish?",
+        options: ['3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM'],
+        correctOptionIndex: 2
+      }
+    ]
+  } as ListeningExercise
 };
 
 export const get_exercise = async (id: string): Promise<Exercise | null> => {
