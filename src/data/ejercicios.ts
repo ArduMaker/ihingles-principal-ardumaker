@@ -1,4 +1,4 @@
-import { Exercise, MultipleChoiceExercise, ListeningExercise } from '@/types/ejercicio';
+import { Exercise, MultipleChoiceExercise, ListeningExercise, ReadingExercise } from '@/types/ejercicio';
 
 // Mock exercise data
 const mockExercises: Record<string, Exercise> = {
@@ -146,7 +146,63 @@ const mockExercises: Record<string, Exercise> = {
         correctOptionIndex: 2
       }
     ]
-  } as ListeningExercise
+  } as ListeningExercise,
+  '3': {
+    id: '3',
+    type: 'reading',
+    title: 'Missing Person',
+    heroImage: '/ejercicio/principal3.png',
+    totalExercises: 23,
+    currentExercise: 2,
+    category: 'Reading',
+    categoryProgress: '2/23',
+    instructions: 'Answer by selecting the correct option from the different options offered',
+    contentImage: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=600&fit=crop',
+    questions: [
+      {
+        id: 'q1',
+        questionNumber: 1,
+        text: 'John Smith is 30 years old',
+        correctAnswer: true
+      },
+      {
+        id: 'q2',
+        questionNumber: 2,
+        text: 'John has green eyes',
+        correctAnswer: false
+      },
+      {
+        id: 'q3',
+        questionNumber: 3,
+        text: 'He was last seen at a shopping mall.',
+        correctAnswer: false
+      },
+      {
+        id: 'q4',
+        questionNumber: 4,
+        text: 'John is wearing a blue jacket',
+        correctAnswer: true
+      },
+      {
+        id: 'q5',
+        questionNumber: 5,
+        text: 'He is 170 cm tall',
+        correctAnswer: false
+      },
+      {
+        id: 'q6',
+        questionNumber: 6,
+        text: 'John has brown hair.',
+        correctAnswer: true
+      },
+      {
+        id: 'q7',
+        questionNumber: 7,
+        text: 'He was last seen at a restaurant',
+        correctAnswer: false
+      }
+    ]
+  } as ReadingExercise
 };
 
 export const get_exercise = async (id: string): Promise<Exercise | null> => {

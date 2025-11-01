@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { MultipleChoiceExercise, ExerciseAnswer } from '@/types/ejercicio';
 import { ChevronRight, AlertCircle, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface MultipleChoiceExerciseProps {
   exercise: MultipleChoiceExercise;
@@ -11,8 +12,11 @@ interface MultipleChoiceExerciseProps {
 export const MultipleChoiceExerciseComponent = ({ exercise }: MultipleChoiceExerciseProps) => {
   const [answers, setAnswers] = useState<Record<string, ExerciseAnswer>>({});
   const [showFeedback, setShowFeedback] = useState<Record<string, boolean>>({});
+  const [isVerified, setIsVerified] = useState(false);
 
   const handleSelectOption = (optionId: string) => {
+    if (isVerified) return;
+    
     const option = exercise.options.find(opt => opt.id === optionId);
     if (!option) return;
 
@@ -34,6 +38,20 @@ export const MultipleChoiceExerciseComponent = ({ exercise }: MultipleChoiceExer
     if (!isCorrect) {
       setShowFeedback(prev => ({ ...prev, [optionId]: true }));
     }
+  };
+
+  const handleVerify = () => {
+    const answeredCount = Object.keys(answers).length;
+    
+    if (answeredCount === 0) {
+      toast.error('Por favor selecciona al menos una opción');
+      return;
+    }
+
+    setIsVerified(true);
+    
+    const correctCount = Object.values(answers).filter(a => a.isCorrect).length;
+    toast.success(`Verificado: ${correctCount}/${answeredCount} respuestas correctas`);
   };
 
   const getOptionStyle = (optionId: string) => {
@@ -77,7 +95,7 @@ export const MultipleChoiceExerciseComponent = ({ exercise }: MultipleChoiceExer
                   variant={isAnswered && !isCorrect ? 'destructive' : 'outline'}
                   size="sm"
                   onClick={() => handleSelectOption(option.id)}
-                  disabled={isAnswered}
+                  disabled={isAnswered || isVerified}
                   className={cn(
                     'min-w-[120px]',
                     isAnswered && isCorrect && 'opacity-50 cursor-not-allowed'
@@ -103,6 +121,19 @@ export const MultipleChoiceExerciseComponent = ({ exercise }: MultipleChoiceExer
           </div>
         );
       })}
+
+      {/* Verify Button */}
+      {!isVerified && (
+        <div className="flex justify-center pt-6">
+          <Button 
+            onClick={handleVerify}
+            className="bg-[#2C5F3C] hover:bg-[#234A2F] text-white px-8 py-6 text-lg font-semibold"
+            size="lg"
+          >
+            Verificar ✓
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

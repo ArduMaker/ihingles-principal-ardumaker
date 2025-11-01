@@ -3,6 +3,7 @@ import { ListeningExercise } from '@/types/ejercicio';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Volume2, Heart, FileText, ChevronRight, X, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface ListeningExerciseComponentProps {
   exercise: ListeningExercise;
@@ -14,6 +15,7 @@ export const ListeningExerciseComponent = ({ exercise }: ListeningExerciseCompon
   const [duration, setDuration] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, number>>({});
   const [showFeedback, setShowFeedback] = useState<Record<string, boolean>>({});
+  const [isVerified, setIsVerified] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -64,6 +66,8 @@ export const ListeningExerciseComponent = ({ exercise }: ListeningExerciseCompon
   };
 
   const handleSelectOption = (questionId: string, optionIndex: number) => {
+    if (isVerified) return;
+    
     const question = exercise.questions.find(q => q.id === questionId);
     if (!question) return;
 
@@ -75,6 +79,23 @@ export const ListeningExerciseComponent = ({ exercise }: ListeningExerciseCompon
     const question = exercise.questions.find(q => q.id === questionId);
     if (!question) return false;
     return selectedAnswers[questionId] === question.correctOptionIndex;
+  };
+
+  const handleVerify = () => {
+    const answeredCount = Object.keys(selectedAnswers).length;
+    
+    if (answeredCount === 0) {
+      toast.error('Por favor responde al menos una pregunta');
+      return;
+    }
+
+    setIsVerified(true);
+    
+    const correctCount = exercise.questions.filter(q => 
+      selectedAnswers[q.id] === q.correctOptionIndex
+    ).length;
+    
+    toast.success(`Verificado: ${correctCount}/${exercise.questions.length} respuestas correctas`);
   };
 
   return (
@@ -202,6 +223,7 @@ export const ListeningExerciseComponent = ({ exercise }: ListeningExerciseCompon
                     <Button
                       variant={answered && !correct ? "destructive" : "outline"}
                       size="sm"
+                      disabled={isVerified}
                       className={cn(
                         "gap-2",
                         answered && correct && "border-primary text-primary"
@@ -229,6 +251,19 @@ export const ListeningExerciseComponent = ({ exercise }: ListeningExerciseCompon
           })}
         </div>
       </div>
+
+      {/* Verify Button */}
+      {!isVerified && (
+        <div className="flex justify-center pt-6">
+          <Button 
+            onClick={handleVerify}
+            className="bg-[#2C5F3C] hover:bg-[#234A2F] text-white px-8 py-6 text-lg font-semibold"
+            size="lg"
+          >
+            Verificar ✓
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
