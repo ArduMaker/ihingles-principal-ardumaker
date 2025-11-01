@@ -11,7 +11,6 @@ import Unidades from "./pages/Unidades";
 import Biblioteca from "./pages/Biblioteca";
 import Vocabulario from "./pages/Vocabulario";
 import Progreso from "./pages/Progreso";
-import Productos from "./pages/Productos";
 import Facturacion from "./pages/Facturacion";
 import Perfil from "./pages/Perfil";
 import Modulo from "./pages/Modulo";
@@ -35,7 +34,6 @@ const App = () => (
             <Route path="/biblioteca" element={<Biblioteca />} />
             <Route path="/vocabulario" element={<Vocabulario />} />
             <Route path="/progreso" element={<Progreso />} />
-            <Route path="/productos" element={<Productos />} />
             <Route path="/facturacion" element={<Facturacion />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/modulo/:id" element={<Modulo />} />

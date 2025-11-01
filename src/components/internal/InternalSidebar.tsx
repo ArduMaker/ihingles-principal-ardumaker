@@ -6,7 +6,6 @@ import {
   BibliotecaIcon,
   VocabularioIcon,
   HabilidadesIcon,
-  ProductosIcon,
   PlanesIcon,
   PerfilIcon,
   ExitIcon
@@ -37,7 +36,6 @@ const menuItems: { section: string; items: MenuItem[] }[] = [
   {
     section: 'CONFIGURACIÓN',
     items: [
-      { label: 'Productos', path: '/productos', icon: ProductosIcon },
       { label: 'Planes', path: '/facturacion', icon: PlanesIcon },
     ],
   },
