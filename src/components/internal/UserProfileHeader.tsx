@@ -1,26 +1,24 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useEffect, useState } from 'react';
-import { get_user_profile } from '@/data/profile';
-import { UserProfile } from '@/types/auth';
+import { useAuth } from '@/hooks/useAuth';
 
 export const UserProfileHeader = () => {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    const loadProfile = async () => {
-      const data = await get_user_profile('1');
-      if (data) {
-        setProfile(data);
-      }
-    };
-    loadProfile();
-  }, []);
-
-  if (!profile) {
-    return null;
+  if (!user) {
+    return (
+      <div className="p-4 border-b border-sidebar-border">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-sidebar-border animate-pulse" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 bg-sidebar-border rounded animate-pulse" />
+            <div className="h-3 bg-sidebar-border rounded w-3/4 animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  const initials = profile.name
+  const initials = user.name
     .split(' ')
     .map(n => n[0])
     .join('')
@@ -30,17 +28,17 @@ export const UserProfileHeader = () => {
     <div className="p-4 border-b border-sidebar-border">
       <div className="flex items-center gap-3">
         <Avatar className="w-12 h-12 border-2 border-sidebar-border">
-          <AvatarImage src={profile.avatar} alt={profile.name} />
+          <AvatarImage src={user.avatar} alt={user.name} />
           <AvatarFallback className="text-sm font-bold bg-primary text-primary-foreground">
             {initials}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-sidebar-foreground truncate">
-            {profile.name}
+            {user.name}
           </p>
           <p className="text-xs text-sidebar-foreground/60 truncate">
-            {profile.subtitle}
+            {user.subtitle}
           </p>
         </div>
       </div>
