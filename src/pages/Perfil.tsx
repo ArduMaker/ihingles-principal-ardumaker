@@ -15,7 +15,7 @@ const Perfil = () => {
 
   useEffect(() => {
     const loadProfile = async () => {
-      const data = await executeApi(() => get_user_profile('1'));
+      const data = await executeApi(() => get_user_profile());
       if (data) {
         setProfile(data);
       }

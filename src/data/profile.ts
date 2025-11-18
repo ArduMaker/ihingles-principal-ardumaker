@@ -1,4 +1,5 @@
 import { UserProfile } from '@/types/auth';
+import { api } from '@/lib/api';
 
 export const mockUserProfile: UserProfile = {
   id: '1',
@@ -21,7 +22,43 @@ export const mockUserProfile: UserProfile = {
   consecutiveDays: 15,
 };
 
-export const get_user_profile = async (userId: string): Promise<UserProfile> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return mockUserProfile;
+// Llama al endpoint real /users/own y hace parsing compatible con el front viejo.
+export const get_user_profile = async (): Promise<UserProfile> => {
+  try {
+    const res = await api<any>('/users/own', { method: 'GET' });
+
+    // El backend del front viejo devolvía un objeto con { data: "<base64>" }
+    // o directamente una cadena. Normalizamos:
+    let payload: any = res;
+    if (res && typeof res === 'object' && 'data' in res) payload = res.data;
+    
+    let user: any = null;
+    if (typeof payload === 'string') {
+      // Intentamos decodificar base64 -> JSON
+      try {
+        console.log("Decoded base64 payload:", atob(payload), payload);
+        user = JSON.parse(atob(payload));
+        
+      } catch (e) {
+        // Si no es base64, intentamos parsear como JSON plano
+        try {
+          user = JSON.parse(payload);
+        } catch (e) {
+          // No JSON: devolvemos la cadena tal cual
+          user = payload;
+        }
+      }
+    } else if (typeof payload === 'object') {
+      user = payload;
+    } else {
+      user = payload;
+    }
+
+    console.log('Usuario obtenido desde /users/own:', user);
+
+    return user as UserProfile;
+  } catch (e) {
+    console.error('Error obteniendo perfil de usuario, usando mock:', e);
+    return mockUserProfile;
+  }
 };

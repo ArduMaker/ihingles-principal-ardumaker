@@ -1,6 +1,6 @@
 // API configuration and utilities
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.vallesystems.com';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://www.iph-api.net';
 
 export const AUTH_COOKIE_NAME = 'Autenticacion';
 
@@ -24,7 +24,11 @@ export async function api<T>(
   };
 
   if (authToken) {
-    headers[AUTH_COOKIE_NAME] = authToken;
+    // Añadimos el header Authorization con el formato Bearer para que coincida
+    // con lo que espera el `front_joaquin`. Conservamos también el header
+    // `Autenticacion` por compatibilidad con posibles endpoints existentes.
+    headers['Authorization'] = `Bearer ${authToken}`;
+    //headers[AUTH_COOKIE_NAME] = authToken;
   }
 
   try {
@@ -40,7 +44,15 @@ export async function api<T>(
       throw new Error('No se pudo completar la operación. Intenta nuevamente.');
     }
 
-    return await response.json();
+    const clone = response.clone();
+
+    try{
+      return await response.json();
+    }
+    catch(error){
+      const rawBody = await clone.text();
+      return rawBody as unknown as T;
+    }
   } catch (error) {
     if (error instanceof Error) {
       throw error;

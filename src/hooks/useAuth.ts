@@ -22,18 +22,27 @@ export const useAuth = () => {
     
     // DESARROLLO: Auto-crear cookie si no existe (remover en producción)
     if (!authCookie && import.meta.env.DEV) {
-      authCookie = 'mock-auth-token';
+      authCookie = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InY5aU5QWk9MWUMwcUdyV2VmRW9DdyJ9.eyJzZXNzaW9uX2lkIjoiNjIuNDguMTg1LjEwIiwiaXNzIjoiaHR0cHM6Ly9pcGgudXMuYXV0aDAuY29tLyIsInN1YiI6Imdvb2dsZS1vYXV0aDJ8MTExMzI2NzY0ODU2OTEyMDk1NTY0IiwiYXVkIjpbImh0dHBzOi8vd3d3LmlwaC1hcGkubmV0IiwiaHR0cHM6Ly9pcGgudXMuYXV0aDAuY29tL3VzZXJpbmZvIl0sImlhdCI6MTc2MzQ2MTc2NiwiZXhwIjoxNzYzNTQ4MTY2LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIG9mZmxpbmVfYWNjZXNzIiwiYXpwIjoidmFaUEJaQlBEYTc5M1ExQkFSZ3JOdXc0U0RGQlY5T3oifQ.wcJfuCRXQPLtpp34VLlHvEkVpUlS0VDh0zn6N2M8JyfzNFVUjcCXlcmFd8642H37PT_QL9Ua961nKMx4drEHizVIYmhm1r2xjLzwWI1Q4mLLaux_koggRKq9gomNpvQEM6_HH1GKchhlPL4cxucjVc9GhWqoiQLaWAklIb7r5IIee6ehjoNdgMLg24lKVgwVwzRTJmBSiRjs45HnN0fw_wQMiqnzwvEFvLIEjH-oRCdYZOC5y8YTIQuOHHven54-r3b8KbRjamh66YUI99By9xbtD9L4mUTuir-WEHMI2p4xmHSqWy_5vZj-vAc8PzlTvcKKlpRnJAwk4xXfatQMMQ';
       Cookies.set(AUTH_COOKIE_NAME, authCookie, { expires: 7 });
     }
     
+    // Si no hay cookie de autenticación, redirigimos a /login
+    if (!authCookie) {
+      setUser(null);
+      setIsLoading(false);
+      // Evitar redireccionar si ya estamos en la página de login
+      if (window.location.pathname !== '/') window.location.href = '/';
+      return;
+    }
+
     if (authCookie) {
-      const cachedProfile = Cookies.get(USER_PROFILE_COOKIE);
+      const cachedProfile = null
       
       if (cachedProfile) {
         setUser(JSON.parse(cachedProfile));
         setIsLoading(false);
       } else {
-        const profile = await get_user_profile('1');
+        const profile = await get_user_profile();
         if (profile) {
           setUser(profile);
           Cookies.set(USER_PROFILE_COOKIE, JSON.stringify(profile), { expires: 7 });
