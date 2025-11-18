@@ -36,8 +36,11 @@ export const PlanCard = ({ plan, userBilling }: PlanCardProps) => {
         <h4 className={`text-xl md:text-2xl font-bold mb-2 ${plan.textColor}`}>
           {plan.nivel}
         </h4>
-        {userBilling && userBilling.subscriptionID && userBilling.planId === plan.id && (
-          <div className="mb-2 text-sm text-green-700 font-semibold">Plan actual</div>
+        {userBilling && (userBilling.subscriptionID || userBilling.subscriptionValidUntil) && userBilling.planID === plan.id && (
+          <div className="mb-2 text-sm text-green-700 font-semibold">✓ Plan actual</div>
+        )}
+        {userBilling && (userBilling.subscriptionID || userBilling.subscriptionValidUntil) && !userBilling.planID && (
+          <div className="mb-2 text-sm text-blue-700 font-semibold">Tienes una suscripción activa</div>
         )}
         <h5 className="text-lg md:text-xl font-semibold mb-2 md:mb-3 text-gray-800">
           {plan.name}
