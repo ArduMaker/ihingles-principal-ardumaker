@@ -1,195 +1,5 @@
 import { LevelProgress, OverallProgress } from '@/types';
 
-// Mock async function to get units by level
-const get_units_by_level_mock = async (): Promise<LevelProgress[]> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  return [
-    {
-      levelId: 'explorador',
-      levelName: 'Explorador',
-      levelImage: '/basico.png',
-      levelDescription: 'Nivel básico para principiantes. Aprende vocabulario esencial y gramática fundamental.',
-      isLocked: false,
-      totalUnits: 23,
-      completedUnits: 8,
-      units: [
-        { id: '1', number: 1, title: 'Saludos y Presentaciones', description: 'Aprende a presentarte y saludar en inglés', status: 'completed' },
-        { id: '2', number: 2, title: 'Saludos y Presentaciones', description: 'Aprende a presentarte y saludar en inglés', status: 'completed' },
-        { id: '3', number: 3, title: 'Saludos y Presentaciones', description: 'Aprende a presentarte y saludar en inglés', status: 'completed' },
-        { id: '4', number: 4, title: 'Saludos y Presentaciones', description: 'Aprende a presentarte y saludar en inglés', status: 'completed' }
-      ]
-    },
-    {
-      levelId: 'cualificado',
-      levelName: 'Cualificado',
-      levelImage: '/calificado.png',
-      levelDescription: 'Nivel básico para principiantes. Aprende vocabulario esencial y gramática fundamental.',
-      isLocked: false,
-      totalUnits: 46,
-      completedUnits: 0,
-      units: [
-        { id: '24', number: 1, title: 'Saludos y Presentaciones', description: 'Aprende a presentarte y saludar en inglés', status: 'in-progress' },
-        { id: '25', number: 2, title: 'Saludos y Presentaciones', description: 'Aprende a presentarte y saludar en inglés', status: 'in-progress' },
-        { id: '26', number: 3, title: 'Saludos y Presentaciones', description: 'Aprende a presentarte y saludar en inglés', status: 'in-progress' },
-        { id: '27', number: 4, title: 'Saludos y Presentaciones', description: 'Aprende a presentarte y saludar en inglés', status: 'in-progress' }
-      ]
-    },
-    {
-      levelId: 'maestro',
-      levelName: 'Maestro',
-      levelImage: '/experto.png',
-      levelDescription: 'Nivel básico para principiantes. Aprende vocabulario esencial y gramática fundamental.',
-      isLocked: true,
-      totalUnits: 69,
-      completedUnits: 0,
-      units: [
-        { id: '47', number: 1, title: 'Saludos y Presentaciones', description: 'Aprende a presentarte y saludar en inglés', status: 'locked' },
-        { id: '48', number: 2, title: 'Saludos y Presentaciones', description: 'Aprende a presentarte y saludar en inglés', status: 'locked' },
-        { id: '49', number: 3, title: 'Saludos y Presentaciones', description: 'Aprende a presentarte y saludar en inglés', status: 'locked' },
-        { id: '50', number: 4, title: 'Saludos y Presentaciones', description: 'Aprende a presentarte y saludar en inglés', status: 'locked' }
-      ]
-    }
-  ];
-};
-
-// Mock async function to get overall progress
-const get_overall_progress_mock = async (): Promise<OverallProgress> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  return {
-    totalCompleted: 8,
-    totalUnits: 69,
-    percentage: 33,
-    levelProgress: [
-      { levelName: 'Explorador', completed: 8, total: 23 },
-      { levelName: 'Cualificado', completed: 0, total: 23 },
-      { levelName: 'Maestro', completed: 0, total: 23 }
-    ]
-  };
-};
-
-// Mock async function to get all units for a specific level
-const get_units_by_level_id_mock = async (levelId: string): Promise<{
-  levelName: string;
-  levelImage: string;
-  description: string;
-  totalUnits: number;
-  completedUnits: number;
-  units: import('@/types').UnitDetail[];
-}> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // Define image sets for each level
-  const imagesByLevel: Record<string, string[]> = {
-    explorador: [
-      '/basico/case1.png',
-      '/basico/case2.png',
-      '/basico/case3.png',
-      '/basico/case4.png',
-      '/basico/case5.png',
-      '/basico/case6.png',
-      '/basico/case7.png',
-      '/basico/case8.png',
-      '/basico/case9.png',
-      '/basico/case11.png',
-      '/basico/case12.png',
-      '/basico/case13.png',
-      '/basico/principal.png'
-    ],
-    cualificado: [
-      '/calificado/case1.png',
-      '/calificado/case2.png',
-      '/calificado/case3.png',
-      '/calificado/case4.png',
-      '/calificado/case5.png',
-      '/calificado/case6.png',
-      '/calificado/case7.png',
-      '/calificado/case8.png',
-      '/calificado/case9.png',
-      '/calificado/case10.png',
-      '/calificado/case11.png',
-      '/calificado/case12.png',
-      '/calificado/case13.png',
-      '/calificado/case14.png',
-      '/calificado/case15.png',
-      '/calificado/case16.png',
-      '/calificado/principal.png'
-    ],
-    maestro: [
-      '/experto/case1.png',
-      '/experto/case2.png',
-      '/experto/case3.png',
-      '/experto/case4.png',
-      '/experto/case5.png',
-      '/experto/case6.png',
-      '/experto/case7.png',
-      '/experto/case8.png',
-      '/experto/case9.png',
-      '/experto/case10.png',
-      '/experto/principal.png'
-    ]
-  };
-
-  const caseImages = imagesByLevel[levelId] || imagesByLevel.explorador;
-
-  // Generate 23 units with random images
-  const units = Array.from({ length: 23 }, (_, i) => {
-    const unitNumber = i + 1;
-    let status: 'completed' | 'in-progress' | 'locked' = 'locked';
-    let progress = 0;
-    
-    if (levelId === 'explorador') {
-      if (unitNumber <= 8) {
-        status = 'completed';
-        progress = 100;
-      } else if (unitNumber === 9) {
-        status = 'in-progress';
-        progress = 45;
-      }
-    }
-    
-    return {
-      id: `${levelId}-${unitNumber}`,
-      number: unitNumber,
-      title: 'Saludos y Presentaciones',
-      description: 'Aprende a presentarte y saludar en inglés',
-      status,
-      progress,
-      caseImage: caseImages[i % caseImages.length]
-    };
-  });
-
-  const levelConfig: Record<string, any> = {
-    explorador: {
-      levelName: 'Explorador',
-      levelImage: '/basico/principal.png',
-      description: 'Explora las 23 unidades para dominar el inglés Básico.',
-      totalUnits: 23,
-      completedUnits: 8
-    },
-    cualificado: {
-      levelName: 'Cualificado',
-      levelImage: '/calificado/principal.png',
-      description: 'Mejora tus habilidades con las 23 unidades del nivel Cualificado.',
-      totalUnits: 23,
-      completedUnits: 0
-    },
-    maestro: {
-      levelName: 'Maestro',
-      levelImage: '/experto/principal.png',
-      description: 'Domina el inglés avanzado con las 23 unidades del nivel Maestro.',
-      totalUnits: 23,
-      completedUnits: 0
-    }
-  };
-
-  return {
-    ...levelConfig[levelId],
-    units
-  };
-};
-
 // ---------- Implementación real (intenta obtener datos del backend, falla al mock) ----------
 import { api } from '@/lib/api';
 
@@ -278,6 +88,15 @@ const unitTitles: string[] = [
   "I WISH",
 ];
 
+// Split en 3 niveles: 22, 22, 20 (64 unidades)
+const TOTAL_UNITS = 64;
+const per = [22, 22, TOTAL_UNITS - 44];
+const levels = [
+  { id: 'explorador', name: 'Explorador' },
+  { id: 'cualificado', name: 'Cualificado' },
+  { id: 'maestro', name: 'Maestro' },
+];
+
 // Intenta mapear la respuesta de /exercises/por-unidad a la estructura del mock
 const fetchExercisesPorUnidad = async () => {
   const res = await api<any>('/exercises/por-unidad', { method: 'GET' });
@@ -287,6 +106,98 @@ const fetchExercisesPorUnidad = async () => {
   return payload;
 };
 
+// ======================================================================
+// Helpers públicos que replican la lógica del front viejo para calcular
+// porcentaje y estado de una unidad. Se colocan aquí para poder usarse
+// dentro de `get_units_by_level_real`.
+// ======================================================================
+
+/**
+ * Calcula el porcentaje completado de una unidad siguiendo la regla del front viejo:
+ * - Si `unidadesStatus[unit] === true` => 100
+ * - Si `position === 0` => 0
+ * - Si position > 0 => Math.round((position / count) * 100)
+ */
+export const computeUnitProgress = (
+  unitNumber: number | string,
+  unidadesData: any,
+  posicionPorUnidad: any,
+  unidadesStatus: any
+): number => {
+  try {
+    const key = String(unitNumber);
+
+    // prioridad: estado completado explícito
+    if (unidadesStatus) {
+      if (unidadesStatus[key] === true || unidadesStatus[Number(key)] === true) return 100;
+    }
+
+    const position = (posicionPorUnidad && (posicionPorUnidad[key] ?? posicionPorUnidad[Number(key)] ?? 0)) ?? 0;
+
+    // obtener tamaño (count) de la unidad
+    const unitInfo = unidadesData && (unidadesData[key] ?? unidadesData[Number(key)] ?? null);
+    const size = unitInfo && (unitInfo.count ?? unitInfo.size ?? null);
+
+    if (!position || position === 0) return 0;
+
+    if (!size || typeof size !== 'number' || size <= 0) return 0;
+
+    return Math.round((position / size) * 100);
+  } catch (e) {
+    return 0;
+  }
+};
+
+/**
+ * Devuelve un resumen del estado de la unidad: { percent, status }
+ * status: 'completed' | 'in-progress' | 'locked'
+ */
+export const getUnitState = (
+  unitNumber: number | string,
+  unidadesData: any,
+  posicionPorUnidad: any,
+  unidadesStatus: any
+) => {
+  const percent = computeUnitProgress(unitNumber, unidadesData, posicionPorUnidad, unidadesStatus);
+  const key = String(unitNumber);
+  let status: 'completed' | 'in-progress' | 'locked' = 'locked';
+
+  if (unidadesStatus && (unidadesStatus[key] === true || unidadesStatus[Number(key)] === true)) {
+    status = 'completed';
+  } else if (percent >= 100) {
+    status = 'completed';
+  } else if (percent > 0) {
+    status = 'in-progress';
+  } else {
+    status = 'locked';
+  }
+
+  return { percent, status };
+};
+
+const getNamelevelUnidad = (unitNumber: number) => {
+  // toma el numero de una unidad y devuelve si esta en maestro, cualificado o explorador
+  const idx = unitNumber - 1;
+  if (idx < 22) return 'explorador';
+  if (idx < 44) return 'cualificado';
+  return 'maestro';
+};
+
+const getIndex = (unitNumber: number) => {
+  // toma el numero de una unidad y devuelve su indice (0-based)
+  const idx = unitNumber;
+  if (idx < 22) return idx - 0;
+  if (idx < 44) return idx - 22;
+  return idx - 44;
+}
+
+const totalCapitulos = (nameLevel: string) => {
+  if (nameLevel === 'explorador') return 22;
+  if (nameLevel === 'cualificado') return 22 + 22;
+  return 20 + 44;
+};
+
+
 export const get_units_by_level_real = async (): Promise<LevelProgress[]> => {
   try {
     const payload = await fetchExercisesPorUnidad();
@@ -294,30 +205,19 @@ export const get_units_by_level_real = async (): Promise<LevelProgress[]> => {
     if (!payload) throw new Error('No payload from backend');
 
     // Queremos exactamente 64 unidades con los títulos del front antiguo.
-    const TOTAL_UNITS = 64;
-    const boughtUpTo = payload.boughtUpTo ?? 0;
     const posicionPorUnidad = payload.position ?? {};
+    console.log('boughtUpTo:', payload);
 
-    const flatUnits = Array.from({ length: TOTAL_UNITS }, (_, idx) => {
+    const flatUnits = Array.from({ length: TOTAL_UNITS }, (index, idx) => {
       const unitNumber = idx + 1;
       // try to read backend-provided per-unit info, fallback to defaults
       const unitInfo = payload.unidades && payload.unidades[unitNumber] ? payload.unidades[unitNumber] : null;
       const count = unitInfo?.count ?? 20;
       const startIndex = unitInfo?.startIndex ?? null;
 
-      // compute status and progress
-      let status: 'completed' | 'in-progress' | 'locked' = 'locked';
-      let progress = 0;
-      if (unitNumber <= boughtUpTo) {
-        status = 'completed';
-        progress = 100;
-      } else {
-        const unitPos = posicionPorUnidad[unitNumber] ?? 0;
-        if (unitPos > 0) {
-          status = 'in-progress';
-          progress = Math.round((unitPos / Math.max(1, count)) * 100);
-        }
-      }
+      // obtener estado/progreso usando los helpers comunes
+      const unidadesStatusFromPayload = payload.unidadesStatus ?? payload.unidades_status ?? null;
+      const { percent: progress, status } = getUnitState(unitNumber, payload.unidades, posicionPorUnidad, unidadesStatusFromPayload);
 
       return {
         id: `u-${unitNumber}`,
@@ -328,17 +228,9 @@ export const get_units_by_level_real = async (): Promise<LevelProgress[]> => {
         startIndex,
         status,
         progress,
-        caseImage: unitInfo?.caseImage ?? '',
+        caseImage: `/${getNamelevelUnidad(unitNumber)}/case${getIndex(unitNumber)}.png`,
       };
     });
-
-    // Split en 3 niveles: 22, 22, 20 (64 unidades)
-    const per = [22, 22, TOTAL_UNITS - 44];
-    const levels = [
-      { id: 'explorador', name: 'Explorador' },
-      { id: 'cualificado', name: 'Cualificado' },
-      { id: 'maestro', name: 'Maestro' },
-    ];
 
     const result: LevelProgress[] = levels.map((lvl, idx) => {
       const start = idx === 0 ? 0 : idx === 1 ? per[0] : per[0] + per[1];
@@ -346,10 +238,10 @@ export const get_units_by_level_real = async (): Promise<LevelProgress[]> => {
       return {
         levelId: lvl.id,
         levelName: lvl.name,
-        levelImage: `/${lvl.id}.png`,
+        levelImage: `/${lvl.id}/principal.png`,
         levelDescription: `${lvl.name} level generated from backend data.`,
         isLocked: lvl.id === 'maestro',
-        totalUnits: slice.length,
+        totalUnits: totalCapitulos(lvl.id),
         completedUnits: slice.filter(u => u.status === 'completed').length,
         units: slice,
       };
@@ -358,7 +250,7 @@ export const get_units_by_level_real = async (): Promise<LevelProgress[]> => {
     return result;
   } catch (e) {
     console.warn('Falling back to mock get_units_by_level due to error:', e);
-    return get_units_by_level_mock();
+    return null as unknown as LevelProgress[]; // for type compatibility
   }
 };
 
@@ -388,7 +280,6 @@ export const get_overall_progress_real = async (): Promise<OverallProgress> => {
     }
 
     const percentage = totalUnits === 0 ? 0 : Math.round((totalCompleted / totalUnits) * 100);
-
     return {
       totalCompleted,
       totalUnits,
@@ -397,7 +288,7 @@ export const get_overall_progress_real = async (): Promise<OverallProgress> => {
     };
   } catch (e) {
     console.warn('Falling back to mock get_overall_progress due to error:', e);
-    return get_overall_progress_mock();
+    return null as unknown as OverallProgress; // for type compatibility
   }
 };
 
@@ -409,7 +300,7 @@ export const get_units_by_level_id_real = async (levelId: string) => {
     return found;
   } catch (e) {
     console.warn('Falling back to mock get_units_by_level_id due to error:', e);
-    return get_units_by_level_id_mock(levelId);
+    return null as unknown as LevelProgress; // for type compatibility
   }
 };
 
