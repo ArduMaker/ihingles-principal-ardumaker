@@ -18,9 +18,9 @@ const documentIcons = {
 
 // Mock images for document thumbnails
 const thumbnails = [
-  'https://images.unsplash.com/photo-1528459199957-0ff28496a7f6?w=400&h=400&fit=crop',
-  'https://images.unsplash.com/photo-1513001900722-370f803f498d?w=400&h=400&fit=crop',
-  'https://images.unsplash.com/photo-1579762593131-4d28a2d8263e?w=400&h=400&fit=crop',
+  '/bibloteca/pdf.svg',
+  '/bibloteca/pdf.svg',
+  '/bibloteca/pdf.svg',
 ];
 
 export const BibliotecaResultCard = ({
@@ -28,7 +28,8 @@ export const BibliotecaResultCard = ({
   onToggleFavorite,
 }: BibliotecaResultCardProps) => {
   const [isFavorite, setIsFavorite] = useState(document.isFavorite);
-  const thumbnailIndex = parseInt(document.id) % thumbnails.length;
+  const numericId = parseInt(String(document.id).replace(/\D/g, ''), 10) || 0;
+  const thumbnailIndex = numericId % thumbnails.length;
 
   const handleToggleFavorite = () => {
     setIsFavorite(!isFavorite);
@@ -71,23 +72,17 @@ export const BibliotecaResultCard = ({
                   <Calendar className="w-4 h-4" />
                   <span>Actualizado: {document.updatedAt}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Download className="w-4 h-4" />
-                  <span>128 descargas</span>
-                </div>
               </div>
 
               <div className="flex gap-3">
-                <Button className="bg-[#2D5016] hover:bg-[#234010] text-[#C5D82E]">
+                <Button
+                  className="bg-[#2D5016] hover:bg-[#234010] text-[#C5D82E]"
+                  onClick={() => {
+                    if (document.url) window.open(document.url, '_blank', 'noopener');
+                  }}
+                >
                   <Eye className="w-4 h-4 mr-2" />
                   Ver Documento
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-2 border-[#2D5016] text-heading hover:bg-[#2D5016] hover:text-white"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Descargar
                 </Button>
               </div>
             </div>

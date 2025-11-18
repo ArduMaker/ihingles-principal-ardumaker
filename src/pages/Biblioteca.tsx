@@ -161,15 +161,6 @@ const Biblioteca = () => {
             />
 
             <div className="flex gap-6">
-              <BibliotecaSidebar
-                units={units}
-                selectedUnit={selectedUnit}
-                selectedTypes={selectedTypes}
-                onUnitChange={setSelectedUnit}
-                onTypeToggle={handleTypeToggle}
-                onApplyFilters={applyFilters}
-                onClearFilters={handleClearFilters}
-              />
 
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-6">

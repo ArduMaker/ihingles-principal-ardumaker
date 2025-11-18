@@ -126,6 +126,7 @@ export interface BibliotecaDocument {
   subtitle: string;
   description: string;
   type: 'pdf' | 'word' | 'image' | 'ppt';
+  url?: string;
   unitId: string;
   unitName: string;
   updatedAt: string;

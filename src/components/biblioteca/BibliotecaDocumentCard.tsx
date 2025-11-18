@@ -45,12 +45,18 @@ export const BibliotecaDocumentCard = ({
             <span className="text-xs text-muted-foreground">
               Actualizado: {document.updatedAt}
             </span>
-            <a 
-              href="#" 
-              className="text-sm text-[#009A47] hover:text-[#007A37] font-semibold"
-            >
-              Ver Documento
-            </a>
+            {document.url ? (
+              <a
+                href={document.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-[#009A47] hover:text-[#007A37] font-semibold"
+              >
+                Ver Documento
+              </a>
+            ) : (
+              <span className="text-sm text-muted-foreground">Sin enlace</span>
+            )}
           </div>
         </div>
         <button 
