@@ -5,21 +5,14 @@ import { UnidadHero } from '@/components/unidad/UnidadHero';
 import { UnidadSearchBar } from '@/components/unidad/UnidadSearchBar';
 import { UnidadGrid } from '@/components/unidad/UnidadGrid';
 import { get_units_by_level_id } from '@/data/unidades';
+import { LevelProgress, UnitDetail } from '@/types';
 import { useApiState } from '@/hooks/useApiState';
-import { UnitDetail } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const Unidad = () => {
   const { levelId } = useParams<{ levelId: string }>();
   const { isLoading, executeApi } = useApiState();
-  const [levelData, setLevelData] = useState<{
-    levelName: string;
-    levelImage: string;
-    description: string;
-    totalUnits: number;
-    completedUnits: number;
-    units: UnitDetail[];
-  } | null>(null);
+  const [levelData, setLevelData] = useState<LevelProgress | null>(null);
   const [filteredUnits, setFilteredUnits] = useState<UnitDetail[]>([]);
 
   useEffect(() => {
@@ -71,7 +64,7 @@ const Unidad = () => {
         />
         
         <UnidadSearchBar
-          description={levelData.description}
+          description={levelData.levelDescription}
           completedUnits={levelData.completedUnits}
           totalUnits={levelData.totalUnits}
           onSearch={handleSearch}

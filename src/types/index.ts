@@ -96,7 +96,7 @@ export interface LevelProgress {
   levelName: string;
   levelImage: string;
   levelDescription: string;
-  units: Unit[];
+  units: UnitDetail[];
   totalUnits: number;
   completedUnits: number;
   isLocked: boolean;
