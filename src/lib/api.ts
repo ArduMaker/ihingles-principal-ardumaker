@@ -1,6 +1,6 @@
 // API configuration and utilities
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://www.iph-api.net';
+export const API_BASE_URL = 'https://www.iph-api.net';
 
 export const AUTH_COOKIE_NAME = 'Autenticacion';
 
