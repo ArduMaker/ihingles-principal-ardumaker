@@ -54,7 +54,7 @@ const Unidades = () => {
           ))}
         </div>
 
-        {progress && <ProgressSection progress={progress} />}
+        {progress && <ProgressSection progress={progress} levels={levels} />}
       </div>
     </InternalLayout>
   );
