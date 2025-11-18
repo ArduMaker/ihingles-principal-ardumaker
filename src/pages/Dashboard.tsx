@@ -13,6 +13,7 @@ import {
   get_recent_units, 
   get_pending_exercises 
 } from '@/data/dashboard';
+import { get_units_by_level } from '@/data/unidades';
 import { DashboardStat, SkillProgress, RecentUnit, PendingExercise } from '@/types';
 
 const Dashboard = () => {
@@ -24,16 +25,38 @@ const Dashboard = () => {
 
   useEffect(() => {
     const loadDashboardData = async () => {
-      const [statsData, skillsData, unitsData, exercisesData] = await Promise.all([
+      const [statsData, skillsData, recentMockUnits, exercisesData, levelsData] = await Promise.all([
         executeApi(get_dashboard_stats),
         executeApi(get_skills_progress),
         executeApi(get_recent_units),
-        executeApi(get_pending_exercises)
+        executeApi(get_pending_exercises),
+        executeApi(get_units_by_level),
       ]);
-      
+
       if (statsData) setStats(statsData);
       if (skillsData) setSkills(skillsData);
-      if (unitsData) setRecentUnits(unitsData);
+
+      // Compute recent units: prefer units in-progress; otherwise fallback to first 3 units
+      let recent: any[] = [];
+      try {
+        if (levelsData && Array.isArray(levelsData)) {
+          const flat = levelsData.flatMap((l: any) => l.units || []);
+          const inProgress = flat.filter((u: any) => u.status === 'in-progress' || (u.progress > 0 && u.progress < 100));
+          if (inProgress.length > 0) {
+            recent = inProgress.map((u: any) => ({ id: u.id, name: u.title, progress: u.progress }));
+          } else {
+            // take first 3 units as lessons
+            const firstThree = flat.slice(0, 3);
+            recent = firstThree.map((u: any) => ({ id: u.id, name: u.title, progress: u.progress ?? 0 }));
+          }
+        } else {
+          recent = recentMockUnits ?? [];
+        }
+      } catch (e) {
+        recent = recentMockUnits ?? [];
+      }
+
+      setRecentUnits(recent);
       if (exercisesData) setPendingExercises(exercisesData);
     };
 
@@ -64,9 +87,8 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
               <DashboardRecentUnits units={recentUnits} />
-              <DashboardPendingExercises exercises={pendingExercises} />
             </div>
           </>
         )}

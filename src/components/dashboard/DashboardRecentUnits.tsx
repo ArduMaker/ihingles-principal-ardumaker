@@ -2,12 +2,19 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { RecentUnit } from '@/types';
+import { useNavigate } from 'react-router-dom';
 
 interface DashboardRecentUnitsProps {
   units: RecentUnit[];
 }
 
 export const DashboardRecentUnits = ({ units }: DashboardRecentUnitsProps) => {
+  const navigate = useNavigate();
+
+  const handleContinue = (unit: RecentUnit) => {
+    // Navigate to module page for the unit. The unit.id is expected to match the format used by the app (e.g. 'u-1' or numeric id)
+    navigate(`/modulo/${unit.id}`);
+  };
   return (
     <Card className="p-6 bg-card border-border">
       <h2 className="text-xl font-bold text-heading mb-6">Unidades Recientes</h2>
@@ -30,6 +37,7 @@ export const DashboardRecentUnits = ({ units }: DashboardRecentUnitsProps) => {
             <Button 
               size="sm"
               className="bg-[#2C5F2D] hover:bg-[#1F4520] text-[#DFB400] font-semibold shrink-0"
+              onClick={() => handleContinue(unit)}
             >
               Continuar
             </Button>
