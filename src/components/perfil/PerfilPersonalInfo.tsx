@@ -24,11 +24,6 @@ export const PerfilPersonalInfo = ({ user }: PerfilPersonalInfoProps) => {
       <h3 className="text-xl font-bold text-heading mb-6">Información Personal</h3>
       <div className="space-y-3 text-sm">
         <div>
-          <label className="text-xs font-semibold text-heading block mb-1">ID</label>
-          <p className="text-foreground">{u.id ?? '—'}</p>
-        </div>
-
-        <div>
           <label className="text-xs font-semibold text-heading block mb-1">Nombre</label>
           <p className="text-foreground">{u.name ?? '—'}</p>
         </div>
@@ -56,16 +51,6 @@ export const PerfilPersonalInfo = ({ user }: PerfilPersonalInfoProps) => {
         <div>
           <label className="text-xs font-semibold text-heading block mb-1">Unidad actual (atUnit)</label>
           <p className="text-foreground">{u.atUnit ?? '—'}</p>
-        </div>
-
-        <div>
-          <label className="text-xs font-semibold text-heading block mb-1">ID de suscripción</label>
-          <p className="text-foreground">{u.subscriptionID ?? '—'}</p>
-        </div>
-
-        <div>
-          <label className="text-xs font-semibold text-heading block mb-1">Plan ID</label>
-          <p className="text-foreground">{u.planID ?? '—'}</p>
         </div>
 
         <div>

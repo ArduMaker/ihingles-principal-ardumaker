@@ -54,7 +54,7 @@ const Perfil = () => {
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <PerfilPersonalInfo user={profile} />
-          <div>
+          <div className='flex flex-col'>
             <PerfilLearningProgress skills={skills ?? profile.skills} />
             <PerfilStats 
               unitsCompleted={overall?.totalCompleted ?? profile.unitsCompleted}
