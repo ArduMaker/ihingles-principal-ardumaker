@@ -36,7 +36,6 @@ export const get_user_profile = async (): Promise<UserProfile> => {
     if (typeof payload === 'string') {
       // Intentamos decodificar base64 -> JSON
       try {
-        console.log("Decoded base64 payload:", atob(payload), payload);
         user = JSON.parse(atob(payload));
         
       } catch (e) {
@@ -53,8 +52,6 @@ export const get_user_profile = async (): Promise<UserProfile> => {
     } else {
       user = payload;
     }
-
-    console.log('Usuario obtenido desde /users/own:', user);
 
     return user as UserProfile;
   } catch (e) {

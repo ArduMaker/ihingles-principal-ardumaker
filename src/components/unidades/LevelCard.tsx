@@ -14,7 +14,7 @@ const levelColors = {
     unitBg: 'bg-[#2D1B1B]',
     unitText: 'text-white',
     buttonBg: 'bg-[#FF4D4D]',
-    buttonText: 'text-white',
+    buttonText: 'text-[#1B1B00]',
     buttonBorder: 'border-[#FF4D4D]'
   },
   cualificado: {
@@ -67,7 +67,7 @@ export const LevelCard = ({ level }: LevelCardProps) => {
       </div>
 
       <div className="space-y-3">
-        {level.units.map((unit) => (
+        {level.units.slice(0, 10).map((unit) => (
           <UnitCard 
             key={unit.id} 
             unit={unit}
