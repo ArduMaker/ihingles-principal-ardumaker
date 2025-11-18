@@ -4,27 +4,52 @@ import { Button } from '@/components/ui/button';
 import { Shield, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { requestSubscriptionLink, createSubscriptionStripe } from '@/services/BillingService';
 
 interface OrderSummaryProps {
   plan: Plan;
+  paymentMethod: string;
 }
 
-export const OrderSummary = ({ plan }: OrderSummaryProps) => {
+export const OrderSummary = ({ plan, paymentMethod }: OrderSummaryProps) => {
   const navigate = useNavigate();
   const subtotal = plan.price;
   const discount = 0;
   const tax = Math.round(subtotal * 0.21);
   const total = subtotal - discount + tax;
 
-  const handleConfirmPayment = () => {
-    toast.success('Pago procesado correctamente', {
-      description: `Tu suscripción al ${plan.name} está activa.`,
-    });
-    
-    // Simulate payment processing
-    setTimeout(() => {
+  const handleConfirmPayment = async () => {
+    try {
+      if (paymentMethod === 'paypal') {
+        const res = await requestSubscriptionLink(plan.id);
+        const link = res?.data?.link ?? res?.link ?? res;
+        if (link) {
+          window.location.href = link;
+          return;
+        }
+        throw new Error('No se obtuvo enlace de pago');
+      }
+
+      // Card / Stripe flow (backend expected to handle creating subscription and returning client info)
+      const res = await createSubscriptionStripe(plan.id, undefined, 'USD');
+      // If backend returned clientSecret, normally frontend should continue with Stripe SDK
+      const clientSecret = res?.data?.clientSecret ?? res?.clientSecret ?? null;
+      if (clientSecret) {
+        // TODO: integrate Stripe confirmation flow. For now, navigate to dashboard and show success.
+        toast.success('Suscripción creada (Stripe), complete el pago en el formulario.', { description: '' });
+        navigate('/dashboard');
+        return;
+      }
+
+      // If backend returns direct success
+      toast.success('Pago procesado correctamente', {
+        description: `Tu suscripción al ${plan.name} está activa.`,
+      });
       navigate('/dashboard');
-    }, 2000);
+    } catch (e: any) {
+      console.error('Error procesando pago', e);
+      toast.error(e?.message || 'No se pudo procesar el pago');
+    }
   };
 
   return (
@@ -87,7 +112,7 @@ export const OrderSummary = ({ plan }: OrderSummaryProps) => {
       <Card className="p-4 md:p-6 bg-[#C8D5B9]">
         <h3 className="text-lg md:text-xl font-bold text-[#2C4A2C] mb-4">Resumen del pedido</h3>
         <div className="space-y-3">
-          {plan.skills.map((skill) => (
+          {(plan.skills ?? []).map((skill) => (
             <div key={skill.id} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-[#2C4A2C]" />

@@ -10,10 +10,11 @@ import { CreditCard } from 'lucide-react';
 
 interface PaymentFormProps {
   plan: Plan;
+  paymentMethod: string;
+  setPaymentMethod: (v: 'card' | 'paypal') => void;
 }
 
-export const PaymentForm = ({ plan }: PaymentFormProps) => {
-  const [paymentMethod, setPaymentMethod] = useState('card');
+export const PaymentForm = ({ plan, paymentMethod, setPaymentMethod }: PaymentFormProps) => {
   const [sameAddress, setSameAddress] = useState(false);
 
   return (
@@ -27,7 +28,7 @@ export const PaymentForm = ({ plan }: PaymentFormProps) => {
           <Label className="text-base font-semibold text-[#2C4A2C] mb-3 block">
             Método de Pago
           </Label>
-          <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
+          <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'card' | 'paypal')}>
             <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="card" id="card" />
