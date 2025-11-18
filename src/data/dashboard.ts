@@ -1,4 +1,5 @@
 import { DashboardStat, SkillProgress, RecentUnit, PendingExercise } from '@/types';
+import { api } from '@/lib/api';
 
 // Mock async function to simulate API call for dashboard stats
 export const get_dashboard_stats = async (): Promise<DashboardStat[]> => {
@@ -14,14 +15,6 @@ export const get_dashboard_stats = async (): Promise<DashboardStat[]> => {
       icon: '/Porcentaje Globnal-01.png'
     },
     {
-      id: 'xp',
-      label: 'Puntos de Experiencia',
-      value: '1,250',
-      change: '+320 pts',
-      subtitle: 'Puntos ganados esta semana',
-      icon: '/XP-01.png'
-    },
-    {
       id: 'unidades',
       label: 'Unidades Terminados',
       value: '4 / 69',
@@ -29,29 +22,72 @@ export const get_dashboard_stats = async (): Promise<DashboardStat[]> => {
       subtitle: 'Progreso del curso actual',
       icon: '/unidades-01-01.png'
     },
-    {
-      id: 'tiempo',
-      label: 'Tiempo de Estudio',
-      value: '24h',
-      change: '+3h',
-      subtitle: 'Este mes',
-      icon: '/Tiempo-01.png'
-    }
   ];
 };
 
 // Mock async function for skills progress
 export const get_skills_progress = async (): Promise<SkillProgress[]> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  return [
-    { id: 'grammar', name: 'Grammar', userProgress: 10, averageProgress: 40 },
-    { id: 'listening', name: 'Listening', userProgress: 50, averageProgress: 30 },
-    { id: 'pronunciation', name: 'Pronunciation', userProgress: 60, averageProgress: 45 },
-    { id: 'reading', name: 'Reading', userProgress: 20, averageProgress: 65 },
-    { id: 'speaking', name: 'Speaking', userProgress: 80, averageProgress: 55 },
-    { id: 'writing', name: 'Writing', userProgress: 70, averageProgress: 50 }
-  ];
+  // Intentamos obtener las estadísticas reales del endpoint del backend.
+  try {
+    const data = await api<any>('/statistics/global/own');
+
+    // El backend devuelve valores en 0..1 por skill. Normalizamos a 0..100.
+    const getPlatformValue = async (key: string) => {
+      // Si la respuesta ya contiene `platform`, la usamos.
+      if (data?.platform && data.platform[key] != null) return Math.round(Number(data.platform[key]) * 100);
+
+      // Si no viene la `platform`, pedimos los datos por unidad y calculamos la media por habilidad.
+      try {
+        const unitsData = await api<any>('/statistics/global/unidades');
+        if (Array.isArray(unitsData) && unitsData.length > 0) {
+          const values: number[] = [];
+          for (const entry of unitsData) {
+            if (entry?.platform && entry.platform[key] != null) values.push(Number(entry.platform[key]));
+          }
+          if (values.length > 0) {
+            const avg = values.reduce((a, b) => a + b, 0) / values.length;
+            return Math.round(avg * 100);
+          }
+        }
+      } catch (e) {
+        // ignore and fallback to 0
+      }
+
+      return 0;
+    };
+
+    const mapSkill = async (key: string, id: string, label?: string) => ({
+      id,
+      name: label ?? id.charAt(0).toUpperCase() + id.slice(1),
+      userProgress: data?.[key] != null ? Math.round(Number(data[key]) * 100) : 0,
+      averageProgress: await getPlatformValue(key),
+    });
+
+    // Keys esperadas según backend: Grammar, Listening, Pronunciation, Reading, Speaking, Writing, Vocabulary, total
+    const skillPromises: Promise<SkillProgress>[] = [
+      mapSkill('Grammar', 'grammar', 'Grammar'),
+      mapSkill('Listening', 'listening', 'Listening'),
+      mapSkill('Pronunciation', 'pronunciation', 'Pronunciation'),
+      mapSkill('Reading', 'reading', 'Reading'),
+      mapSkill('Speaking', 'speaking', 'Speaking'),
+      mapSkill('Writing', 'writing', 'Writing'),
+      mapSkill('Vocabulary', 'vocabulary', 'Vocabulary'),
+    ];
+
+    const skills = await Promise.all(skillPromises);
+    return skills;
+  } catch (e) {
+    // Fallback al mock local si falla la petición
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return [
+      { id: 'grammar', name: 'Grammar', userProgress: 10, averageProgress: 40 },
+      { id: 'listening', name: 'Listening', userProgress: 50, averageProgress: 30 },
+      { id: 'pronunciation', name: 'Pronunciation', userProgress: 60, averageProgress: 45 },
+      { id: 'reading', name: 'Reading', userProgress: 20, averageProgress: 65 },
+      { id: 'speaking', name: 'Speaking', userProgress: 80, averageProgress: 55 },
+      { id: 'writing', name: 'Writing', userProgress: 70, averageProgress: 50 }
+    ];
+  }
 };
 
 // Mock async function for recent units
