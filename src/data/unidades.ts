@@ -356,6 +356,14 @@ export interface Exercise {
   description?: string;
   videoID?: string;
   options?: Array<{ id: string; text: string }>;
+  sentences?: Array<{
+    sentence: string;
+    answer: string;
+    answer2?: string;
+    answer3?: string;
+    shown?: boolean;
+    explanation?: string;
+  }>;
   fields?: Array<{
     answer: string;
     answer2?: string;
