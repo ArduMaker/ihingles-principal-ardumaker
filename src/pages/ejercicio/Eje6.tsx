@@ -105,8 +105,8 @@ export function Eje6({ exercise }: Eje6Props) {
     try {
       await postUserGrade(exercise._id, grade, String(exercise.unidad || 0));
       await postUserPosition({
-        unidad: id,
-        exerciseIndex: exercise.number,
+        unidad: Number(id),
+        position: exercise.number,
       });
       
       toast({

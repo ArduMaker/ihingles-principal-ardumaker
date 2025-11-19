@@ -62,7 +62,7 @@ export async function api<T>(
 }
 
 // Statistics endpoints
-export const postUserPosition = async (payload: { unidad?: string; position?: number; exerciseIndex?: number }) => {
+export const postUserPosition = async (payload: { unidad?: number; position?: number }) => {
   return await api('/statistics/position', {
     method: 'POST',
     body: JSON.stringify(payload),

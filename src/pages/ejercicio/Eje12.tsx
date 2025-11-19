@@ -82,7 +82,7 @@ export function Eje12({ exercise }: Eje12Props) {
       );
 
       await postUserPosition({
-        unidad: exercise.unidad?.toString() || '0',
+        unidad: exercise.unidad || 0,
         position: exercise.position || 0
       });
 
