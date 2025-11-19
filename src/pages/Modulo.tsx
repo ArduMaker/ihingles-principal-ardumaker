@@ -57,7 +57,7 @@ const Modulo = () => {
     );
   }
 
-  // Si hay un ejercicio específico cargado, mostrarlo
+  // Si hay un ejercicio específico cargado, mostrarlo con ExerciseRouter
   if (exercise) {
     return (
       <InternalLayout>
@@ -72,37 +72,17 @@ const Modulo = () => {
           </Button>
           
           <div className="bg-card border rounded-lg p-6">
-            <h2 className="text-2xl font-bold mb-4">{exercise.question || 'Ejercicio'}</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              Tipo: {exercise.type} | Posición: {exercise.position}
-            </p>
+            <h2 className="text-2xl font-bold mb-4">Ejercicio #{exercise.position + 1}</h2>
+            <div className="mb-4">
+              <span className="text-sm text-muted-foreground">Tipo: {exercise.type}</span>
+            </div>
             
-            {exercise.media?.images && exercise.media.images.length > 0 && (
-              <div className="mb-4">
-                {exercise.media.images.map((img, idx) => (
-                  <img key={idx} src={img} alt={`Exercise ${idx}`} className="max-w-full rounded" />
-                ))}
-              </div>
-            )}
-
-            {exercise.options && (
-              <div className="space-y-2 mb-4">
-                {exercise.options.map((opt) => (
-                  <div key={opt.id} className="border rounded p-3 hover:bg-accent cursor-pointer">
-                    {opt.text}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {exercise.solution && (
-              <div className="mt-4 p-4 bg-green-500/10 border border-green-500/20 rounded">
-                <p className="font-semibold text-green-600">Respuesta correcta: {exercise.solution.correctOptionId}</p>
-                {exercise.solution.explanation && (
-                  <p className="text-sm mt-2">{exercise.solution.explanation}</p>
-                )}
-              </div>
-            )}
+            {/* Renderizar información básica del ejercicio */}
+            <div className="space-y-4">
+              <pre className="bg-muted p-4 rounded overflow-auto text-xs">
+                {JSON.stringify(exercise, null, 2)}
+              </pre>
+            </div>
           </div>
         </div>
       </InternalLayout>
@@ -156,7 +136,7 @@ const Modulo = () => {
                         ? 'opacity-50 cursor-not-allowed' 
                         : 'hover:bg-accent cursor-pointer'
                     }`}
-                    onClick={() => !isLocked && navigate(`/modulo/${id}/ejercicio/${item.position}`)}
+                    onClick={() => !isLocked && navigate(`/modulo/${id}/ejercicio/${unitIndex.startIndex + item.position}`)}
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
