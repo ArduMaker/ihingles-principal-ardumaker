@@ -216,15 +216,15 @@ export const Eje31 = ({ exercise }: InteractiveVideoExerciseProps) => {
 
     try {
       const exerciseId = (exercise as any)._id;
-      const unidad = String((exercise as any).displayUnidad || (exercise as any).unidad);
+      const unidad = Number((exercise as any).displayUnidad || (exercise as any).unidad);
       const position = (exercise as any).position;
 
-      if (position !== undefined && unidad) {
+      if (position !== undefined && !isNaN(unidad)) {
         await postUserPosition({ unidad, position });
       }
 
-      if (exerciseId && unidad) {
-        await postUserGrade(exerciseId, 1, unidad);
+      if (exerciseId && !isNaN(unidad)) {
+        await postUserGrade(exerciseId, 1, String(unidad));
       }
 
       setProgressSaved(true);
