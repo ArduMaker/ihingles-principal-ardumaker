@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import { Eje18 } from './Eje18';
+import { Eje31 } from './Eje31';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
 
@@ -51,6 +52,9 @@ export default function EjercicioView() {
     switch (exerciseType) {
       case 18:
         return <Eje18 exercise={exercise} />;
+      
+      case 31:
+        return <Eje31 exercise={exercise} />;
 
       // Aquí se agregarán los otros ~34 tipos de ejercicios
       default:
