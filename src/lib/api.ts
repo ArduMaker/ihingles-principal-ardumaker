@@ -60,3 +60,19 @@ export async function api<T>(
     throw new Error('Ocurrió un error inesperado. Intenta nuevamente.');
   }
 }
+
+// Statistics endpoints
+export const postUserPosition = async (payload: { unidad?: string; position?: number; exerciseIndex?: number }) => {
+  return await api('/statistics/position', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+};
+
+export const postUserGrade = async (exerciseId: string, grade: number, unit: string) => {
+  const payload = btoa(JSON.stringify({ exerciseId, grade, unit }));
+  return await api('/statistics/user-grade', {
+    method: 'POST',
+    body: JSON.stringify({ payload }),
+  });
+};
