@@ -68,7 +68,12 @@ export const UnidadGridCard = ({ unit }: UnidadGridCardProps) => {
 
         <Button
           className={`w-full ${config.bgColor} text-white hover:opacity-90`}
-          onClick={() => navigate(`/modulo/${unit.id}`)}
+          onClick={() => {
+            if (!isLocked) {
+              // Navegar a la vista de índice de la unidad
+              navigate(`/modulo/${unit.number}`);
+            }
+          }}
           disabled={isLocked}
         >
           {config.label}
