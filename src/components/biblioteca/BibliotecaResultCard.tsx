@@ -89,7 +89,7 @@ export const BibliotecaResultCard = ({
           </div>
         </div>
 
-        {/* Favorite Button */}
+        {/* Favorite Button 
         <button onClick={handleToggleFavorite} className="absolute top-6 right-6">
           <img
             src={isFavorite ? '/bibloteca/cora_big.svg' : '/bibloteca/cora_empty.svg'}
@@ -97,6 +97,7 @@ export const BibliotecaResultCard = ({
             className="w-8 h-8"
           />
         </button>
+        */}
       </div>
     </Card>
   );

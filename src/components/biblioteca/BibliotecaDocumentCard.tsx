@@ -14,9 +14,9 @@ const documentIcons = {
   ppt: '/bibloteca/image.svg',
 };
 
-export const BibliotecaDocumentCard = ({ 
-  document, 
-  onToggleFavorite 
+export const BibliotecaDocumentCard = ({
+  document,
+  onToggleFavorite
 }: BibliotecaDocumentCardProps) => {
   const [isFavorite, setIsFavorite] = useState(document.isFavorite);
 
@@ -29,8 +29,8 @@ export const BibliotecaDocumentCard = ({
     <Card className="p-6 relative bg-white border-2 border-gray-200 hover:border-[#2D5016] transition-colors">
       <div className="flex gap-4">
         <div className="flex-shrink-0">
-          <img 
-            src={documentIcons[document.type]} 
+          <img
+            src={documentIcons[document.type]}
             alt={document.type}
             className="w-12 h-12"
           />
@@ -59,6 +59,7 @@ export const BibliotecaDocumentCard = ({
             )}
           </div>
         </div>
+        {/* 
         <button 
           onClick={handleToggleFavorite}
           className="absolute top-4 right-4"
@@ -69,6 +70,7 @@ export const BibliotecaDocumentCard = ({
             className="w-6 h-6"
           />
         </button>
+        */}
       </div>
     </Card>
   );

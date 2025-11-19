@@ -27,7 +27,7 @@ export const BibliotecaUnitFilter = ({
             } text-white font-semibold`}
           >
             <span className="text-xl text-[#C5D82E]">{unit.name}</span>
-            <span className="text-sm opacity-90">Documentos {unit.documentCount}</span>
+            {/*<span className="text-sm opacity-90">Documentos {unit.documentCount}</span>*/}
           </Button>
         ))}
       </div>
