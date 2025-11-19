@@ -205,6 +205,20 @@ export const get_units_by_level_real = async (): Promise<LevelProgress[]> => {
 
     if (!payload) throw new Error('No payload from backend');
 
+    // Verificar si el usuario tiene suscripción activa
+    const { getUserBillingData } = await import('@/services/BillingService');
+    let hasActiveSubscription = false;
+    try {
+      const billingData = await getUserBillingData();
+      const validUntil = billingData?.subscriptionValidUntil;
+      if (validUntil) {
+        const validDate = new Date(validUntil);
+        hasActiveSubscription = validDate > new Date();
+      }
+    } catch (e) {
+      console.warn('No se pudo verificar suscripción:', e);
+    }
+
     // Queremos exactamente 64 unidades con los títulos del front antiguo.
     const posicionPorUnidad = payload.position ?? {};
     console.log('boughtUpTo:', payload);
@@ -218,7 +232,10 @@ export const get_units_by_level_real = async (): Promise<LevelProgress[]> => {
 
       // obtener estado/progreso usando los helpers comunes
       const unidadesStatusFromPayload = payload.unidadesStatus ?? payload.unidades_status ?? null;
-      const { percent: progress, status } = getUnitState(unitNumber, payload.unidades, posicionPorUnidad, unidadesStatusFromPayload);
+      const { percent: progress, status: calculatedStatus } = getUnitState(unitNumber, payload.unidades, posicionPorUnidad, unidadesStatusFromPayload);
+
+      // Si no hay suscripción activa, todas las unidades están bloqueadas
+      const status = hasActiveSubscription ? calculatedStatus : 'locked';
 
       return {
         id: `u-${unitNumber}`,
@@ -303,3 +320,104 @@ export const get_units_by_level_id_real = async (levelId: string) => {
 export const get_units_by_level = get_units_by_level_real;
 export const get_overall_progress = get_overall_progress_real;
 export const get_units_by_level_id = get_units_by_level_id_real;
+
+// ======================================================================
+// API para cargar datos de una unidad individual según README/unidades_informacion.md
+// ======================================================================
+
+export interface UnitIndexItem {
+  position: number;
+  title: string;
+  skill: string;
+  type: string;
+  estimatedSeconds?: number;
+  hasAudio?: boolean;
+  status?: 'locked' | 'available' | 'done';
+  metadata?: any;
+}
+
+export interface UnitIndex {
+  unidad: string;
+  title: string;
+  items: UnitIndexItem[];
+}
+
+export interface Exercise {
+  index: number;
+  displayUnidad: string;
+  position: number;
+  type: string;
+  question: string;
+  options?: Array<{ id: string; text: string }>;
+  media?: {
+    images?: string[];
+    audio?: string[];
+    video?: string[];
+  };
+  solution?: {
+    correctOptionId?: string;
+    explanation?: string;
+  };
+  scoring?: {
+    maxScore: number;
+    minScore: number;
+  };
+  meta?: {
+    timeLimitSeconds?: number;
+    difficulty?: string;
+  };
+}
+
+/**
+ * Obtiene el índice (lista de ejercicios) de una unidad
+ * Endpoint: GET /exercises/{displayUnidad}/indice
+ */
+export const getUnitIndex = async (displayUnidad: string): Promise<UnitIndex> => {
+  const res = await api<any>(`/exercises/${displayUnidad}/indice`, { method: 'GET' });
+  const payload = res && typeof res === 'object' && 'data' in res ? decodePayload(res.data) : res;
+  return payload;
+};
+
+/**
+ * Obtiene el contenido completo de un ejercicio por su índice absoluto
+ * Endpoint: GET /exercises/{index}
+ */
+export const getExercise = async (index: number): Promise<Exercise> => {
+  const res = await api<any>(`/exercises/${index}`, { method: 'GET' });
+  const payload = res && typeof res === 'object' && 'data' in res ? decodePayload(res.data) : res;
+  return payload;
+};
+
+/**
+ * Actualiza la posición actual del usuario en el progreso
+ * Endpoint: POST /statistics/position
+ */
+export const updatePosition = async (data: {
+  exerciseIndex: number;
+  position: number;
+  timestamp?: string;
+}) => {
+  return api<any>('/statistics/position', {
+    method: 'POST',
+    body: JSON.stringify({
+      ...data,
+      timestamp: data.timestamp || new Date().toISOString(),
+    }),
+  });
+};
+
+/**
+ * Envía la calificación de un intento de ejercicio
+ * Endpoint: POST /statistics/user-grade
+ */
+export const submitGrade = async (data: {
+  exerciseIndex: number;
+  grade: number;
+  correct: boolean;
+  timeSpentSeconds?: number;
+}) => {
+  return api<any>('/statistics/user-grade', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+};
