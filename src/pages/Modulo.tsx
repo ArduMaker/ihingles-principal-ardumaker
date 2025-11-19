@@ -5,7 +5,13 @@ import { useApiState } from '@/hooks/useApiState';
 import { getUnitIndex, getExercise, type UnitIndex, type UnitIndexItem, type Exercise as ExerciseFromAPI } from '@/data/unidades';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, Lock } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const Modulo = () => {
   const { id, exerciseIndex } = useParams<{ id: string; exerciseIndex?: string }>();
@@ -72,16 +78,29 @@ const Modulo = () => {
           </Button>
           
           <div className="bg-card border rounded-lg p-6">
-            <h2 className="text-2xl font-bold mb-4">Ejercicio #{exercise.position + 1}</h2>
-            <div className="mb-4">
-              <span className="text-sm text-muted-foreground">Tipo: {exercise.type}</span>
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold mb-2">{exercise.title}</h2>
+              <div className="flex gap-2 text-sm text-muted-foreground">
+                <span className="px-2 py-1 bg-primary/10 text-primary rounded">
+                  {exercise.skill}
+                </span>
+                <span className="px-2 py-1 bg-muted rounded">
+                  Tipo: {exercise.type}
+                </span>
+                <span className="px-2 py-1 bg-muted rounded">
+                  Índice: {exercise.index}
+                </span>
+              </div>
             </div>
             
-            {/* Renderizar información básica del ejercicio */}
+            {/* Mostrar datos completos del ejercicio */}
             <div className="space-y-4">
-              <pre className="bg-muted p-4 rounded overflow-auto text-xs">
-                {JSON.stringify(exercise, null, 2)}
-              </pre>
+              <div className="bg-muted/50 p-4 rounded">
+                <h3 className="font-semibold mb-2">Datos del ejercicio:</h3>
+                <pre className="bg-background p-4 rounded overflow-auto text-xs max-h-[600px]">
+                  {JSON.stringify(exercise, null, 2)}
+                </pre>
+              </div>
             </div>
           </div>
         </div>
@@ -130,46 +149,58 @@ const Modulo = () => {
               </div>
             </div>
 
-            {Object.entries(groupedBySkill).map(([skill, items]) => (
-              <div key={skill} className="mb-6">
-                <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
-                  <span className="px-3 py-1 bg-primary/10 text-primary rounded">
-                    {skill}
-                  </span>
-                </h2>
+            <Accordion type="multiple" defaultValue={Object.keys(groupedBySkill)} className="w-full">
+              {Object.entries(groupedBySkill).map(([skill, items]) => {
+                const completedInSkill = items.filter(item => item.completedByUser).length;
                 
-                <div className="space-y-3">
-                  {items.map((item) => {
-                    const isCompleted = item.completedByUser;
-                    
-                    return (
-                      <div
-                        key={item._id}
-                        className="border rounded-lg p-4 flex items-center justify-between transition-all hover:bg-accent cursor-pointer"
-                        onClick={() => navigate(`/modulo/${id}/ejercicio/${item.number}`)}
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-semibold text-muted-foreground">
-                              #{item.indicePosition + 1}
-                            </span>
-                            <h3 className="font-semibold">{item.title}</h3>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          {isCompleted && (
-                            <span className="px-3 py-1 rounded text-xs font-medium bg-green-500/20 text-green-600">
-                              ✓ Completado
-                            </span>
-                          )}
-                        </div>
+                return (
+                  <AccordionItem key={skill} value={skill}>
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center gap-3 w-full">
+                        <span className="px-3 py-1 bg-primary/10 text-primary rounded text-sm font-semibold">
+                          {skill}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {completedInSkill}/{items.length} completados
+                        </span>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-3 pt-3">
+                        {items.map((item) => {
+                          const isCompleted = item.completedByUser;
+                          
+                          return (
+                            <div
+                              key={item._id}
+                              className="border rounded-lg p-4 flex items-center justify-between transition-all hover:bg-accent cursor-pointer"
+                              onClick={() => navigate(`/modulo/${id}/ejercicio/${item.number}`)}
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-sm font-semibold text-muted-foreground">
+                                    #{item.indicePosition + 1}
+                                  </span>
+                                  <h3 className="font-semibold">{item.title}</h3>
+                                </div>
+                              </div>
+                              
+                              <div>
+                                {isCompleted && (
+                                  <span className="px-3 py-1 rounded text-xs font-medium bg-green-500/20 text-green-600">
+                                    ✓ Completado
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
           </div>
         </div>
       </InternalLayout>
