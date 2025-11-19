@@ -351,7 +351,23 @@ export interface Exercise {
   title: string;
   skill: string;
   question: string;
+  number?: number;
+  unidad?: number;
+  description?: string;
+  videoID?: string;
   options?: Array<{ id: string; text: string }>;
+  fields?: Array<{
+    answer: string;
+    answer2?: string;
+    answer3?: string;
+    answer4?: string;
+    shown?: boolean;
+    explanation?: string;
+  }>;
+  answers?: Array<{
+    timeInSeconds?: number;
+    answer: string;
+  }>;
   media?: {
     images?: string[];
     audio?: string[];
