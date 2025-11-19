@@ -24,10 +24,11 @@ const Pago = () => {
         const raw = data && (data.data ?? data);
 
         // Map backend plan to local Plan shape expected by UI
+
         const mapped = raw
           ? {
               id: raw.id,
-              name: raw.name ?? raw.id,
+              name: raw.billing_frequency == "YEAR" ? 'Plan Anual' : 'Plan Mensual',
               price: raw.price ?? 0,
               nivel: raw.profile?.nombre ?? raw.name ?? raw.id,
               description: raw.description ?? raw.profile?.descripcion ?? '',
