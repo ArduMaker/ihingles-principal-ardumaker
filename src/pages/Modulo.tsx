@@ -155,9 +155,6 @@ const Modulo = () => {
                             </span>
                             <h3 className="font-semibold">{item.title}</h3>
                           </div>
-                          <div className="flex gap-2 text-xs text-muted-foreground">
-                            <span>Tipo {item.type}</span>
-                          </div>
                         </div>
                         
                         <div>
