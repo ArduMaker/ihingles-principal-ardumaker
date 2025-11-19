@@ -18,19 +18,17 @@ const Modulo = () => {
   const query = new URLSearchParams(location.search);
   const exerciseIndex = query.get('exerciseIndex') ?? undefined;
   const { id } = useParams<{ id: string; }>();
-  const navigate = useNavigate();
   const [unitIndex, setUnitIndex] = useState<UnitIndex | null>(null);
-  const [exercise, setExercise] = useState<ExerciseFromAPI | null>(null);
   const { isLoading, executeApi } = useApiState();
 
   // Cargar índice de la unidad
   useEffect(() => {
     const loadUnitIndex = async () => {
-      if (!id || exerciseIndex) return;
-      
+      if (!id) return;
+      if (exerciseIndex) return;
+
       const result = await executeApi(() => getUnitIndex(id));
       if (result) {
-        console.log('Índice de unidad cargado:', result);
         setUnitIndex(result);
       }
     };
@@ -38,20 +36,10 @@ const Modulo = () => {
     loadUnitIndex();
   }, [id, exerciseIndex]);
 
-  // Cargar ejercicio específico si se proporciona exerciseIndex
-  useEffect(() => {
-    const loadExercise = async () => {
-      if (!exerciseIndex) return;
-      
-      const result = await executeApi(() => getExercise(Number(exerciseIndex)));
-      if (result) {
-        console.log('Ejercicio cargado:', result);
-        setExercise(result);
-      }
-    };
-
-    loadExercise();
-  }, [exerciseIndex]);
+  // Si hay un ejercicio específico cargado, mostrarlo
+  if (exerciseIndex) {
+    return ( <EjercicioView /> );
+  }
 
   if (isLoading) {
     return (
@@ -64,11 +52,6 @@ const Modulo = () => {
         </div>
       </InternalLayout>
     );
-  }
-
-  // Si hay un ejercicio específico cargado, mostrarlo
-  if (exercise) {
-    return ( <EjercicioView /> );
   }
 
   // Mostrar índice de la unidad
