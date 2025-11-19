@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Exercise, getVideoCredentials } from '@/data/unidades';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Loader2, Play } from 'lucide-react';
+import { Loader2, Play, CheckCircle } from 'lucide-react';
+import { postUserPosition, postUserGrade } from '@/lib/api';
+import { toast } from 'sonner';
 
 interface VideoExerciseProps {
   exercise: Exercise;
@@ -17,6 +19,9 @@ export const VideoExercise = ({ exercise }: VideoExerciseProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [videoCompleted, setVideoCompleted] = useState(false);
+  const [progressSaved, setProgressSaved] = useState(false);
+  const playerRef = useRef<any>(null);
+  const progressCheckInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Extraer videoID del ejercicio
   const videoId = (exercise as any).videoID;
@@ -54,7 +59,66 @@ export const VideoExercise = ({ exercise }: VideoExerciseProps) => {
 
   useEffect(() => {
     loadVideoCredentials();
+    
+    return () => {
+      if (progressCheckInterval.current) {
+        clearInterval(progressCheckInterval.current);
+      }
+    };
   }, [videoId]);
+
+  // Monitor video progress
+  useEffect(() => {
+    if (!videoCredentials || videoCompleted) return;
+
+    const checkProgress = () => {
+      if (typeof window !== 'undefined' && (window as any).VdoPlayer) {
+        const player = (window as any).VdoPlayer.getInstance();
+        if (player) {
+          player.video.addEventListener('progress', async () => {
+            const totalPlayed = player.video.totalPlayed || 0;
+            const duration = player.video.duration || 0;
+            
+            if (duration > 0 && totalPlayed >= duration * 0.75 && !videoCompleted) {
+              setVideoCompleted(true);
+              await markExerciseCompleted();
+            }
+          });
+        }
+      }
+    };
+
+    // Wait for player to load
+    const timer = setTimeout(checkProgress, 2000);
+    
+    return () => clearTimeout(timer);
+  }, [videoCredentials, videoCompleted]);
+
+  const markExerciseCompleted = async () => {
+    if (progressSaved) return;
+
+    try {
+      const exerciseId = (exercise as any)._id;
+      const unidad = String((exercise as any).displayUnidad || (exercise as any).unidad);
+      const position = (exercise as any).position;
+
+      // Mark position
+      if (position !== undefined && unidad) {
+        await postUserPosition({ unidad, position });
+      }
+
+      // Mark grade
+      if (exerciseId && unidad) {
+        await postUserGrade(exerciseId, 1, unidad);
+      }
+
+      setProgressSaved(true);
+      toast.success('¡Video completado! Progreso guardado.');
+    } catch (err) {
+      console.error('Error saving progress:', err);
+      toast.error('Error al guardar el progreso. Por favor intenta de nuevo.');
+    }
+  };
 
   const handleRetry = () => {
     loadVideoCredentials();
@@ -112,9 +176,10 @@ export const VideoExercise = ({ exercise }: VideoExerciseProps) => {
             )}
 
             {videoCompleted && (
-              <Alert>
-                <AlertDescription>
-                  ✓ Video completado. Puedes continuar al siguiente ejercicio.
+              <Alert className="border-green-500/50 bg-green-500/10">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <AlertDescription className="text-green-700 dark:text-green-300">
+                  ✓ Video completado. {progressSaved ? 'Progreso guardado.' : 'Guardando progreso...'} Puedes continuar al siguiente ejercicio.
                 </AlertDescription>
               </Alert>
             )}
