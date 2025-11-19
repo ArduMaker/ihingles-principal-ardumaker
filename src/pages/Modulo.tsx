@@ -14,7 +14,9 @@ import {
 } from "@/components/ui/accordion";
 
 const Modulo = () => {
-  const { id, exerciseIndex } = useParams<{ id: string; exerciseIndex?: string }>();
+  const query = new URLSearchParams(location.search);
+  const exerciseIndex = query.get('exerciseIndex') ?? undefined;
+  const { id } = useParams<{ id: string; }>();
   const navigate = useNavigate();
   const [unitIndex, setUnitIndex] = useState<UnitIndex | null>(null);
   const [exercise, setExercise] = useState<ExerciseFromAPI | null>(null);
@@ -70,7 +72,7 @@ const Modulo = () => {
         <div className="container max-w-4xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
           <Button
             variant="ghost"
-            onClick={() => navigate(`/modulo/${id}`)}
+            onClick={() => window.location.href = `/modulo/${id}`}
             className="mb-4"
           >
             <ChevronLeft className="h-4 w-4 mr-2" />
@@ -228,7 +230,7 @@ const Modulo = () => {
         <div className="container max-w-4xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
           <Button
             variant="ghost"
-            onClick={() => navigate(-1)}
+            onClick={() => window.location.href = `/unidades`}
             className="mb-4"
           >
             <ChevronLeft className="h-4 w-4 mr-2" />
@@ -273,7 +275,7 @@ const Modulo = () => {
                             <div
                               key={item._id}
                               className="border rounded-lg p-4 flex items-center justify-between transition-all hover:bg-accent cursor-pointer"
-                              onClick={() => navigate(`/modulo/${id}/ejercicio/${item.number}`)}
+                              onClick={() => window.location.href = `/modulo/${id}?exerciseIndex=${item.number}`}
                             >
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
