@@ -240,7 +240,7 @@ export const get_units_by_level_real = async (): Promise<LevelProgress[]> => {
       console.log('Unit', unitNumber, 'status:', status, 'progress:', progress, 'hasActiveSubscription:', hasActiveSubscription, calculatedStatus);
 
       return {
-        id: unitNumber,
+        id: String(unitNumber),
         number: unitNumber,
         title: unitTitles[idx] ?? `Unidad ${unitNumber}`,
         description: unitInfo?.description ?? '',
@@ -248,6 +248,7 @@ export const get_units_by_level_real = async (): Promise<LevelProgress[]> => {
         startIndex,
         status,
         progress,
+        isLocked: !hasActiveSubscription,
         caseImage: `/${getNamelevelUnidad(unitNumber)}/case${getIndex(unitNumber)}.png`,
       };
     });
@@ -341,6 +342,7 @@ export interface UnitIndexItem {
 export interface UnitIndex {
   unidad: string;
   title: string;
+  startIndex: number;
   items: UnitIndexItem[];
 }
 
