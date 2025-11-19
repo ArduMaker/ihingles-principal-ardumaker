@@ -2,7 +2,7 @@ import { InternalLayout } from '@/components/internal/InternalLayout';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useApiState } from '@/hooks/useApiState';
-import { getUnitIndex, getExercise, type UnitIndex, type Exercise as ExerciseFromAPI } from '@/data/unidades';
+import { getUnitIndex, getExercise, type UnitIndex, type UnitIndexItem, type Exercise as ExerciseFromAPI } from '@/data/unidades';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, Lock } from 'lucide-react';
@@ -91,10 +91,19 @@ const Modulo = () => {
 
   // Mostrar índice de la unidad
   if (unitIndex) {
-    const completedCount = unitIndex.items.filter(item => item.status === 'done').length;
+    const completedCount = unitIndex.items.filter(item => item.completedByUser).length;
     const progressPercent = unitIndex.items.length > 0 
       ? Math.round((completedCount / unitIndex.items.length) * 100) 
       : 0;
+
+    // Agrupar items por skill
+    const groupedBySkill = unitIndex.items.reduce((acc, item) => {
+      if (!acc[item.skill]) {
+        acc[item.skill] = [];
+      }
+      acc[item.skill].push(item);
+      return acc;
+    }, {} as Record<string, UnitIndexItem[]>);
 
     return (
       <InternalLayout>
@@ -109,8 +118,7 @@ const Modulo = () => {
           </Button>
 
           <div className="bg-card border rounded-lg p-6">
-            <h1 className="text-3xl font-bold mb-2">{unitIndex.title}</h1>
-            <p className="text-muted-foreground mb-4">Unidad {unitIndex.unidad}</p>
+            <h1 className="text-3xl font-bold mb-2">Unidad {id}</h1>
             
             <div className="flex items-center gap-4 mb-6">
               <div className="flex-1">
@@ -122,55 +130,49 @@ const Modulo = () => {
               </div>
             </div>
 
-            <div className="space-y-3">
-              {unitIndex.items.map((item, idx) => {
-                const isLocked = item.status === 'locked';
-                // Calcular índice absoluto (necesitarías tener startIndex de la unidad)
-                // Por ahora usamos position directamente
+            {Object.entries(groupedBySkill).map(([skill, items]) => (
+              <div key={skill} className="mb-6">
+                <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
+                  <span className="px-3 py-1 bg-primary/10 text-primary rounded">
+                    {skill}
+                  </span>
+                </h2>
                 
-                return (
-                  <div
-                    key={idx}
-                    className={`border rounded-lg p-4 flex items-center justify-between transition-all ${
-                      isLocked 
-                        ? 'opacity-50 cursor-not-allowed' 
-                        : 'hover:bg-accent cursor-pointer'
-                    }`}
-                    onClick={() => !isLocked && navigate(`/modulo/${id}/ejercicio/${unitIndex.startIndex + item.position}`)}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-semibold text-muted-foreground">
-                          #{item.position + 1}
-                        </span>
-                        <h3 className="font-semibold">{item.title}</h3>
-                        {isLocked && <Lock className="h-4 w-4 text-red-500" />}
-                      </div>
-                      <div className="flex gap-2 text-xs text-muted-foreground">
-                        <span className="px-2 py-0.5 bg-primary/10 rounded">{item.skill}</span>
-                        <span>{item.type}</span>
-                        {item.estimatedSeconds && <span>~{item.estimatedSeconds}s</span>}
-                        {item.hasAudio && <span>🎧 Audio</span>}
-                      </div>
-                    </div>
+                <div className="space-y-3">
+                  {items.map((item) => {
+                    const isCompleted = item.completedByUser;
                     
-                    <div>
-                      <span className={`px-3 py-1 rounded text-xs font-medium ${
-                        item.status === 'done' 
-                          ? 'bg-green-500/20 text-green-600' 
-                          : item.status === 'available'
-                          ? 'bg-blue-500/20 text-blue-600'
-                          : 'bg-red-500/20 text-red-600'
-                      }`}>
-                        {item.status === 'done' ? 'Completado' : 
-                         item.status === 'available' ? 'Disponible' : 
-                         'Bloqueado'}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                    return (
+                      <div
+                        key={item._id}
+                        className="border rounded-lg p-4 flex items-center justify-between transition-all hover:bg-accent cursor-pointer"
+                        onClick={() => navigate(`/modulo/${id}/ejercicio/${item.number}`)}
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-semibold text-muted-foreground">
+                              #{item.indicePosition + 1}
+                            </span>
+                            <h3 className="font-semibold">{item.title}</h3>
+                          </div>
+                          <div className="flex gap-2 text-xs text-muted-foreground">
+                            <span>Tipo {item.type}</span>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          {isCompleted && (
+                            <span className="px-3 py-1 rounded text-xs font-medium bg-green-500/20 text-green-600">
+                              ✓ Completado
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </InternalLayout>
