@@ -329,20 +329,16 @@ export const get_units_by_level_id = get_units_by_level_id_real;
 // ======================================================================
 
 export interface UnitIndexItem {
-  position: number;
-  title: string;
+  _id: string;
   skill: string;
-  type: string;
-  estimatedSeconds?: number;
-  hasAudio?: boolean;
-  status?: 'locked' | 'available' | 'done';
-  metadata?: any;
+  type: number;
+  number: number; // índice absoluto del ejercicio
+  title: string;
+  completedByUser: boolean;
+  indicePosition: number; // posición relativa dentro de la unidad
 }
 
 export interface UnitIndex {
-  unidad: string;
-  title: string;
-  startIndex: number;
   items: UnitIndexItem[];
 }
 
@@ -379,7 +375,8 @@ export interface Exercise {
 export const getUnitIndex = async (displayUnidad: string): Promise<UnitIndex> => {
   const res = await api<any>(`/exercises/${displayUnidad}/indice`, { method: 'GET' });
   const payload = res && typeof res === 'object' && 'data' in res ? decodePayload(res.data) : res;
-  return payload;
+  // La respuesta es directamente un array de items
+  return { items: Array.isArray(payload) ? payload : [] };
 };
 
 /**
