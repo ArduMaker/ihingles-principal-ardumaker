@@ -76,3 +76,29 @@ export const postUserGrade = async (exerciseId: string, grade: number, unit: str
     body: JSON.stringify({ payload }),
   });
 };
+
+// Vocabulary endpoints
+export interface VocabularyItem {
+  vocabularyType: string;
+  vocabularyLevel: string;
+  title: string;
+  explanation: string;
+  example: string;
+}
+
+export interface VocabularyResponse {
+  data: VocabularyItem[];
+  count: number;
+  page: string;
+}
+
+export const getVocabulary = async (searchQuery?: string, page: number = 1): Promise<VocabularyResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    ...(searchQuery && { search: searchQuery }),
+  });
+  
+  return await api(`/vocabulary/from-jsons?${params.toString()}`, {
+    method: 'GET',
+  });
+};
