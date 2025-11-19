@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 import { Eje12 } from './Eje12';
 import { Eje18 } from './Eje18';
 import { Eje31 } from './Eje31';
+import { Eje6 } from './Eje6';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
 
@@ -51,6 +52,9 @@ export default function EjercicioView() {
     const exerciseType = typeof exercise.type === 'number' ? exercise.type : parseInt(exercise.type);
 
     switch (exerciseType) {
+      case 6:
+        return <Eje6 exercise={exercise} />;
+      
       case 12:
         return <Eje12 exercise={exercise} />;
       
