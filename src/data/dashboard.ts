@@ -74,9 +74,8 @@ export const get_skills_progress = async (): Promise<SkillProgress[]> => {
     const data = await api<any>('/statistics/global/own');
 
     // El backend devuelve valores en 0..1 por skill. Normalizamos a 0..100.
+    let CACHE: { [key: string]: number } = {};
     const getPlatformValue = async (key: string) => {
-
-      if (CACHE[key] != null) return CACHE[key];
 
       // Si la respuesta ya contiene `platform`, la usamos.
       if (data?.platform && data.platform[key] != null) return Math.round(Number(data.platform[key]) * 100);

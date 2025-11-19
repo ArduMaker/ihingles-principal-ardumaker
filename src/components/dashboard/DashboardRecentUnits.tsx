@@ -19,7 +19,7 @@ export const DashboardRecentUnits = ({ units }: DashboardRecentUnitsProps) => {
     <Card className="p-6 bg-card border-border">
       <h2 className="text-xl font-bold text-heading mb-6">Unidades Recientes</h2>
       <div className="space-y-3">
-        {units.map((unit) => (
+        {units.slice(0, 3).map((unit) => (
           <div 
             key={unit.id} 
             className="flex items-center gap-4 p-4 bg-[#C5DCC8] rounded-lg"

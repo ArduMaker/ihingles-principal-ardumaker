@@ -41,7 +41,7 @@ const Dashboard = () => {
       try {
         if (levelsData && Array.isArray(levelsData)) {
           const flat = levelsData.flatMap((l: any) => l.units || []);
-          const inProgress = flat.filter((u: any) => u.status === 'in-progress' || (u.progress > 0 && u.progress < 100));
+          const inProgress = flat.filter((u: any) => u.status === 'in-progress' && (u.progress > 0 && u.progress < 100));
           if (inProgress.length > 0) {
             recent = inProgress.map((u: any) => ({ id: u.id, name: u.title, progress: u.progress }));
           } else {
