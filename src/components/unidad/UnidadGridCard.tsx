@@ -30,6 +30,7 @@ export const UnidadGridCard = ({ unit }: UnidadGridCardProps) => {
   const navigate = useNavigate();
   const config = statusConfig[unit.status];
   const isLocked = unit.status === 'locked';
+  console.log('Rendering UnidadGridCard for unit:', unit);
 
   return (
     <div className={`rounded-lg overflow-hidden border ${isLocked ? 'opacity-70' : ''}`}>

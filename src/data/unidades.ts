@@ -162,11 +162,12 @@ export const getUnitState = (
   const key = String(unitNumber);
   let status: 'completed' | 'in-progress' | 'locked' = 'locked';
 
+  console.log("percent", percent)
   if (unidadesStatus && (unidadesStatus[key] === true || unidadesStatus[Number(key)] === true)) {
     status = 'completed';
   } else if (percent >= 100) {
     status = 'completed';
-  } else if (percent > 0) {
+  } else if (percent >= 0) {
     status = 'in-progress';
   } else {
     status = 'locked';
@@ -236,9 +237,10 @@ export const get_units_by_level_real = async (): Promise<LevelProgress[]> => {
 
       // Si no hay suscripción activa, todas las unidades están bloqueadas
       const status = !hasActiveSubscription ? 'locked' : calculatedStatus;
+      console.log('Unit', unitNumber, 'status:', status, 'progress:', progress, 'hasActiveSubscription:', hasActiveSubscription, calculatedStatus);
 
       return {
-        id: `u-${unitNumber}`,
+        id: unitNumber,
         number: unitNumber,
         title: unitTitles[idx] ?? `Unidad ${unitNumber}`,
         description: unitInfo?.description ?? '',

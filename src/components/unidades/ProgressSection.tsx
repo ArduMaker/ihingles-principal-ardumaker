@@ -72,7 +72,7 @@ export const ProgressSection = ({ progress, levels }: ProgressSectionProps) => {
             {levels.flatMap(l => l.units).filter(u => u.status === 'in-progress' || ((u as any).progress > 0 && (u as any).progress < 100)).length === 0 && (
               <p className="text-sm text-muted-foreground">No tienes unidades en progreso. Pulsa "Continuar unidad" para comenzar la siguiente.</p>
             )}
-            {levels.flatMap(l => l.units).filter(u => u.status === 'in-progress' || ((u as any).progress > 0 && (u as any).progress < 100)).map((u) => (
+            {levels.flatMap(l => l.units).filter(u => u.status === 'in-progress' && ((u as any).progress > 0 && (u as any).progress < 100)).map((u) => (
               <div key={u.id} className="flex items-center justify-between">
                 <div>
                   <div className="text-sm font-medium">{u.title}</div>
