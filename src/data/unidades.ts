@@ -428,3 +428,28 @@ export const submitGrade = async (data: {
     body: JSON.stringify(data),
   });
 };
+
+/**
+ * Obtiene las credenciales para reproducir un video de VdoCipher
+ * Endpoint: GET /vdocipher/{videoId}
+ */
+export const getVideoCredentials = async (videoId: string): Promise<{
+  otp: string;
+  playbackInfo: string;
+} | string> => {
+  try {
+    const res = await api<any>(`/vdocipher/${videoId}`, { method: 'GET' });
+    
+    // Verificar si es "fallo"
+    if (res === 'fallo' || typeof res === 'string') {
+      return 'fallo';
+    }
+    
+    // Manejar envelope si existe
+    const payload = res && typeof res === 'object' && 'data' in res ? res.data : res;
+    
+    return payload;
+  } catch (err) {
+    return 'fallo';
+  }
+};
