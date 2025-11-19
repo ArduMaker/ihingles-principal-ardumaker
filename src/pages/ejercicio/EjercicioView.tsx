@@ -6,6 +6,7 @@ import { InternalLayout } from '@/components/internal/InternalLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
+import { Eje12 } from './Eje12';
 import { Eje18 } from './Eje18';
 import { Eje31 } from './Eje31';
 import { Button } from '@/components/ui/button';
@@ -50,6 +51,9 @@ export default function EjercicioView() {
     const exerciseType = typeof exercise.type === 'number' ? exercise.type : parseInt(exercise.type);
 
     switch (exerciseType) {
+      case 12:
+        return <Eje12 exercise={exercise} />;
+      
       case 18:
         return <Eje18 exercise={exercise} />;
       
