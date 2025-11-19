@@ -7,12 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import { VideoExercise } from './VideoExercise';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft } from 'lucide-react';
 
 export default function EjercicioView() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const exerciseIndex = searchParams.get('exerciseIndex');
-  
+
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,11 +47,11 @@ export default function EjercicioView() {
 
     // Router de tipos de ejercicios
     const exerciseType = typeof exercise.type === 'number' ? exercise.type : parseInt(exercise.type);
-    
+
     switch (exerciseType) {
       case 18:
         return <VideoExercise exercise={exercise} />;
-      
+
       // Aquí se agregarán los otros ~34 tipos de ejercicios
       default:
         return (
@@ -84,8 +86,15 @@ export default function EjercicioView() {
 
         {exercise && (
           <div className="space-y-6">
-            {/* Ejercicio renderizado */}
-            {renderExercise()}
+
+            <Button
+              variant="ghost"
+              onClick={() => window.location.href = `/modulo/${id}`}
+              className="mb-4"
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Volver al índice
+            </Button>
 
             {/* JSON completo para debug */}
             <Card className="bg-muted/50">
@@ -101,6 +110,10 @@ export default function EjercicioView() {
                 </details>
               </CardContent>
             </Card>
+
+            {/* Ejercicio renderizado */}
+            {renderExercise()}
+
           </div>
         )}
       </div>

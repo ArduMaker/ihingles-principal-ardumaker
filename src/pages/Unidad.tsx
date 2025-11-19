@@ -8,6 +8,7 @@ import { get_units_by_level_id } from '@/data/unidades';
 import { LevelProgress, UnitDetail } from '@/types';
 import { useApiState } from '@/hooks/useApiState';
 import { Skeleton } from '@/components/ui/skeleton';
+import EjercicioView from "@/pages/ejercicio/EjercicioView";
 
 const Unidad = () => {
   const { levelId } = useParams<{ levelId: string }>();

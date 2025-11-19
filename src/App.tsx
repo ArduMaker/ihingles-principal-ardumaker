@@ -16,7 +16,6 @@ import Pago from "./pages/Pago";
 import Perfil from "./pages/Perfil";
 import Modulo from "./pages/Modulo";
 import Unidad from "./pages/Unidad";
-import EjercicioView from "./pages/ejercicio/EjercicioView";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,7 +38,7 @@ const App = () => (
             <Route path="/facturacion" element={<Facturacion />} />
             <Route path="/facturacion/pago/:planId" element={<Pago />} />
             <Route path="/perfil" element={<Perfil />} />
-            <Route path="/modulo/:id" element={<EjercicioView />} />
+            <Route path="/modulo/:id" element={<Modulo />} />
             <Route path="/unidad/:levelId" element={<Unidad />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
