@@ -6,7 +6,7 @@ import { InternalLayout } from '@/components/internal/InternalLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
-import { VideoExercise } from './VideoExercise';
+import { Eje18 } from './Eje18';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
 
@@ -50,7 +50,7 @@ export default function EjercicioView() {
 
     switch (exerciseType) {
       case 18:
-        return <VideoExercise exercise={exercise} />;
+        return <Eje18 exercise={exercise} />;
 
       // Aquí se agregarán los otros ~34 tipos de ejercicios
       default:

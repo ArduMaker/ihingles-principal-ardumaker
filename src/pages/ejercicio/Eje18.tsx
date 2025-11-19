@@ -11,7 +11,7 @@ interface VideoExerciseProps {
   exercise: Exercise;
 }
 
-export const VideoExercise = ({ exercise }: VideoExerciseProps) => {
+export const Eje18 = ({ exercise }: VideoExerciseProps) => {
   const [videoCredentials, setVideoCredentials] = useState<{
     otp: string;
     playbackInfo: string;
