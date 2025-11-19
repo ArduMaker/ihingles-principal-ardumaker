@@ -343,10 +343,13 @@ export interface UnitIndex {
 }
 
 export interface Exercise {
+  _id: string;
   index: number;
   displayUnidad: string;
   position: number;
   type: string;
+  title: string;
+  skill: string;
   question: string;
   options?: Array<{ id: string; text: string }>;
   media?: {
@@ -362,6 +365,9 @@ export interface Exercise {
     maxScore: number;
     minScore: number;
   };
+  completedByUser: boolean;
+  credentials?: any;
+  attachedDocument?: any;
   meta?: {
     timeLimitSeconds?: number;
     difficulty?: string;
