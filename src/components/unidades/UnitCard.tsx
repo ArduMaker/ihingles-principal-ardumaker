@@ -20,7 +20,7 @@ const statusConfig = {
 
 export const UnitCard = ({ unit, colors, onClick }: UnitCardProps) => {
   const config = statusConfig[unit.status];
-  
+
   return (
     <div className={`${colors.unitBg} rounded-lg p-4 flex items-center justify-between`}>
       <div className="flex-1">
@@ -34,7 +34,7 @@ export const UnitCard = ({ unit, colors, onClick }: UnitCardProps) => {
       <Button
         className={`${colors.buttonBg} ${colors.buttonText} font-semibold hover:opacity-90`}
         onClick={onClick}
-        disabled={unit.status === 'locked'}
+        disabled={unit.isLocked}
       >
         {config.label}
       </Button>

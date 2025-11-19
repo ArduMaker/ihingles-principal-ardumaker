@@ -235,7 +235,7 @@ export const get_units_by_level_real = async (): Promise<LevelProgress[]> => {
       const { percent: progress, status: calculatedStatus } = getUnitState(unitNumber, payload.unidades, posicionPorUnidad, unidadesStatusFromPayload);
 
       // Si no hay suscripción activa, todas las unidades están bloqueadas
-      const status = hasActiveSubscription ? calculatedStatus : 'locked';
+      const status = !hasActiveSubscription ? 'locked' : calculatedStatus;
 
       return {
         id: `u-${unitNumber}`,
@@ -258,7 +258,7 @@ export const get_units_by_level_real = async (): Promise<LevelProgress[]> => {
         levelName: lvl.name,
         levelImage: `/${lvl.id}/principal.png`,
         levelDescription: `${lvl.name} level generated from backend data.`,
-        isLocked: lvl.id === 'maestro',
+        isLocked: !hasActiveSubscription,
         totalUnits: per[idx],
         completedUnits: slice.filter(u => (u as any).status === 'completed').length,
         units: slice,

@@ -89,6 +89,7 @@ export interface Unit {
   title: string;
   description: string;
   status: 'completed' | 'in-progress' | 'locked';
+  isLocked: boolean;
 }
 
 export interface LevelProgress {
