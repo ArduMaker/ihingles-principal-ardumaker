@@ -9,6 +9,7 @@ import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { checkAnswer } from '@/lib/exerciseUtils';
 import { postUserGrade, postUserPosition } from '@/lib/api';
 import { toast } from 'sonner';
+import { Calculate_index_exercise } from '@/hooks/calculate_index.ts';
 
 interface Eje12Props {
   exercise: Exercise;
@@ -83,7 +84,7 @@ export function Eje12({ exercise }: Eje12Props) {
 
       await postUserPosition({
         unidad: exercise.unidad || 0,
-        position: exercise.position || 0
+        position: await Calculate_index_exercise(exercise)
       });
 
       toast.success('Progreso guardado correctamente');

@@ -98,11 +98,16 @@ const levels = [
 ];
 
 // Intenta mapear la respuesta de /exercises/por-unidad a la estructura del mock
-const fetchExercisesPorUnidad = async () => {
+let CACHE_POR_UNIDAD: any = null;
+export const fetchExercisesPorUnidad = async () => {
+  if (CACHE_POR_UNIDAD) {
+    return CACHE_POR_UNIDAD;
+  }
   const res = await api<any>('/exercises/por-unidad', { method: 'GET' });
   // Normalizar payload
   const payload = res && typeof res === 'object' && 'data' in res ? decodePayload(res.data) : res;
   // payload esperado: { unidades: { <unitNumber>: { count, startIndex, ... } }, boughtUpTo, position }
+  CACHE_POR_UNIDAD = payload;
   return payload;
 };
 
@@ -402,11 +407,16 @@ export interface Exercise {
  * Obtiene el índice (lista de ejercicios) de una unidad
  * Endpoint: GET /exercises/{displayUnidad}/indice
  */
+let CACHE_UNIT_INDEX: { [key: string]: UnitIndex } = {};
 export const getUnitIndex = async (displayUnidad: string): Promise<UnitIndex> => {
+  if (CACHE_UNIT_INDEX[displayUnidad]) {
+    return CACHE_UNIT_INDEX[displayUnidad];
+  }
   const res = await api<any>(`/exercises/${displayUnidad}/indice`, { method: 'GET' });
   const payload = res && typeof res === 'object' && 'data' in res ? decodePayload(res.data) : res;
   // La respuesta es directamente un array de items
-  return { items: Array.isArray(payload) ? payload : [] };
+  CACHE_UNIT_INDEX[displayUnidad] = { items: Array.isArray(payload) ? payload : [] };
+  return CACHE_UNIT_INDEX[displayUnidad];
 };
 
 /**

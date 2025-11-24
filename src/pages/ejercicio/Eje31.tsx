@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Play, CheckCircle, Mic, MicOff } from 'lucide-react';
 import { postUserPosition, postUserGrade } from '@/lib/api';
 import { toast } from 'sonner';
+import { Calculate_index_exercise } from '@/hooks/calculate_index.ts';
 
 interface InteractiveVideoExerciseProps {
   exercise: Exercise;
@@ -33,14 +34,14 @@ export const Eje31 = ({ exercise }: InteractiveVideoExerciseProps) => {
   const [error, setError] = useState<string | null>(null);
   const [videoCompleted, setVideoCompleted] = useState(false);
   const [progressSaved, setProgressSaved] = useState(false);
-  
+
   // Dialog & answer states
   const [showDialog, setShowDialog] = useState(false);
   const [currentAnswerIndex, setCurrentAnswerIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
   const [currentResponse, setCurrentResponse] = useState('');
   const [isRecording, setIsRecording] = useState(false);
-  
+
   const playerRef = useRef<any>(null);
   const timeCheckInterval = useRef<NodeJS.Timeout | null>(null);
   const processedTimestamps = useRef<Set<number>>(new Set());
@@ -65,7 +66,7 @@ export const Eje31 = ({ exercise }: InteractiveVideoExerciseProps) => {
       setLoading(true);
       setError(null);
       const credentials = await getVideoCredentials(videoId);
-      
+
       if (credentials === 'fallo' || typeof credentials === 'string') {
         setError('No se pudieron obtener las credenciales del video');
         return;
@@ -81,7 +82,7 @@ export const Eje31 = ({ exercise }: InteractiveVideoExerciseProps) => {
 
   useEffect(() => {
     loadVideoCredentials();
-    
+
     return () => {
       if (timeCheckInterval.current) {
         clearInterval(timeCheckInterval.current);
@@ -99,15 +100,15 @@ export const Eje31 = ({ exercise }: InteractiveVideoExerciseProps) => {
         const player = (window as any).VdoPlayer.getInstance();
         if (player && player.video) {
           playerRef.current = player;
-          
+
           const currentTime = player.video.currentTime || 0;
-          
+
           // Check if we need to pause for an answer
           answers.forEach((answer, index) => {
             const timeDiff = Math.abs(currentTime - answer.timeInSeconds);
-            
+
             if (
-              timeDiff < 0.5 && 
+              timeDiff < 0.5 &&
               !processedTimestamps.current.has(answer.timeInSeconds) &&
               !showDialog
             ) {
@@ -122,9 +123,9 @@ export const Eje31 = ({ exercise }: InteractiveVideoExerciseProps) => {
           // Check if all answers processed and video mostly watched
           const totalPlayed = player.video.totalPlayed || 0;
           const duration = player.video.duration || 0;
-          
+
           if (
-            duration > 0 && 
+            duration > 0 &&
             totalPlayed >= duration * 0.75 &&
             processedTimestamps.current.size === answers.length &&
             !videoCompleted
@@ -137,7 +138,7 @@ export const Eje31 = ({ exercise }: InteractiveVideoExerciseProps) => {
     };
 
     timeCheckInterval.current = setInterval(checkVideoTime, 500);
-    
+
     return () => {
       if (timeCheckInterval.current) {
         clearInterval(timeCheckInterval.current);
@@ -149,7 +150,7 @@ export const Eje31 = ({ exercise }: InteractiveVideoExerciseProps) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
-      
+
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -161,12 +162,12 @@ export const Eje31 = ({ exercise }: InteractiveVideoExerciseProps) => {
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        
+
         // Convert audio to text (placeholder - would need speech-to-text service)
         // For now, just indicate that audio was recorded
         const transcription = '[Audio grabado - transcripción pendiente]';
         setCurrentResponse(transcription);
-        
+
         // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
       };
@@ -220,7 +221,10 @@ export const Eje31 = ({ exercise }: InteractiveVideoExerciseProps) => {
       const position = (exercise as any).position;
 
       if (position !== undefined && !isNaN(unidad)) {
-        await postUserPosition({ unidad, position });
+        await postUserPosition({
+          unidad,
+          position: await Calculate_index_exercise(exercise)
+        });
       }
 
       if (exerciseId && !isNaN(unidad)) {
@@ -323,11 +327,11 @@ export const Eje31 = ({ exercise }: InteractiveVideoExerciseProps) => {
           <DialogHeader>
             <DialogTitle>Responde en voz alta o por escrito</DialogTitle>
             <DialogDescription>
-              Pausa en {answers[currentAnswerIndex]?.timeInSeconds}s. 
+              Pausa en {answers[currentAnswerIndex]?.timeInSeconds}s.
               Respuesta esperada: "{answers[currentAnswerIndex]?.answer}"
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <Textarea
               placeholder="Escribe tu respuesta aquí..."
@@ -336,7 +340,7 @@ export const Eje31 = ({ exercise }: InteractiveVideoExerciseProps) => {
               rows={4}
               className="resize-none"
             />
-            
+
             <div className="flex items-center gap-2">
               <Button
                 type="button"

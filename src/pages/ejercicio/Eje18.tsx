@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Play, CheckCircle } from 'lucide-react';
 import { postUserPosition, postUserGrade } from '@/lib/api';
 import { toast } from 'sonner';
+import { Calculate_index_exercise } from '@/hooks/calculate_index.ts';
 
 interface VideoExerciseProps {
   exercise: Exercise;
@@ -42,7 +43,7 @@ export const Eje18 = ({ exercise }: VideoExerciseProps) => {
       setLoading(true);
       setError(null);
       const credentials = await getVideoCredentials(videoId);
-      
+
       // Verificar si es "fallo"
       if (credentials === 'fallo' || typeof credentials === 'string') {
         setError('No se pudieron obtener las credenciales del video');
@@ -59,7 +60,7 @@ export const Eje18 = ({ exercise }: VideoExerciseProps) => {
 
   useEffect(() => {
     loadVideoCredentials();
-    
+
     return () => {
       if (progressCheckInterval.current) {
         clearInterval(progressCheckInterval.current);
@@ -78,7 +79,7 @@ export const Eje18 = ({ exercise }: VideoExerciseProps) => {
           player.video.addEventListener('progress', async () => {
             const totalPlayed = player.video.totalPlayed || 0;
             const duration = player.video.duration || 0;
-            
+
             if (duration > 0 && totalPlayed >= duration * 0.75 && !videoCompleted) {
               setVideoCompleted(true);
               await markExerciseCompleted();
@@ -90,7 +91,7 @@ export const Eje18 = ({ exercise }: VideoExerciseProps) => {
 
     // Wait for player to load
     const timer = setTimeout(checkProgress, 2000);
-    
+
     return () => clearTimeout(timer);
   }, [videoCredentials, videoCompleted]);
 
@@ -104,7 +105,10 @@ export const Eje18 = ({ exercise }: VideoExerciseProps) => {
 
       // Mark position
       if (position !== undefined && !isNaN(unidad)) {
-        await postUserPosition({ unidad, position });
+        await postUserPosition({
+          unidad,
+          position: await Calculate_index_exercise(exercise)
+        });
       }
 
       // Mark grade

@@ -7,6 +7,7 @@ import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { postUserPosition, postUserGrade } from '@/lib/api';
 import { checkAnswer } from '@/lib/exerciseUtils';
 import { toast } from '@/hooks/use-toast';
+import { Calculate_index_exercise } from '@/hooks/calculate_index.ts';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Exercise } from '@/types/ejercicio';
 
 interface Sentence {
   sentence: string;
@@ -106,7 +108,7 @@ export function Eje6({ exercise }: Eje6Props) {
       await postUserGrade(exercise._id, grade, String(exercise.unidad || 0));
       await postUserPosition({
         unidad: Number(id),
-        position: exercise.number,
+        position: await Calculate_index_exercise(exercise),
       });
       
       toast({
