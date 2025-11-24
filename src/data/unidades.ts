@@ -377,6 +377,17 @@ export interface Exercise {
     shown?: boolean;
     explanation?: string;
   }>;
+  // Type 1 fields
+  sections?: Array<{
+    includeSeparator?: number;
+    columns: Array<{
+      title: string;
+      fields: Array<{
+        shown: boolean;
+        value: string;
+      }>;
+    }>;
+  }>;
   answers?: Array<{
     timeInSeconds?: number;
     answer: string;
