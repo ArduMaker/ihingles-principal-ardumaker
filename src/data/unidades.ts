@@ -377,17 +377,36 @@ export interface Exercise {
     shown?: boolean;
     explanation?: string;
   }>;
-  // Type 1 fields
-  sections?: Array<{
-    includeSeparator?: number;
-    columns: Array<{
-      title: string;
-      fields: Array<{
-        shown: boolean;
-        value: string;
+  // Type 1 & Type 2 sections
+  sections?: Array<
+    {
+      // Type 1 structure
+      includeSeparator?: number;
+      columns: Array<{
+        title: string;
+        fields: Array<{
+          shown: boolean;
+          value: string;
+        }>;
       }>;
-    }>;
-  }>;
+    } | {
+      // Type 2 structure
+      title: string;
+      left: string[];
+      top: string[];
+      rows: Array<{
+        fields: Array<{
+          shown: boolean;
+          answer: string;
+          answer2?: string;
+          answer3?: string;
+          explanation?: string;
+          options?: string[];
+          includeQuestionMark?: boolean;
+        }>;
+      }>;
+    }
+  >;
   answers?: Array<{
     timeInSeconds?: number;
     answer: string;

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import Eje1 from './Eje1';
+import Eje2 from './Eje2';
 import { Eje6 } from './Eje6';
 import { Eje12 } from './Eje12';
 import { Eje18 } from './Eje18';
@@ -55,6 +56,9 @@ export default function EjercicioView() {
     switch (exerciseType) {
       case 1:
         return <Eje1 exercise={exercise} />;
+      
+      case 2:
+        return <Eje2 exercise={exercise} />;
       
       case 6:
         return <Eje6 exercise={exercise} />;
