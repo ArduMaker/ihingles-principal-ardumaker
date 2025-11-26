@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { useAuth0 } from '@auth0/auth0-react';
 import { GraduationCap, Globe } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Link } from 'react-router-dom';
@@ -7,6 +8,15 @@ import logo from '@/assets/logo.svg';
 
 export const Header = () => {
   const { language, toggleLanguage, t } = useLanguage();
+
+  const { loginWithRedirect, isAuthenticated } = useAuth0();
+
+  const handleStart = () => {
+    // Si el usuario no está autenticado, iniciamos el flujo de login
+    if (!isAuthenticated) return loginWithRedirect();
+    // Si ya está autenticado, navegamos a dashboard vía enlace normal (el Link sigue disponible)
+    // Dejar Link fallback en caso de que no queramos forzar redirect desde aquí
+  };
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -33,8 +43,8 @@ export const Header = () => {
             <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
             <span className="text-xs sm:text-sm font-medium uppercase">{language}</span>
           </button>
-          <Button className="font-semibold text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 h-auto" asChild>
-            <Link to="/dashboard">{t('nav.start')}</Link>
+          <Button className="font-semibold text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 h-auto" onClick={handleStart}>
+            {t('nav.start')}
           </Button>
         </div>
       </div>
