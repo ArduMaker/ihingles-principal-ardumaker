@@ -59,7 +59,7 @@ export const useAuth = () => {
     Cookies.remove(AUTH_COOKIE_NAME);
     Cookies.remove(USER_PROFILE_COOKIE);
     setUser(null);
-    window.location.href = '/';
+    if (window.location.pathname !== '/') window.location.href = '/';
   };
 
   return {

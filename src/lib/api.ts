@@ -19,7 +19,7 @@ export async function api<T>(
   const authToken = getAuthCookie();
   
   const headers: HeadersInit = {
-    //'Content-Type': 'application/json',
+    'Content-Type': 'application/json',
     ...options.headers,
   };
 
@@ -34,7 +34,7 @@ export async function api<T>(
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
-      //headers,
+      headers,
     });
 
     if (!response.ok) {
