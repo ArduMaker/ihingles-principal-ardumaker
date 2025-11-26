@@ -4,6 +4,8 @@ import Cookies from 'js-cookie';
 
 // Llama al endpoint real /users/own y hace parsing compatible con el front viejo.
 export const get_user_profile = async (): Promise<UserProfile> => {
+
+  // Primero intentamos obtener el perfil desde la cookie (si existe)
   const userProfileCookie = Cookies.get(USER_PROFILE_COOKIE);
   if (userProfileCookie) {
     return JSON.parse(userProfileCookie) as UserProfile;
