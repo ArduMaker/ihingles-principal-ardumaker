@@ -452,6 +452,11 @@ export interface Exercise {
     answer3?: string;
     explanation?: string;
   }>>;
+  // Type 8 specific fields (Translation exercise)
+  groupLength?: number;
+  sentence?: string;
+  answer?: string;
+  explanation?: string;
   media?: {
     images?: string[];
     audio?: string[];
