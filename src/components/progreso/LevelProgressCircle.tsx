@@ -15,7 +15,7 @@ export const LevelProgressCircle = ({
   label, 
   isLocked 
 }: LevelProgressCircleProps) => {
-  const size = 120;
+  const size = 100;
   const strokeWidth = 8;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -97,12 +97,12 @@ export const LevelProgressCircle = ({
           <img 
             src={icon} 
             alt={label}
-            className="w-12 h-12 object-contain"
+            className="w-8 h-8 object-contain"
           />
         </div>
       </div>
 
-      <div className="text-lg font-bold text-foreground">
+      <div className="text-base font-bold text-foreground">
         {percentage}%
       </div>
     </div>
