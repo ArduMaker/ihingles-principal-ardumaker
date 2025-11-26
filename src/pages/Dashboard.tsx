@@ -17,7 +17,8 @@ import { get_units_by_level } from '@/data/unidades';
 import { DashboardStat, SkillProgress, RecentUnit, PendingExercise } from '@/types';
 
 const Dashboard = () => {
-  const { isLoading, executeApi } = useApiState();
+  const { executeApi } = useApiState();
+  const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStat[]>([]);
   const [skills, setSkills] = useState<SkillProgress[]>([]);
   const [recentUnits, setRecentUnits] = useState<RecentUnit[]>([]);
@@ -25,6 +26,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     const loadDashboardData = async () => {
+      setIsLoading(true);
+      
       const [statsData, skillsData, recentMockUnits, exercisesData, levelsData] = await Promise.all([
         executeApi(get_dashboard_stats),
         executeApi(get_skills_progress),
@@ -58,6 +61,8 @@ const Dashboard = () => {
 
       setRecentUnits(recent);
       if (exercisesData) setPendingExercises(exercisesData);
+      
+      setIsLoading(false);
     };
 
     loadDashboardData();
