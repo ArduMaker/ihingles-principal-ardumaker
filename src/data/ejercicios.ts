@@ -305,9 +305,3 @@ const mockExercises: Record<string, Exercise> = {
     ]
   } as SentenceAnalysisExercise
 };
-
-export const get_exercise = async (id: string): Promise<Exercise | null> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  return mockExercises[id] || null;
-};

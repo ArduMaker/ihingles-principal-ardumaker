@@ -97,20 +97,14 @@ const mockUnits: BibliotecaUnit[] = [
 ];
 
 export const get_biblioteca_documents = async (): Promise<BibliotecaDocument[]> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
   return mockDocuments;
 };
 
 export const get_biblioteca_units = async (): Promise<BibliotecaUnit[]> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300));
   return mockUnits;
 };
 
 export const toggle_document_favorite = async (documentId: string): Promise<boolean> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 200));
   const doc = mockDocuments.find(d => d.id === documentId);
   if (doc) {
     doc.isFavorite = !doc.isFavorite;
