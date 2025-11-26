@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { InternalLayout } from '@/components/internal/InternalLayout';
-import { ProgresoHeader } from '@/components/progreso/ProgresoHeader';
 import { LevelProgressCircle } from '@/components/progreso/LevelProgressCircle';
 import { UserProgressCard } from '@/components/progreso/UserProgressCard';
 import { SkillTreeBackground } from '@/components/progreso/SkillTreeBackground';
@@ -43,7 +42,7 @@ const Progreso = () => {
   // Calculate progress per level (22, 22, 20 units)
   const levelUnits = [22, 22, 20];
   const completedByLevel = progress?.levelProgress || [];
-  
+
   const getLevelPercentage = (levelIndex: number) => {
     const levelData = completedByLevel[levelIndex];
     if (!levelData) return 0;
@@ -60,14 +59,19 @@ const Progreso = () => {
   return (
     <InternalLayout>
       <div className="w-full">
+
         {/* Header with background */}
-        <ProgresoHeader backgroundImage="/habilidades/principal.png" />
+        <div
+          className="relative w-full h-40 md:h-48 bg-cover bg-center flex items-center justify-end px-8 md:px-16"
+          style={{ backgroundImage: `url(/habilidades/principal.png)` }}
+        />
 
         {/* Main content area with background */}
         <div className="relative">
           {/* Top section with level circles and user card */}
-          <div 
+          <div
             className="relative bg-cover bg-center py-8 px-4 md:px-8"
+            style={{ backgroundImage: 'url(/habilidades/fondo.png)' }}
           >
             <div className="max-w-7xl mx-auto">
               {/* Combined layout: circles on left, card on right */}
@@ -112,9 +116,6 @@ const Progreso = () => {
               </div>
             </div>
           </div>
-
-          {/* Skill tree background section */}
-          <SkillTreeBackground backgroundImage="/habilidades/fondo.png" />
         </div>
       </div>
     </InternalLayout>
