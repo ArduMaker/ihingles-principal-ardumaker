@@ -14,15 +14,8 @@ export async function Calculate_index_exercise(Exercise: any) {
             const index = Number(Exercise.unidad) > 1 ? Number(Exercise.unidad).toString() : (Number(Exercise.unidad) + 1).toPrecision(1).toString();
             INDECES[Exercise.unidad] = await getUnitIndex(index);
         }
-
-        console.log("EXERCISE", Exercise);
-        console.log("POSICIONES", POSICIONES);
         const startIndex = POSICIONES.unidades[Exercise.unidad].startIndex;
-
-        console.log("INDECES", INDECES);
         const ExerciseIndex = INDECES[Exercise.unidad].items.filter((item : any) => item._id === Exercise._id)[0].indicePosition;
-
-        console.log("startIndex", startIndex, "ExerciseIndex", ExerciseIndex);
         return startIndex + ExerciseIndex;
     } catch (e) {
         console.error("Error calculating index for exercise", Exercise, e);

@@ -38,7 +38,7 @@ const levelColors = {
 export const LevelCard = ({ level }: LevelCardProps) => {
   const navigate = useNavigate();
   const colors = levelColors[level.levelId as keyof typeof levelColors];
-  console.log('Rendering LevelCard for level:', level);
+
   return (
     <Card className={`${colors.bg} border-none shadow-lg p-6 space-y-4`}>
       <div className="relative rounded-lg overflow-hidden">

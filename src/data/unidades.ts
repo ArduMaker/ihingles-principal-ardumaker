@@ -226,7 +226,6 @@ export const get_units_by_level_real = async (): Promise<LevelProgress[]> => {
 
     // Queremos exactamente 64 unidades con los títulos del front antiguo.
     const posicionPorUnidad = payload.position ?? {};
-    console.log('boughtUpTo:', payload);
 
     const flatUnits = Array.from({ length: TOTAL_UNITS }, (index, idx) => {
       const unitNumber = idx + 1;
@@ -241,7 +240,6 @@ export const get_units_by_level_real = async (): Promise<LevelProgress[]> => {
 
       // Si no hay suscripción activa, todas las unidades están bloqueadas
       const status = !hasActiveSubscription ? 'locked' : calculatedStatus;
-      console.log('Unit', unitNumber, 'status:', status, 'progress:', progress, 'hasActiveSubscription:', hasActiveSubscription, calculatedStatus);
 
       return {
         id: String(unitNumber),
