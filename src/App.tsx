@@ -30,8 +30,6 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          {/* Redirect to /dashboard when Auth0 returns to / and user is authenticated */}
-          <AuthRedirector />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/terms" element={<Terms />} />
@@ -45,7 +43,6 @@ const App = () => (
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/modulo/:id" element={<Modulo />} />
             <Route path="/unidad/:levelId" element={<Unidad />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
@@ -55,18 +52,3 @@ const App = () => (
 );
 
 export default App;
-
-// Component placed inside <BrowserRouter> to handle post-login redirect behavior.
-function AuthRedirector() {
-  const { isAuthenticated, isLoading } = useAuth0();
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && location.pathname === '/') {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [isLoading, isAuthenticated, location.pathname, navigate]);
-
-  return null;
-}

@@ -28,7 +28,6 @@ export const useAuth = () => {
     if (!authCookie) {
       setUser(null);
       setIsLoading(false);
-      // Evitar redireccionar si ya estamos en la página de login
       if (loc.pathname !== '/') navigate('/');
       return;
     }

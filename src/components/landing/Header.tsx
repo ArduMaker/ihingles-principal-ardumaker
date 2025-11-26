@@ -12,13 +12,8 @@ export const Header = () => {
   const { loginWithRedirect, isAuthenticated } = useAuth0();
 
   const handleStart = () => {
-    // Si el usuario no está autenticado, iniciamos el flujo de login
     if (!isAuthenticated) return loginWithRedirect();
-
-    // Si ya está autenticado, navegamos a dashboard vía enlace normal (el Link sigue disponible)
     navigate('/dashboard');
-
-    // Dejar Link fallback en caso de que no queramos forzar redirect desde aquí
   };
 
   return (
