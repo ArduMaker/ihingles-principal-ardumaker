@@ -167,7 +167,6 @@ export const getUnitState = (
   const key = String(unitNumber);
   let status: 'completed' | 'in-progress' | 'locked' = 'locked';
 
-  console.log("percent", percent)
   if (unidadesStatus && (unidadesStatus[key] === true || unidadesStatus[Number(key)] === true)) {
     status = 'completed';
   } else if (percent >= 100) {

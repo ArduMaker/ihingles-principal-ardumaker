@@ -4,7 +4,6 @@ export const API_BASE_URL = 'https://www.iph-api.net';
 
 //export const API_BASE_URL = 'https://oxibackihingles.carlos.arducloud.com';
 
-
 export const AUTH_COOKIE_NAME = 'Autenticacion';
 
 // Get auth cookie from document.cookie
@@ -14,11 +13,22 @@ export const getAuthCookie = (): string | null => {
   return authCookie ? authCookie.split('=')[1] : null;
 };
 
+
+// Cache para consultas en menos de 2 segundos, si es el mismo enpoint en ese tiempo, devolver el mismo resultado
+const CACHE : { [key: string]: [number, any] } = {};
+
+
 // Generic API call function
 export async function api<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+
+  if (CACHE[endpoint] && (Date.now() - CACHE[endpoint][0] < 2000) && CACHE[endpoint][1] != null) {
+    return CACHE[endpoint][1];
+  }
+
+  CACHE[endpoint] = [Date.now(), null];
   const authToken = getAuthCookie();
   
   const headers: HeadersInit = {
@@ -28,10 +38,7 @@ export async function api<T>(
 
   if (authToken) {
     // Añadimos el header Authorization con el formato Bearer para que coincida
-    // con lo que espera el `front_joaquin`. Conservamos también el header
-    // `Autenticacion` por compatibilidad con posibles endpoints existentes.
     headers['Authorization'] = `Bearer ${authToken}`;
-    //headers[AUTH_COOKIE_NAME] = authToken;
   }
 
   try {
@@ -41,7 +48,8 @@ export async function api<T>(
     });
 
     if (!response.ok) {
-      if (response.status === 401) {
+      if (response.status === 401 || response.status === 403 || response.status === 409) {
+        window.location.href = '/';
         throw new Error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
       }
       throw new Error('No se pudo completar la operación. Intenta nuevamente.');
@@ -50,7 +58,9 @@ export async function api<T>(
     const clone = response.clone();
 
     try{
-      return await response.json();
+      const jsonResponse = await response.json();
+      CACHE[endpoint][1] = jsonResponse;
+      return jsonResponse;
     }
     catch(error){
       const rawBody = await clone.text();
