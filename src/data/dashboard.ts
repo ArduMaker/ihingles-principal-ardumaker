@@ -51,6 +51,7 @@ export const get_skills_progress = async (): Promise<SkillProgress[]> => {
   // Intentamos obtener las estadísticas reales del endpoint del backend.
   try {
     const data = await api<any>('/statistics/global/own');
+    const unitsData = await api<any>('/statistics/global/unidades');
 
     const getPlatformValue = async (key: string) => {
 
@@ -59,7 +60,6 @@ export const get_skills_progress = async (): Promise<SkillProgress[]> => {
 
       // Si no viene la `platform`, pedimos los datos por unidad y calculamos la media por habilidad.
       try {
-        const unitsData = await api<any>('/statistics/global/unidades');
         if (Array.isArray(unitsData) && unitsData.length > 0) {
           const values: number[] = [];
           for (const entry of unitsData) {
