@@ -19,7 +19,7 @@ export async function api<T>(
   const authToken = getAuthCookie();
   
   const headers: HeadersInit = {
-    'Content-Type': 'application/json',
+    //'Content-Type': 'application/json',
     ...options.headers,
   };
 
@@ -27,14 +27,14 @@ export async function api<T>(
     // Añadimos el header Authorization con el formato Bearer para que coincida
     // con lo que espera el `front_joaquin`. Conservamos también el header
     // `Autenticacion` por compatibilidad con posibles endpoints existentes.
-    //headers['Authorization'] = `Bearer ${authToken}`;
+    headers['Authorization'] = `Bearer ${authToken}`;
     //headers[AUTH_COOKIE_NAME] = authToken;
   }
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
-      headers,
+      //headers,
     });
 
     if (!response.ok) {
