@@ -16,6 +16,7 @@ import {
 import { get_units_by_level } from '@/data/unidades';
 import { DashboardStat, SkillProgress, RecentUnit, PendingExercise } from '@/types';
 
+
 const Dashboard = () => {
   const { executeApi } = useApiState();
   const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +66,21 @@ const Dashboard = () => {
       setIsLoading(false);
     };
 
-    loadDashboardData();
+    // Si en el url tenemos = code, esperamos hasta que Auth0 termine de cargar
+    // antes de cargar los datos del dashboard
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('code')) {
+      setIsLoading(true);
+      const checkAuth0Loaded = setInterval(() => {
+        const auth0Loading = (window as any)?.auth0Loading;
+        if (auth0Loading === false) {
+          clearInterval(checkAuth0Loaded);
+          loadDashboardData();
+        }
+      }, 100);
+    } else {
+      loadDashboardData();
+    }
   }, []);
 
   return (
@@ -86,23 +101,6 @@ const Dashboard = () => {
               ))}
             </div>
             
-            {/* Chart and Skills Skeletons */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Skeleton 
-                className="lg:col-span-2 h-[350px] rounded-lg"
-                style={{ animationDelay: '0.2s' }}
-              />
-              <Skeleton 
-                className="h-[350px] rounded-lg"
-                style={{ animationDelay: '0.3s' }}
-              />
-            </div>
-
-            {/* Recent Units Skeleton */}
-            <Skeleton 
-              className="h-64 rounded-lg"
-              style={{ animationDelay: '0.4s' }}
-            />
           </div>
         ) : (
           <div className="space-y-6 animate-fade-in">
