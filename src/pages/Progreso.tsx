@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { InternalLayout } from '@/components/internal/InternalLayout';
 import { LevelProgressCircle } from '@/components/progreso/LevelProgressCircle';
 import { UserProgressCard } from '@/components/progreso/UserProgressCard';
-import { SkillTreeBackground } from '@/components/progreso/SkillTreeBackground';
+import { ProgresoHero } from '@/components/progreso/ProgresoHero';
 import { get_overall_progress } from '@/data/unidades';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -58,57 +58,64 @@ const Progreso = () => {
 
   return (
     <InternalLayout>
-      <div className="w-full">
+      <div className="w-full min-h-screen">
+        {/* Container with padding */}
+        <div className="container mx-auto px-4 py-6">
+          {/* Hero section */}
+          <ProgresoHero />
 
-        {/* Header with background */}
-        <div
-          className="relative w-full h-40 md:h-48 bg-cover bg-center flex items-center justify-end px-8 md:px-16"
-          style={{ backgroundImage: `url(/habilidades/principal.png)` }}
-        />
-
-        {/* Main content area with background */}
-        <div className="max-w-7xl mx-auto">
-          {/* Combined layout: circles on left, card on right */}
-          <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8 justify-center">
-            {/* Level circles - left side */}
-            <div className="flex flex-wrap justify-center gap-6 md:gap-12">
-              <LevelProgressCircle
-                level="explorador"
-                percentage={getLevelPercentage(0)}
-                icon="/habilidades/explorador.png"
-                label="Explorador"
-                isLocked={false}
-              />
-              <LevelProgressCircle
-                level="cualificado"
-                percentage={getLevelPercentage(1)}
-                icon="/habilidades/cualificado.png"
-                label="Cualificado"
-                isLocked={getLevelPercentage(0) < 100}
-              />
-              <LevelProgressCircle
-                level="maestro"
-                percentage={getLevelPercentage(2)}
-                icon="/habilidades/maestro.png"
-                label="Maestro"
-                isLocked={getLevelPercentage(1) < 100}
-              />
-            </div>
-            {/* User progress card - right side */}
-            <div className="w-full lg:w-auto lg:min-w-[400px] lg:max-w-[500px]">
-              <UserProgressCard
-                name={user?.name || 'Alberto González'}
-                level={overallPercentage}
-                title=""
-                xp={`XP: ${currentXP} / ${totalXP}`}
-                percentage={overallPercentage}
-                avatar={user?.avatar}
-                shield={user?.shield}
-              />
+          {/* Content section with background */}
+          <div 
+            className="relative bg-cover bg-center rounded-lg p-8 md:p-12"
+            style={{ backgroundImage: 'url(/habilidades/fondo.png)' }}
+          >
+            {/* Overlay for better readability */}
+            <div className="absolute inset-0 bg-black/20 rounded-lg" />
+            
+            {/* Content */}
+            <div className="relative z-10 max-w-7xl mx-auto">
+              <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8 justify-center">
+                {/* Level circles - left side */}
+                <div className="flex flex-wrap justify-center gap-6 md:gap-12">
+                  <LevelProgressCircle
+                    level="explorador"
+                    percentage={getLevelPercentage(0)}
+                    icon="/habilidades/explorador.png"
+                    label="Explorador"
+                    isLocked={false}
+                  />
+                  <LevelProgressCircle
+                    level="cualificado"
+                    percentage={getLevelPercentage(1)}
+                    icon="/habilidades/cualificado.png"
+                    label="Cualificado"
+                    isLocked={getLevelPercentage(0) < 100}
+                  />
+                  <LevelProgressCircle
+                    level="maestro"
+                    percentage={getLevelPercentage(2)}
+                    icon="/habilidades/maestro.png"
+                    label="Maestro"
+                    isLocked={getLevelPercentage(1) < 100}
+                  />
+                </div>
+                
+                {/* User progress card - right side */}
+                <div className="w-full lg:w-auto lg:min-w-[400px] lg:max-w-[500px]">
+                  <UserProgressCard
+                    name={user?.name || 'Alberto González'}
+                    level={overallPercentage}
+                    title=""
+                    xp={`XP: ${currentXP} / ${totalXP}`}
+                    percentage={overallPercentage}
+                    avatar={user?.avatar}
+                    shield={user?.shield}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
       </div>
     </InternalLayout>
   );
