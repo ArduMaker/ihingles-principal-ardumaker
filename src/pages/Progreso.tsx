@@ -58,17 +58,19 @@ const Progreso = () => {
 
   return (
     <InternalLayout>
-      <div className="w-full flex flex-col">
-        {/* Hero section */}
-        <ProgresoHero />
+      <div className="w-full min-h-screen">
+        {/* Container with padding */}
+        <div className="container mx-auto px-4 py-6">
+          {/* Hero section */}
+          <ProgresoHero />
 
-        {/* Content section with background - fills remaining screen */}
-        <div 
-          className="relative bg-cover bg-center flex-1 min-h-[calc(100vh-280px)] p-8 md:p-12"
-          style={{ backgroundImage: 'url(/habilidades/fondo.png)' }}
-        >
-          {/* Overlay for better readability */}
-          <div className="absolute inset-0 bg-black/20" />
+          {/* Content section with background */}
+          <div 
+            className="relative bg-cover bg-center rounded-lg p-8 md:p-12"
+            style={{ backgroundImage: 'url(/habilidades/fondo.png)' }}
+          >
+            {/* Overlay for better readability */}
+            <div className="absolute inset-0 bg-black/20 rounded-lg" />
             
             {/* Content */}
             <div className="relative z-10 max-w-7xl mx-auto">
@@ -114,8 +116,9 @@ const Progreso = () => {
             </div>
           </div>
         </div>
-      </InternalLayout>
-    );
-  };
-  
-  export default Progreso;
+      </div>
+    </InternalLayout>
+  );
+};
+
+export default Progreso;
