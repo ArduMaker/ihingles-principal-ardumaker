@@ -14,17 +14,17 @@ export const DashboardProgressChart = ({ data }: DashboardProgressChartProps) =>
   }));
 
   return (
-    <Card className="p-6 bg-card border-border">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-heading">Progreso Personal</h2>
-        <div className="flex gap-4 text-sm">
+    <Card className="p-4 md:p-6 bg-card border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <h2 className="text-lg md:text-xl font-bold text-heading">Progreso Personal</h2>
+        <div className="flex flex-wrap gap-3 md:gap-4 text-xs md:text-sm">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#8FB896]"></div>
-            <span className="text-foreground">Tu progreso</span>
+            <span className="text-foreground whitespace-nowrap">Tu progreso</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#2C5F2D]"></div>
-            <span className="text-foreground">La Media</span>
+            <span className="text-foreground whitespace-nowrap">La Media</span>
           </div>
         </div>
       </div>

@@ -69,16 +69,41 @@ const Dashboard = () => {
         <h1 className="text-2xl md:text-3xl font-bold text-heading">Dashboard de Aprendizaje</h1>
         
         {isLoading ? (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32" />)}
+          <div className="space-y-6 animate-fade-in">
+            {/* Stats Skeletons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[1, 2].map(i => (
+                <Skeleton 
+                  key={i} 
+                  className="h-28 rounded-lg"
+                  style={{ animationDelay: `${i * 0.1}s` }}
+                />
+              ))}
             </div>
+            
+            {/* Chart and Skills Skeletons */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Skeleton 
+                className="lg:col-span-2 h-[350px] rounded-lg"
+                style={{ animationDelay: '0.2s' }}
+              />
+              <Skeleton 
+                className="h-[350px] rounded-lg"
+                style={{ animationDelay: '0.3s' }}
+              />
+            </div>
+
+            {/* Recent Units Skeleton */}
+            <Skeleton 
+              className="h-64 rounded-lg"
+              style={{ animationDelay: '0.4s' }}
+            />
           </div>
         ) : (
-          <>
+          <div className="space-y-6 animate-fade-in">
             <DashboardStats stats={stats} />
             
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 ">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
               <div className="lg:col-span-2">
                 <DashboardProgressChart data={skills} />
               </div>
@@ -87,10 +112,10 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 gap-4 md:gap-6">
               <DashboardRecentUnits units={recentUnits} />
             </div>
-          </>
+          </div>
         )}
       </div>
     </InternalLayout>
