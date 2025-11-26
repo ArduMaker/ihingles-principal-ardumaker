@@ -452,8 +452,6 @@ export interface Exercise {
     answer3?: string;
     explanation?: string;
   }>>;
-  // Type 8 translation
-  groupLength?: number;
   media?: {
     images?: string[];
     audio?: string[];
