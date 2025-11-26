@@ -424,6 +424,29 @@ export interface Exercise {
       explanation?: string;
     }>;
   }>;
+  // Type 4 left/right columns
+  Description?: string;
+  Description2?: string;
+  left?: Array<{
+    answer: string;
+    shown?: boolean;
+    color?: string;
+    options?: string[];
+    tachado?: boolean;
+    answer2?: string;
+    answer3?: string;
+    explanation?: string;
+  }>;
+  right?: Array<Array<{
+    answer: string;
+    shown?: boolean;
+    color?: string;
+    options?: string[];
+    tachado?: boolean;
+    answer2?: string;
+    answer3?: string;
+    explanation?: string;
+  }>>;
   answers?: Array<{
     timeInSeconds?: number;
     answer: string;
