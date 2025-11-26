@@ -1,6 +1,9 @@
 // API configuration and utilities
 
-export const API_BASE_URL = 'https://www.iph-api.net';
+//export const API_BASE_URL = 'https://www.iph-api.net';
+
+export const API_BASE_URL = 'https://oxibackihingles.carlos.arducloud.com';
+
 
 export const AUTH_COOKIE_NAME = 'Autenticacion';
 
