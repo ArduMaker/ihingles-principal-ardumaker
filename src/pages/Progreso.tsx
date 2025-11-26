@@ -67,56 +67,48 @@ const Progreso = () => {
         />
 
         {/* Main content area with background */}
-        <div className="relative">
-          {/* Top section with level circles and user card */}
-          <div
-            className="relative bg-cover bg-center py-8 px-4 md:px-8"
-            style={{ backgroundImage: 'url(/habilidades/fondo.png)' }}
-          >
-            <div className="max-w-7xl mx-auto">
-              {/* Combined layout: circles on left, card on right */}
-              <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8 justify-center">
-                {/* Level circles - left side */}
-                <div className="flex flex-wrap justify-center gap-6 md:gap-12">
-                  <LevelProgressCircle
-                    level="explorador"
-                    percentage={getLevelPercentage(0)}
-                    icon="/habilidades/explorador.png"
-                    label="Explorador"
-                    isLocked={false}
-                  />
-                  <LevelProgressCircle
-                    level="cualificado"
-                    percentage={getLevelPercentage(1)}
-                    icon="/habilidades/cualificado.png"
-                    label="Cualificado"
-                    isLocked={getLevelPercentage(0) < 100}
-                  />
-                  <LevelProgressCircle
-                    level="maestro"
-                    percentage={getLevelPercentage(2)}
-                    icon="/habilidades/maestro.png"
-                    label="Maestro"
-                    isLocked={getLevelPercentage(1) < 100}
-                  />
-                </div>
-
-                {/* User progress card - right side */}
-                <div className="w-full lg:w-auto lg:min-w-[400px] lg:max-w-[500px]">
-                  <UserProgressCard
-                    name={user?.name || 'Alberto González'}
-                    level={overallPercentage}
-                    title=""
-                    xp={`XP: ${currentXP} / ${totalXP}`}
-                    percentage={overallPercentage}
-                    avatar={user?.avatar}
-                    shield={user?.shield}
-                  />
-                </div>
-              </div>
+        <div className="max-w-7xl mx-auto">
+          {/* Combined layout: circles on left, card on right */}
+          <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8 justify-center">
+            {/* Level circles - left side */}
+            <div className="flex flex-wrap justify-center gap-6 md:gap-12">
+              <LevelProgressCircle
+                level="explorador"
+                percentage={getLevelPercentage(0)}
+                icon="/habilidades/explorador.png"
+                label="Explorador"
+                isLocked={false}
+              />
+              <LevelProgressCircle
+                level="cualificado"
+                percentage={getLevelPercentage(1)}
+                icon="/habilidades/cualificado.png"
+                label="Cualificado"
+                isLocked={getLevelPercentage(0) < 100}
+              />
+              <LevelProgressCircle
+                level="maestro"
+                percentage={getLevelPercentage(2)}
+                icon="/habilidades/maestro.png"
+                label="Maestro"
+                isLocked={getLevelPercentage(1) < 100}
+              />
+            </div>
+            {/* User progress card - right side */}
+            <div className="w-full lg:w-auto lg:min-w-[400px] lg:max-w-[500px]">
+              <UserProgressCard
+                name={user?.name || 'Alberto González'}
+                level={overallPercentage}
+                title=""
+                xp={`XP: ${currentXP} / ${totalXP}`}
+                percentage={overallPercentage}
+                avatar={user?.avatar}
+                shield={user?.shield}
+              />
             </div>
           </div>
         </div>
+
       </div>
     </InternalLayout>
   );
