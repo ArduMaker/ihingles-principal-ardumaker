@@ -3,11 +3,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { User } from '@/types/auth';
 import Cookies from 'js-cookie';
 import { get_user_profile } from '@/data/profile';
-
-export const AUTH_COOKIE_NAME = 'Autenticacion';
-const USER_PROFILE_COOKIE = 'UserProfile';
+import { AUTH_COOKIE_NAME, USER_PROFILE_COOKIE } from '@/lib/api';
 
 export const useAuth = () => {
+
   const [user, setUser] = useState<User | null>(() => {
     const cached = Cookies.get(USER_PROFILE_COOKIE);
     return cached ? JSON.parse(cached) : null;
@@ -41,6 +40,7 @@ export const useAuth = () => {
       } else {
         const profile = await get_user_profile();
         if (profile) {
+          profile.time = new Date().toISOString();
           setUser(profile);
           Cookies.set(USER_PROFILE_COOKIE, JSON.stringify(profile), { expires: 7 });
         }

@@ -8,6 +8,7 @@ export interface User {
   phone?: string;
   country?: string;
   city?: string;
+  time?: string;
 }
 
 export interface LearningSkill {

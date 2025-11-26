@@ -1,29 +1,17 @@
 import { UserProfile } from '@/types/auth';
-import { api } from '@/lib/api';
-
-export const mockUserProfile: UserProfile = {
-  id: '1',
-  name: 'Alberto González',
-  email: 'Alberto_G@gmail.com',
-  phone: '+34 678 986 097',
-  country: 'España',
-  city: 'Madrid',
-  subtitle: 'Level Maestro del Río de la Escritura',
-  skills: [
-    { skill: 'Grammar', value: 75 },
-    { skill: 'Listening', value: 65 },
-    { skill: 'Pronunciation', value: 55 },
-    { skill: 'Reading', value: 70 },
-    { skill: 'Speaking', value: 50 },
-    { skill: 'Writing', value: 60 },
-  ],
-  unitsCompleted: 4,
-  totalUnits: 69,
-  consecutiveDays: 15,
-};
+import { api, AUTH_COOKIE_NAME, USER_PROFILE_COOKIE } from '@/lib/api';
+import Cookies from 'js-cookie';
 
 // Llama al endpoint real /users/own y hace parsing compatible con el front viejo.
 export const get_user_profile = async (): Promise<UserProfile> => {
+
+  const cookie = Cookies.get(AUTH_COOKIE_NAME);
+  
+  if (cookie)
+  {
+    return cookie as unknown as UserProfile;
+  }
+
   try {
     const res = await api<any>('/users/own', { method: 'GET' });
 
@@ -55,7 +43,6 @@ export const get_user_profile = async (): Promise<UserProfile> => {
 
     return user as UserProfile;
   } catch (e) {
-    console.error('Error obteniendo perfil de usuario, usando mock:', e);
-    return mockUserProfile;
+    return null;
   }
 };

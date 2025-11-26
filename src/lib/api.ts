@@ -1,10 +1,9 @@
-// API configuration and utilities
+import { VocabularyResponse } from '@/types/vocabulary';
 
 export const API_BASE_URL = 'https://www.iph-api.net';
-
-//export const API_BASE_URL = 'https://oxibackihingles.carlos.arducloud.com';
-
 export const AUTH_COOKIE_NAME = 'Autenticacion';
+export const USER_PROFILE_COOKIE = 'UserProfile';
+export const CACHE : { [key: string]: [number, any] } = {};
 
 // Get auth cookie from document.cookie
 export const getAuthCookie = (): string | null => {
@@ -12,11 +11,6 @@ export const getAuthCookie = (): string | null => {
   const authCookie = cookies.find(cookie => cookie.trim().startsWith(`${AUTH_COOKIE_NAME}=`));
   return authCookie ? authCookie.split('=')[1] : null;
 };
-
-
-// Cache para consultas en menos de 2 segundos, si es el mismo enpoint en ese tiempo, devolver el mismo resultado
-const CACHE : { [key: string]: [number, any] } = {};
-
 
 // Generic API call function
 export async function api<T>(
@@ -37,7 +31,6 @@ export async function api<T>(
   };
 
   if (authToken) {
-    // Añadimos el header Authorization con el formato Bearer para que coincida
     headers['Authorization'] = `Bearer ${authToken}`;
   }
 
@@ -56,7 +49,6 @@ export async function api<T>(
     }
 
     const clone = response.clone();
-
     try{
       const jsonResponse = await response.json();
       CACHE[endpoint][1] = jsonResponse;
@@ -89,21 +81,6 @@ export const postUserGrade = async (exerciseId: string, grade: number, unit: str
     body: JSON.stringify({ payload }),
   });
 };
-
-// Vocabulary endpoints
-export interface VocabularyItem {
-  vocabularyType: string;
-  vocabularyLevel: string;
-  title: string;
-  explanation: string;
-  example: string;
-}
-
-export interface VocabularyResponse {
-  data: VocabularyItem[];
-  count: number;
-  page: string;
-}
 
 export const getVocabulary = async (searchQuery?: string, page: number = 1): Promise<VocabularyResponse> => {
   const params = new URLSearchParams({
