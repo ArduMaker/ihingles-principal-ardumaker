@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { VocabularyItem } from '@/lib/api';
+import { VocabularyItem } from '@/types/vocabulary';
 
 interface VocabularioCardProps {
   item: VocabularyItem;
