@@ -11,7 +11,7 @@ export const ProgresoHero = ({ title = "Árbol de habilidades" }: ProgresoHeroPr
         className="w-full h-full object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent" />
-      <h1 className="absolute bottom-8 right-8 text-5xl font-bold text-white">
+      <h1 className="absolute bottom-8 right-8 text-5xl font-bold font-alef text-white">
         {title}
       </h1>
     </div>
