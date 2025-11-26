@@ -2,19 +2,22 @@ import { Button } from '@/components/ui/button';
 import { useAuth0 } from '@auth0/auth0-react';
 import { GraduationCap, Globe } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Link } from 'react-router-dom';
-import shieldIcon from '@/assets/icons/shield.svg';
 import logo from '@/assets/logo.svg';
+import { useParams, useNavigate } from 'react-router-dom';
 
 export const Header = () => {
   const { language, toggleLanguage, t } = useLanguage();
+  const navigate = useNavigate();
 
   const { loginWithRedirect, isAuthenticated } = useAuth0();
 
   const handleStart = () => {
     // Si el usuario no está autenticado, iniciamos el flujo de login
     if (!isAuthenticated) return loginWithRedirect();
+
     // Si ya está autenticado, navegamos a dashboard vía enlace normal (el Link sigue disponible)
+    navigate('/dashboard');
+
     // Dejar Link fallback en caso de que no queramos forzar redirect desde aquí
   };
 
