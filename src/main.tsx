@@ -48,7 +48,7 @@ createRoot(document.getElementById("root")!).render(
 		clientId={ENV.okta_clientId}
 		authorizationParams={{
 			// Al terminar el login, redirigimos a /dashboard para cumplir el requerimiento
-			redirect_uri: `${window.location.origin}/dashboard`,
+			redirect_uri: `${window.location.origin}`,
 			audience: ENV.okta_audience,
 			scope: ENV.okta_scope,
 		}}
