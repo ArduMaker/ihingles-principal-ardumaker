@@ -20,11 +20,11 @@ export const UserProgressCard = ({
   shield
 }: UserProgressCardProps) => {
   return (
-    <Card className="bg-[#C8E6C9]/90 border-[#7CB342] border-4 p-6 backdrop-blur-sm">
-      <div className="flex flex-col sm:flex-row items-center gap-6">
+    <Card className="bg-[#C8E6C9]/95 border-[#7CB342] border-4 p-4 backdrop-blur-sm">
+      <div className="flex items-center gap-4">
         {/* Avatar */}
-        <div className="relative">
-          <div className="w-24 h-24 rounded-lg overflow-hidden border-4 border-[#DFB400] bg-white">
+        <div className="relative flex-shrink-0">
+          <div className="w-20 h-20 rounded-lg overflow-hidden border-4 border-[#DFB400] bg-white">
             {avatar ? (
               <img 
                 src={avatar} 
@@ -32,7 +32,7 @@ export const UserProgressCard = ({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-[#7CB342] text-white text-3xl font-bold">
+              <div className="w-full h-full flex items-center justify-center bg-[#7CB342] text-white text-2xl font-bold">
                 {name.charAt(0).toUpperCase()}
               </div>
             )}
@@ -40,33 +40,33 @@ export const UserProgressCard = ({
         </div>
 
         {/* User info */}
-        <div className="flex-1 text-center sm:text-left">
-          <h2 className="text-2xl font-bold text-[#2C5F2D] mb-1">{name}</h2>
-          <p className="text-sm text-[#4A7C59] mb-2">{title}</p>
-          <p className="text-xs text-[#4A7C59] mb-3">{xp}</p>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl font-bold text-[#2C5F2D] mb-0.5 truncate">{name}</h2>
+          <p className="text-xs text-[#4A7C59] mb-1 truncate">{title}</p>
+          <p className="text-xs text-[#4A7C59] mb-2">{xp}</p>
           
           {/* Progress bar */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 bg-[#A5D6A7] rounded-full h-3 overflow-hidden">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 bg-[#A5D6A7] rounded-full h-2.5 overflow-hidden">
               <div 
                 className="bg-[#2C5F2D] h-full transition-all duration-500"
                 style={{ width: `${percentage}%` }}
               />
             </div>
-            <span className="text-sm font-bold text-[#2C5F2D] min-w-[45px]">
+            <span className="text-xs font-bold text-[#2C5F2D] min-w-[40px]">
               {percentage}%
             </span>
           </div>
         </div>
 
         {/* Level badge */}
-        <div className="flex flex-col items-center gap-2">
-          <div className="text-sm font-medium text-[#4A7C59]">Nvl: {level}</div>
+        <div className="flex flex-col items-center gap-1 flex-shrink-0">
+          <div className="text-base font-bold text-[#2C5F2D]">Nvl: {level}</div>
           {shield && (
             <img 
               src={shield} 
               alt="Shield"
-              className="w-10 h-10 object-contain"
+              className="w-8 h-8 object-contain"
             />
           )}
         </div>
