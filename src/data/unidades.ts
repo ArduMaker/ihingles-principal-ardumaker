@@ -407,6 +407,23 @@ export interface Exercise {
       }>;
     }
   >;
+  // Type 3 formulas
+  formulas?: Array<{
+    name: string;
+    textoAuxiliar?: string;
+    options: string[];
+    answers: Array<{
+      value: string;
+      shown?: boolean;
+      color?: string;
+      black?: string;
+      parentesis?: boolean;
+      asterisco?: boolean;
+      answer2?: string;
+      answer3?: string;
+      explanation?: string;
+    }>;
+  }>;
   answers?: Array<{
     timeInSeconds?: number;
     answer: string;
