@@ -42,30 +42,9 @@ export const get_dashboard_stats = async (): Promise<DashboardStat[]> => {
 
     return stats;
   } catch (e) {
-    // Fallback a valores mock si algo falla
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return [
-      {
-        id: 'promedio',
-        label: 'Promedio Global',
-        value: '85%',
-        change: '+5%',
-        subtitle: 'Comparado con el mes anterior',
-        icon: '/Porcentaje Globnal-01.png'
-      },
-      {
-        id: 'unidades',
-        label: 'Unidades Terminados',
-        value: '4 / 69',
-        change: '33%',
-        subtitle: 'Progreso del curso actual',
-        icon: '/unidades-01-01.png'
-      },
-    ];
+    return [];
   }
 };
-
-const CACHE = {};
 
 // Mock async function for skills progress
 export const get_skills_progress = async (): Promise<SkillProgress[]> => {
@@ -73,8 +52,6 @@ export const get_skills_progress = async (): Promise<SkillProgress[]> => {
   try {
     const data = await api<any>('/statistics/global/own');
 
-    // El backend devuelve valores en 0..1 por skill. Normalizamos a 0..100.
-    let CACHE: { [key: string]: number } = {};
     const getPlatformValue = async (key: string) => {
 
       // Si la respuesta ya contiene `platform`, la usamos.
@@ -90,8 +67,7 @@ export const get_skills_progress = async (): Promise<SkillProgress[]> => {
           }
           if (values.length > 0) {
             const avg = values.reduce((a, b) => a + b, 0) / values.length;
-            CACHE[key] = Math.round(avg * 100);
-            return CACHE[key];
+            return Math.round(avg * 100);
           }
         }
       } catch (e) {
@@ -122,37 +98,16 @@ export const get_skills_progress = async (): Promise<SkillProgress[]> => {
     const skills = await Promise.all(skillPromises);
     return skills;
   } catch (e) {
-    // Fallback al mock local si falla la petición
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return [
-      { id: 'grammar', name: 'Grammar', userProgress: 10, averageProgress: 40 },
-      { id: 'listening', name: 'Listening', userProgress: 50, averageProgress: 30 },
-      { id: 'pronunciation', name: 'Pronunciation', userProgress: 60, averageProgress: 45 },
-      { id: 'reading', name: 'Reading', userProgress: 20, averageProgress: 65 },
-      { id: 'speaking', name: 'Speaking', userProgress: 80, averageProgress: 55 },
-      { id: 'writing', name: 'Writing', userProgress: 70, averageProgress: 50 }
-    ];
+    return [];
   }
 };
 
 // Mock async function for recent units
 export const get_recent_units = async (): Promise<RecentUnit[]> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  return [
-    { id: '1', name: 'Unidad 1: Nombre de la unidad', progress: 80 },
-    { id: '2', name: 'Unidad 2: Nombre de la unidad', progress: 60 },
-    { id: '3', name: 'Unidad 3: Nombre de la unidad', progress: 75 }
-  ];
+  return [];
 };
 
 // Mock async function for pending exercises
 export const get_pending_exercises = async (): Promise<PendingExercise[]> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  return [
-    { id: '1', title: 'Past Perfect Tense', type: 'grammar', timeAgo: 'Hace 2 días' },
-    { id: '2', title: 'Past Perfect Tense', type: 'listening', timeAgo: 'Hace 3 días' },
-    { id: '3', title: 'Past Perfect Tense', type: 'reading', timeAgo: 'Hace 8 días' }
-  ];
+  return [];
 };
