@@ -1,6 +1,4 @@
 import { VocabularyResponse } from '@/types/vocabulary';
-import Cookies from 'js-cookie';
-
 export const API_BASE_URL = 'https://www.iph-api.net';
 export const AUTH_COOKIE_NAME = 'Autenticacion';
 export const USER_PROFILE_COOKIE = 'UserProfile';
@@ -20,7 +18,6 @@ export async function api<T>(
 ): Promise<T> {
 
   // Check cache first
-  CACHE = Cookies.get('API_CACHE') ? JSON.parse(Cookies.get('API_CACHE') as string) : {};
   if (CACHE[endpoint] && (Date.now() - CACHE[endpoint][0] < 4000) && CACHE[endpoint][1] != null) {
     return CACHE[endpoint][1];
   }
@@ -56,7 +53,6 @@ export async function api<T>(
     try{
       const jsonResponse = await response.json();
       CACHE[endpoint][1] = jsonResponse;
-      Cookies.set('API_CACHE', JSON.stringify(CACHE), { expires: 1/1440 }); // 1 minute
       return jsonResponse;
     }
     catch(error){
