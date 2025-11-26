@@ -42,7 +42,7 @@ export async function api<T>(
     });
 
     if (!response.ok) {
-      if (response.status === 401 || response.status === 403 || response.status === 409) {
+      if (response.status === 401 || response.status === 409) {
         window.location.href = '/';
         throw new Error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
       }

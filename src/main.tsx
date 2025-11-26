@@ -43,7 +43,14 @@ createRoot(document.getElementById("root")!).render(
 			redirect_uri: `${window.location.origin}/dashboard`,
 			audience: ENV.okta_audience,
 			scope: ENV.okta_scope,
-		}}
+			}}
+			onRedirectCallback={(appState?: any) => {
+				// Emitimos un evento para que la app (que está dentro de BrowserRouter)
+				// pueda usar la navegación del router (useNavigate) en lugar de
+				// llamar a window.location desde aquí.
+				const returnTo = appState && appState.returnTo;
+				window.dispatchEvent(new CustomEvent('auth:redirect', { detail: { returnTo } }));
+			}}
 		useRefreshTokens={true}
 		useRefreshTokensFallback={false}
 		cacheLocation="localstorage"
