@@ -362,12 +362,14 @@ export interface Exercise {
   videoID?: string;
   options?: Array<{ id: string; text: string }>;
   sentences?: Array<{
-    sentence: string;
-    answer?: string;
+    sentence?: string;
+    answer?: string | boolean;
     answer2?: string;
     answer3?: string;
     shown?: boolean;
     explanation?: string;
+    description?: string;
+    description2?: string;
     // Type 5 specific fields
     answers?: (string | [string, string[]])[];
     answers2?: (string | null)[];
@@ -470,6 +472,8 @@ export interface Exercise {
       options?: string[];
     }>;
   }>;
+  // Type 11 specific fields (True/False exercise)
+  audio?: string;
   media?: {
     images?: string[];
     audio?: string[];

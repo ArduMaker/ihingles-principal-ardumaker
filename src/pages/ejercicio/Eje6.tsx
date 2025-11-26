@@ -36,7 +36,7 @@ export function Eje6({ exercise }: Eje6Props) {
     if (!exercise.sentences) return;
     const initialResponses: Record<number, string> = {};
     exercise.sentences.forEach((sentence, index) => {
-      if (sentence.shown) {
+      if (sentence.shown && typeof sentence.answer === 'string') {
         initialResponses[index] = sentence.answer;
       }
     });
@@ -58,10 +58,10 @@ export function Eje6({ exercise }: Eje6Props) {
       } else {
         const userAnswer = responses[index] || '';
         const validAnswers = [
-          sentence.answer,
+          typeof sentence.answer === 'string' ? sentence.answer : undefined,
           sentence.answer2,
           sentence.answer3,
-        ];
+        ].filter((a): a is string => typeof a === 'string');
         newResults[index] = checkAnswer(userAnswer, validAnswers);
       }
     });
@@ -112,7 +112,7 @@ export function Eje6({ exercise }: Eje6Props) {
     
     const initialResponses: Record<number, string> = {};
     exercise.sentences.forEach((sentence, index) => {
-      if (sentence.shown) {
+      if (sentence.shown && typeof sentence.answer === 'string') {
         initialResponses[index] = sentence.answer;
       }
     });
