@@ -68,7 +68,6 @@ const Progreso = () => {
           {/* Top section with level circles and user card */}
           <div 
             className="relative bg-cover bg-center py-8 px-4 md:px-8"
-            style={{ backgroundImage: 'url(/habilidades/fondo.png)' }}
           >
             <div className="max-w-7xl mx-auto">
               {/* Combined layout: circles on left, card on right */}
@@ -102,8 +101,8 @@ const Progreso = () => {
                 <div className="w-full lg:w-auto lg:min-w-[400px] lg:max-w-[500px]">
                   <UserProgressCard
                     name={user?.name || 'Alberto González'}
-                    level={48}
-                    title="Lord Maestro del Río de la Escritura"
+                    level={overallPercentage}
+                    title=""
                     xp={`XP: ${currentXP} / ${totalXP}`}
                     percentage={overallPercentage}
                     avatar={user?.avatar}
