@@ -15,29 +15,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Exercise } from '@/types/ejercicio';
-
-interface Sentence {
-  sentence: string;
-  answer: string;
-  answer2?: string;
-  answer3?: string;
-  shown?: boolean;
-  explanation?: string;
-}
+import { Exercise } from '@/data/unidades';
 
 interface Eje6Props {
-  exercise: {
-    _id: string;
-    type: number | string;
-    number?: number;
-    unidad?: number;
-    title: string;
-    description?: string;
-    skill: string;
-    options?: string[] | { id: string; text: string; }[];
-    sentences?: Sentence[];
-  };
+  exercise: Exercise;
 }
 
 export function Eje6({ exercise }: Eje6Props) {

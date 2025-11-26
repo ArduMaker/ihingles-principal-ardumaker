@@ -363,11 +363,16 @@ export interface Exercise {
   options?: Array<{ id: string; text: string }>;
   sentences?: Array<{
     sentence: string;
-    answer: string;
+    answer?: string;
     answer2?: string;
     answer3?: string;
     shown?: boolean;
     explanation?: string;
+    // Type 5 specific fields
+    answers?: (string | [string, string[]])[];
+    answers2?: (string | null)[];
+    answers3?: (string | null)[];
+    textToConjugate?: string;
   }>;
   fields?: Array<{
     answer: string;
@@ -447,10 +452,6 @@ export interface Exercise {
     answer3?: string;
     explanation?: string;
   }>>;
-  answers?: Array<{
-    timeInSeconds?: number;
-    answer: string;
-  }>;
   media?: {
     images?: string[];
     audio?: string[];
