@@ -4,6 +4,7 @@ import { GraduationCap, Globe } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import logo from '@/assets/logo.svg';
 import { useParams, useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
 
 export const Header = () => {
   const { language, toggleLanguage, t } = useLanguage();
@@ -12,6 +13,7 @@ export const Header = () => {
   const { loginWithRedirect, isAuthenticated } = useAuth0();
 
   const handleStart = () => {
+    Cookies.set('login', 'true', { path: '/' });
     if (!isAuthenticated) return loginWithRedirect();
     navigate('/dashboard');
   };
