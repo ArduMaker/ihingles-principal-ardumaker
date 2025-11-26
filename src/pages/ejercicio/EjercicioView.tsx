@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import Eje1 from './Eje1';
 import Eje2 from './Eje2';
+import { Eje3 } from './Eje3';
 import { Eje6 } from './Eje6';
 import { Eje12 } from './Eje12';
 import { Eje18 } from './Eje18';
@@ -59,6 +60,9 @@ export default function EjercicioView() {
       
       case 2:
         return <Eje2 exercise={exercise} />;
+      
+      case 3:
+        return <Eje3 exercise={exercise} />;
       
       case 6:
         return <Eje6 exercise={exercise} />;
