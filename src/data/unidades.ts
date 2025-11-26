@@ -457,6 +457,19 @@ export interface Exercise {
   sentence?: string;
   answer?: string;
   explanation?: string;
+  // Type 10 specific fields (Table exercise)
+  includeNumeration?: boolean;
+  heads?: string[];
+  rowsType10?: Array<{
+    fields: Array<{
+      shown?: boolean;
+      answer: string;
+      answer2?: string;
+      answer3?: string;
+      explanation?: string;
+      options?: string[];
+    }>;
+  }>;
   media?: {
     images?: string[];
     audio?: string[];
