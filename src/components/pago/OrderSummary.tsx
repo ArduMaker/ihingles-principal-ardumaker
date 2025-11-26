@@ -24,7 +24,13 @@ export const OrderSummary = ({ plan, paymentMethod }: OrderSummaryProps) => {
         const res = await requestSubscriptionLink(plan.id);
         const link = res?.data?.link ?? res?.link ?? res;
         if (link) {
-          window.location.href = link;
+          // If link is external, perform a full redirect. If internal, use router navigation.
+          if (typeof link === 'string' && (link.startsWith('http://') || link.startsWith('https://'))) {
+            window.location.href = link;
+            return;
+          }
+          // internal route
+          navigate(String(link));
           return;
         }
         throw new Error('No se obtuvo enlace de pago');

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { User } from '@/types/auth';
 import Cookies from 'js-cookie';
 import { get_user_profile } from '@/data/profile';
@@ -12,6 +13,9 @@ export const useAuth = () => {
     return cached ? JSON.parse(cached) : null;
   });
   const [isLoading, setIsLoading] = useState(true);
+
+  const navigate = useNavigate();
+  const loc = useLocation();
 
   useEffect(() => {
     checkAuth();
@@ -31,7 +35,7 @@ export const useAuth = () => {
       setUser(null);
       setIsLoading(false);
       // Evitar redireccionar si ya estamos en la página de login
-      if (window.location.pathname !== '/') window.location.href = '/';
+      if (loc.pathname !== '/') navigate('/');
       return;
     }
 
@@ -59,7 +63,7 @@ export const useAuth = () => {
     Cookies.remove(AUTH_COOKIE_NAME);
     Cookies.remove(USER_PROFILE_COOKIE);
     setUser(null);
-    if (window.location.pathname !== '/') window.location.href = '/';
+    if (loc.pathname !== '/') navigate('/');
   };
 
   return {

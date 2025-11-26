@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { getExercise } from '@/data/unidades';
 import { Exercise } from '@/data/unidades';
 import { InternalLayout } from '@/components/internal/InternalLayout';
@@ -113,6 +113,8 @@ export default function EjercicioView() {
     }
   };
 
+  const navigate = useNavigate();
+
   return (
     <InternalLayout>
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -128,7 +130,7 @@ export default function EjercicioView() {
 
             <Button
               variant="ghost"
-              onClick={() => window.location.href = `/modulo/${id}`}
+              onClick={() => navigate(`/modulo/${id}`)}
               className="mb-4"
             >
               <ChevronLeft className="h-4 w-4 mr-2" />
