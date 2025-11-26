@@ -23,9 +23,6 @@ const AuthHandler: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 					// Guardamos token en cookie para compatibilidad con api.ts
 					// Caduca en 7 días
 					document.cookie = `Autenticacion=${token}; path=/; max-age=${7*24*60*60}`;
-					if (window.location.href !== '/dashboard') {
-						window.location.href = '/dashboard';
-					}
 				} catch (e) {
 					console.error('Error obteniendo access token:', e);
 					// No forzamos logout aquí; el manejo puede hacerse a nivel de UI
