@@ -3,6 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useAuth0 } from '@auth0/auth0-react';
+import { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import Index from "./pages/Index";
 import Terms from "./pages/Terms";
@@ -27,6 +30,8 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          {/* Redirect to /dashboard when Auth0 returns to / and user is authenticated */}
+          <AuthRedirector />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/terms" element={<Terms />} />
@@ -50,3 +55,18 @@ const App = () => (
 );
 
 export default App;
+
+// Component placed inside <BrowserRouter> to handle post-login redirect behavior.
+function AuthRedirector() {
+  const { isAuthenticated, isLoading } = useAuth0();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && location.pathname === '/') {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isLoading, isAuthenticated, location.pathname, navigate]);
+
+  return null;
+}

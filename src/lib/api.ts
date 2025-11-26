@@ -24,7 +24,7 @@ export async function api<T>(
   options: RequestInit = {}
 ): Promise<T> {
 
-  if (CACHE[endpoint] && (Date.now() - CACHE[endpoint][0] < 2000) && CACHE[endpoint][1] != null) {
+  if (CACHE[endpoint] && (Date.now() - CACHE[endpoint][0] < 4000) && CACHE[endpoint][1] != null) {
     return CACHE[endpoint][1];
   }
 
