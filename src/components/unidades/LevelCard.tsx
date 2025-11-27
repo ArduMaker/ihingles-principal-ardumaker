@@ -69,7 +69,7 @@ export const LevelCard = ({ level }: LevelCardProps) => {
       </div>
 
       <div className="space-y-2 md:space-y-3 max-h-[400px] md:max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-        {level.units.slice(0, 10).map((unit) => (
+        {level.units.slice(0, 6).map((unit) => (
           <UnitCard 
             key={unit.id} 
             unit={unit}
