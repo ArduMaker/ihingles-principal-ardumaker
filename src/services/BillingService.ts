@@ -1,4 +1,4 @@
-import { api } from '@/lib/api';
+import { api, CACHE } from '@/lib/api';
 
 export const getPublishedSubscriptionPlans = async () => {
   return api<any>('/billing/plans/publish', { method: 'GET' });
@@ -35,7 +35,12 @@ export const stopSubscription = async () => {
 };
 
 export const getUserBillingData = async () => {
-  return api<any>('/billing/my-data', { method: 'GET' });
+  if (CACHE.billingData) {
+    return CACHE.billingData;
+  }
+  const data = await api<any>('/billing/my-data', { method: 'GET' });
+  CACHE.billingData = data;
+  return data;
 };
 
 export const getSubscriptionPlans = async (page = 1) => {
