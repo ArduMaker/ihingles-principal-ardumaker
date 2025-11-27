@@ -11,7 +11,7 @@ const DashboardLogin = () => {
   
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate('/panel', { replace: true });
+        setTimeout( ()=> {navigate('/panel', { replace: true });}, 300); // Pequeño retraso para asegurar que la cookie se ha establecido)
     }
   }, [isLoading, isAuthenticated, navigate]);
 
