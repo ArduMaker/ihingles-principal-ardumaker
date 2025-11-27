@@ -9,11 +9,9 @@ import Cookies from 'js-cookie';
 export const Header = () => {
   const { language, toggleLanguage, t } = useLanguage();
   const navigate = useNavigate();
-
   const { loginWithRedirect, isAuthenticated } = useAuth0();
 
   const handleStart = () => {
-    Cookies.set('login', 'true', { path: '/' });
     if (!isAuthenticated) return loginWithRedirect();
     navigate('/dashboard');
   };
