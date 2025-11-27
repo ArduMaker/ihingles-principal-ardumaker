@@ -5,6 +5,80 @@ import { mockPlans } from '@/data/planes';
 import { useEffect, useState } from 'react';
 import { getPublishedSubscriptionPlans, getUserBillingData } from '@/services/BillingService';
 
+// Mapea frecuencia de facturación a nombre de plan
+const getPlanName = (frequency: string) => {
+  const map: Record<string, string> = {
+    'YEAR': 'Plan Anual',
+    'MONTH': 'Plan Mensual',
+    'WEEK': 'Plan Semanal',
+    'DAY': 'Plan Diario',
+  };
+  return map[frequency] || frequency;
+};
+
+// Mapea frecuencia a nivel (explorador, cualificado, maestro)
+const getPlanLevel = (price: number, frequency: string) => {
+  // Lógica basada en precio para determinar nivel
+  if (frequency === 'YEAR') {
+    if (price >= 1000) return 'Maestro';
+    if (price >= 700) return 'Cualificado';
+    return 'Explorador';
+  } else if (frequency === 'MONTH') {
+    if (price >= 100) return 'Maestro';
+    if (price >= 60) return 'Cualificado';
+    return 'Explorador';
+  }
+  return 'Explorador';
+};
+
+// Obtiene imagen según nivel
+const getLevelImage = (nivel: string) => {
+  const map: Record<string, string> = {
+    'Maestro': '/planes/nivel3.png',
+    'Cualificado': '/planes/nivel2.png',
+    'Explorador': '/planes/nivel1.png',
+  };
+  return map[nivel] || '/planes/nivel1.png';
+};
+
+// Skills por defecto según nivel
+const getSkillsByLevel = (nivel: string) => {
+  const skills = [
+    { id: 's-1', name: 'Grammar', icon: '/planes/grammar.svg', level: 'Básico' },
+    { id: 's-2', name: 'Vocabulary', icon: '/planes/vocabulary.svg', level: 'Básico' },
+    { id: 's-3', name: 'Listening', icon: '/planes/listening.svg', level: 'Básico' },
+    { id: 's-4', name: 'Reading', icon: '/planes/reading.svg', level: 'Básico' },
+    { id: 's-5', name: 'Speaking', icon: '/planes/speaking.svg', level: 'Básico' },
+    { id: 's-6', name: 'Pronunciation', icon: '/planes/pronunciation.svg', level: 'Básico' },
+  ];
+  
+  if (nivel === 'Maestro') {
+    return skills.map(s => ({ ...s, level: 'Avanzado' }));
+  } else if (nivel === 'Cualificado') {
+    return skills.map(s => ({ ...s, level: 'Intermedio' }));
+  }
+  return skills;
+};
+
+// helper to map backend plan to local Plan type
+const mapBackendPlan = (p: any) => {
+  const nivel = getPlanLevel(p.price, p.billing_frequency);
+  const frequency = p.billing_frequency === 'YEAR' ? 'año' : p.billing_frequency === 'MONTH' ? 'mes' : 'periodo';
+  
+  return {
+    id: p._id || p.id,
+    name: getPlanName(p.billing_frequency),
+    price: p.price ?? 0,
+    nivel,
+    description: `Acceso completo a la plataforma durante 1 ${frequency}. ${p.hasFreeTrial ? 'Incluye prueba gratuita.' : ''}`,
+    tagline: p.hasFreeTrial ? 'Prueba gratis' : '',
+    backgroundImage: getLevelImage(nivel),
+    skills: getSkillsByLevel(nivel),
+    buttonColor: nivel === 'Maestro' ? 'bg-[#FFD700]' : 'bg-[#2C4A2C]',
+    textColor: nivel === 'Maestro' ? 'text-black' : 'text-white',
+  };
+};
+
 const Facturacion = () => {
   const [plans, setPlans] = useState<any[] | null>(null);
   const [userBilling, setUserBilling] = useState<any | null>(null);
@@ -14,7 +88,8 @@ const Facturacion = () => {
       try {
         const published = await getPublishedSubscriptionPlans();
         const maybeArray = (published && (published.data ?? published)) ?? null;
-        setPlans(maybeArray?.length ? maybeArray : null);
+        const mapped = Array.isArray(maybeArray) ? maybeArray.map(mapBackendPlan) : [];
+        setPlans(mapped.length ? mapped : null);
       } catch (e) {
         setPlans(null);
       }
@@ -29,12 +104,10 @@ const Facturacion = () => {
     };
     load();
   }, []);
-
-
   return (
     <InternalLayout>
       <PlanesHero />
-
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 md:pb-16">
         {/* Title section */}
         <div className="text-center mb-8 md:mb-12">
