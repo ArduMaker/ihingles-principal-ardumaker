@@ -4,6 +4,7 @@ import { PlanCard } from '@/components/planes/PlanCard';
 import { mockPlans } from '@/data/planes';
 import { useEffect, useState } from 'react';
 import { getPublishedSubscriptionPlans, getUserBillingData } from '@/services/BillingService';
+import DashboardLoader from '@/components/dashboard/DashboardLoader';
 
 // Mapea frecuencia de facturación a nombre de plan
 const getPlanName = (frequency: string) => {
@@ -82,9 +83,11 @@ const mapBackendPlan = (p: any) => {
 const Facturacion = () => {
   const [plans, setPlans] = useState<any[] | null>(null);
   const [userBilling, setUserBilling] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
+      setLoading(true);
       try {
         const published = await getPublishedSubscriptionPlans();
         const maybeArray = (published && (published.data ?? published)) ?? null;
@@ -101,9 +104,19 @@ const Facturacion = () => {
       } catch (e) {
         setUserBilling(null);
       }
+      setLoading(false);
     };
     load();
   }, []);
+
+  if (loading || !plans) {
+    return (
+      <InternalLayout>
+        <DashboardLoader />
+      </InternalLayout>
+    );
+  }
+
   return (
     <InternalLayout>
       <PlanesHero />
@@ -122,7 +135,7 @@ const Facturacion = () => {
 
         {/* Plans grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8 mb-8 md:mb-12">
-          {(plans ?? mockPlans).map((plan: any) => (
+          {(plans).map((plan: any) => (
             <PlanCard key={plan.id} plan={plan} userBilling={userBilling} />
           ))}
         </div>
