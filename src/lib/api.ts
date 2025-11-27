@@ -1,4 +1,6 @@
 import { VocabularyResponse } from '@/types/vocabulary';
+import Cookies from 'js-cookie';
+
 export const API_BASE_URL = 'https://www.iph-api.net';
 export const AUTH_COOKIE_NAME = 'Autenticacion';
 export const USER_PROFILE_COOKIE = 'UserProfile';
@@ -43,6 +45,8 @@ export async function api<T>(
 
     if (!response.ok) {
       if (response.status === 401 || response.status === 409) {
+        Cookies.remove(AUTH_COOKIE_NAME);
+        Cookies.remove(USER_PROFILE_COOKIE);
         window.location.href = '/';
         throw new Error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
       }
