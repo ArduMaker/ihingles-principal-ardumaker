@@ -5,6 +5,7 @@ import { UserProgressCard } from '@/components/progreso/UserProgressCard';
 import { ProgresoHero } from '@/components/progreso/ProgresoHero';
 import { get_overall_progress } from '@/data/unidades';
 import { useAuth } from '@/hooks/useAuth';
+import DashboardLoader from '@/components/dashboard/DashboardLoader';
 
 const Progreso = () => {
   const { user } = useAuth();
@@ -29,12 +30,7 @@ const Progreso = () => {
   if (loading) {
     return (
       <InternalLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-pulse text-center">
-            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Cargando progreso...</p>
-          </div>
-        </div>
+        <DashboardLoader />
       </InternalLayout>
     );
   }

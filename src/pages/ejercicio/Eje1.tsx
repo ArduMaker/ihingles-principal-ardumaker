@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import DashboardLoader from '@/components/dashboard/DashboardLoader';
 
 interface Field {
   shown: boolean;
@@ -148,9 +149,7 @@ export default function Eje1({ exercise: initialExercise }: Eje1Props) {
 
   if (!exercise) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">Cargando ejercicio...</p>
-      </div>
+      <DashboardLoader />
     );
   }
 

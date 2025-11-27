@@ -10,6 +10,7 @@ import { UserProfile } from '@/types/auth';
 import { useEffect, useState } from 'react';
 import { get_skills_progress } from '@/data/dashboard';
 import { get_overall_progress } from '@/data/unidades';
+import DashboardLoader from '@/components/dashboard/DashboardLoader';
 
 const Perfil = () => {
   const { isLoading, executeApi } = useApiState();
@@ -39,9 +40,7 @@ const Perfil = () => {
   if (isLoading || !profile) {
     return (
       <InternalLayout>
-        <div className="p-8 flex items-center justify-center min-h-[400px]">
-          <p className="text-muted-foreground">Cargando perfil...</p>
-        </div>
+        <DashboardLoader />
       </InternalLayout>
     );
   }

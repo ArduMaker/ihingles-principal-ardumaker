@@ -13,6 +13,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import EjercicioView from "@/pages/ejercicio/EjercicioView";
+import DashboardLoader from '@/components/dashboard/DashboardLoader';
 
 const Modulo = () => {
   const loc = useLocation();
@@ -46,12 +47,7 @@ const Modulo = () => {
   if (isLoading) {
     return (
       <InternalLayout>
-        <div className="flex items-center justify-center h-full">
-          <div className="animate-pulse text-center">
-            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Cargando...</p>
-          </div>
-        </div>
+        <DashboardLoader />
       </InternalLayout>
     );
   }

@@ -26,7 +26,7 @@ const DashboardLoader = () => {
         
         <div className="flex flex-col items-center gap-2">
           <p className="text-lg font-medium text-foreground animate-pulse">
-            Cargando tu panel...
+            Cargando tu información...
           </p>
           <div className="flex gap-1">
             <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
