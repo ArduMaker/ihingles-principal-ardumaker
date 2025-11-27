@@ -1,9 +1,9 @@
-// tiene que amoldase al padre no tiene que ocupar toda la pantalla
+// tiene que amoldase al padre no tiene que ocupar toda la pantalla pero siempre centrado
 import React from 'react';
 
 const DashboardLoader = () => {
   return (
-    <div className="flex items-center justify-center bg-background z-50">
+    <div className="flex items-center justify-center bg-background z-50 p-8 h-full">
       <div className="flex flex-col items-center gap-6">
         <div className="relative">
           {/* Logo principal con animación de pulso */}
