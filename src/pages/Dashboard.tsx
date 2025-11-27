@@ -72,8 +72,8 @@ const Dashboard = () => {
     loadDashboardData();
   }, []);
 
-  // Mostrar loader mientras se verifica autenticación
-  if (authLoading) {
+  // Mostrar loader mientras se verifica autenticación o se cargan datos
+  if (authLoading || isLoading) {
     return <DashboardLoader />;
   }
 
@@ -82,23 +82,8 @@ const Dashboard = () => {
       <div className="p-4 md:p-6 lg:p-8 space-y-6">
         <h1 className="text-2xl md:text-3xl font-bold text-heading">Dashboard de Aprendizaje</h1>
         
-        {isLoading ? (
-          <div className="space-y-6 animate-fade-in">
-            {/* Stats Skeletons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[1, 2].map(i => (
-                <Skeleton 
-                  key={i} 
-                  className="h-28 rounded-lg"
-                  style={{ animationDelay: `${i * 0.1}s` }}
-                />
-              ))}
-            </div>
-            
-          </div>
-        ) : (
-          <div className="space-y-6 animate-fade-in">
-            <DashboardStats stats={stats} />
+        <div className="space-y-6 animate-fade-in">
+          <DashboardStats stats={stats} />
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
               <div className="lg:col-span-2">
@@ -109,11 +94,10 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:gap-6">
-              <DashboardRecentUnits units={recentUnits} />
-            </div>
+          <div className="grid grid-cols-1 gap-4 md:gap-6">
+            <DashboardRecentUnits units={recentUnits} />
           </div>
-        )}
+        </div>
       </div>
     </InternalLayout>
   );
