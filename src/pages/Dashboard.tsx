@@ -28,7 +28,7 @@ const Dashboard = () => {
   useEffect(() => {
     const loadDashboardData = async () => {
       setIsLoading(true);
-      
+      console.log('Loading dashboard data...');
       const [statsData, skillsData, recentMockUnits, exercisesData, levelsData] = await Promise.all([
         executeApi(get_dashboard_stats),
         executeApi(get_skills_progress),
@@ -71,6 +71,7 @@ const Dashboard = () => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('code')) {
       setIsLoading(true);
+      console.log('Waiting for Auth0 to load before fetching dashboard data...');
       const checkAuth0Loaded = setInterval(() => {
         const auth0Loading = (window as any)?.auth0Loading;
         if (auth0Loading === false) {
