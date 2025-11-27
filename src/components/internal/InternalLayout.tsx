@@ -24,14 +24,6 @@ export const InternalLayout = ({ children }: InternalLayoutProps) => {
     }
   }, [isAuthenticated, isLoading, navigate]);
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center bg-background">
-        <DashboardLoader />
-      </div>
-    );
-  }
-
   return (
     <div className="w-full h-screen flex flex-col overflow-hidden">
       <nav className="h-16 border-b border-navbar-border bg-navbar flex items-center justify-between px-4 lg:px-6">
