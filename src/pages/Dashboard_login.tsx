@@ -38,8 +38,12 @@ const DashboardLogin = () => {
     }
   }, [isLoading, isAuthenticated, navigate]);
 
-  // Mientras tanto, mostramos un mensaje de carga (Coloca una animación de carga aquí)
-  return ( <DashboardLoader /> );
+  // Mientras tanto, que ocupa toda la pantalla
+  return ( 
+    <div className="w-full h-screen flex items-center justify-center bg-background">
+        <DashboardLoader /> 
+    </div>
+  );
 };
 
 export default DashboardLogin;

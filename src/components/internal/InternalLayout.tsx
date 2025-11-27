@@ -15,11 +15,11 @@ export const InternalLayout = ({ children }: InternalLayoutProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && false) {
+    if (!isLoading && !isAuthenticated) {
       toast.error('Tu sesión ha expirado', {
         description: 'Por favor, inicia sesión nuevamente'
       });
-      navigate('/');
+      navigate('/dashboard_login');
     }
   }, [isAuthenticated, isLoading, navigate]);
 
