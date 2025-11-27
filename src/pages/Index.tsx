@@ -7,9 +7,6 @@ import { JourneySection } from '@/components/landing/JourneySection';
 import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
 import { CommunitySection } from '@/components/landing/CommunitySection';
 import { Footer } from '@/components/landing/Footer';
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Cookies from 'js-cookie';
 
 const Index = () => {
   return (
