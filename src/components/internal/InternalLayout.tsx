@@ -5,6 +5,7 @@ import { InternalNavbar } from './InternalNavbar';
 import { InternalSidebar } from './InternalSidebar';
 import { MobileSidebar } from './MobileSidebar';
 import { toast } from 'sonner';
+import DashboardLoader from '@/components/dashboard/DashboardLoader';
 
 interface InternalLayoutProps {
   children: ReactNode;
@@ -26,10 +27,7 @@ export const InternalLayout = ({ children }: InternalLayoutProps) => {
   if (isLoading) {
     return (
       <div className="w-full h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Cargando...</p>
-        </div>
+        <DashboardLoader />
       </div>
     );
   }
