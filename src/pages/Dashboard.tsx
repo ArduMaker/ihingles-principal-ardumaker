@@ -65,23 +65,8 @@ const Dashboard = () => {
       
       setIsLoading(false);
     };
-
-    // Si en el url tenemos = code, esperamos hasta que Auth0 termine de cargar
-    // antes de cargar los datos del dashboard
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('code')) {
-      setIsLoading(true);
-      console.log('Waiting for Auth0 to load before fetching dashboard data...');
-      const checkAuth0Loaded = setInterval(() => {
-        const auth0Loading = (window as any)?.auth0Loading;
-        if (auth0Loading === false) {
-          clearInterval(checkAuth0Loaded);
-          loadDashboardData();
-        }
-      }, 100);
-    } else {
-      loadDashboardData();
-    }
+    
+    loadDashboardData();
   }, []);
 
   return (

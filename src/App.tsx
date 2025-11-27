@@ -19,6 +19,7 @@ import Perfil from "./pages/Perfil";
 import Modulo from "./pages/Modulo";
 import Unidad from "./pages/Unidad";
 import NotFound from "./pages/NotFound";
+import DashboardLogin from "./pages/Dashboard_login";
 
 const queryClient = new QueryClient();
 
@@ -34,7 +35,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/terms" element={<Terms />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard" element={<DashboardLogin />} />
+            <Route path="/panel" element={<Dashboard />} />
             <Route path="/unidades" element={<Unidades />} />
             <Route path="/biblioteca" element={<Biblioteca />} />
             <Route path="/vocabulario" element={<Vocabulario />} />
