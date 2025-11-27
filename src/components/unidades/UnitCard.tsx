@@ -22,17 +22,18 @@ export const UnitCard = ({ unit, colors, onClick }: UnitCardProps) => {
   const config = statusConfig[unit.status];
 
   return (
-    <div className={`${colors.unitBg} rounded-lg p-4 flex items-center justify-between`}>
-      <div className="flex-1">
-        <h3 className={`font-semibold ${colors.unitText}`}>
+    <div className={`${colors.unitBg} rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3`}>
+      <div className="flex-1 min-w-0">
+        <h3 className={`font-semibold ${colors.unitText} text-sm sm:text-base truncate`}>
           Unidad {unit.number}: {unit.title}
         </h3>
-        <p className={`text-sm ${colors.unitText} opacity-80`}>
+        <p className={`text-xs sm:text-sm ${colors.unitText} opacity-80 line-clamp-2`}>
           {unit.description}
         </p>
       </div>
       <Button
-        className={`${colors.buttonBg} ${colors.buttonText} font-semibold hover:opacity-90`}
+        size="sm"
+        className={`${colors.buttonBg} ${colors.buttonText} font-semibold hover:opacity-90 text-xs sm:text-sm whitespace-nowrap w-full sm:w-auto`}
         onClick={onClick}
         disabled={unit.isLocked}
       >
