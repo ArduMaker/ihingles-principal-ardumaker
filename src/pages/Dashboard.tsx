@@ -4,9 +4,7 @@ import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { DashboardProgressChart } from '@/components/dashboard/DashboardProgressChart';
 import { DashboardSkillsProgress } from '@/components/dashboard/DashboardSkillsProgress';
 import { DashboardRecentUnits } from '@/components/dashboard/DashboardRecentUnits';
-import { DashboardPendingExercises } from '@/components/dashboard/DashboardPendingExercises';
 import { useApiState } from '@/hooks/useApiState';
-import { Skeleton } from '@/components/ui/skeleton';
 import DashboardLoader from '@/components/dashboard/DashboardLoader';
 import { useAuth } from '@/hooks/useAuth';
 import { 
@@ -74,7 +72,7 @@ const Dashboard = () => {
 
   // Mostrar loader mientras se verifica autenticación o se cargan datos
   if (authLoading || isLoading) {
-    return <DashboardLoader />;
+    return <InternalLayout> <DashboardLoader /> </InternalLayout>;
   }
 
   return (
