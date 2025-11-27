@@ -1,6 +1,9 @@
+// tiene que amoldase al padre no tiene que ocupar toda la pantalla
+import React from 'react';
+
 const DashboardLoader = () => {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-background z-50">
+    <div className="flex items-center justify-center bg-background z-50">
       <div className="flex flex-col items-center gap-6">
         <div className="relative">
           {/* Logo principal con animación de pulso */}
