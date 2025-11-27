@@ -7,6 +7,8 @@ import { DashboardRecentUnits } from '@/components/dashboard/DashboardRecentUnit
 import { DashboardPendingExercises } from '@/components/dashboard/DashboardPendingExercises';
 import { useApiState } from '@/hooks/useApiState';
 import { Skeleton } from '@/components/ui/skeleton';
+import DashboardLoader from '@/components/dashboard/DashboardLoader';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   get_dashboard_stats, 
   get_skills_progress, 
@@ -19,6 +21,7 @@ import { DashboardStat, SkillProgress, RecentUnit, PendingExercise } from '@/typ
 
 const Dashboard = () => {
   const { executeApi } = useApiState();
+  const { isLoading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStat[]>([]);
   const [skills, setSkills] = useState<SkillProgress[]>([]);
@@ -68,6 +71,11 @@ const Dashboard = () => {
     
     loadDashboardData();
   }, []);
+
+  // Mostrar loader mientras se verifica autenticación
+  if (authLoading) {
+    return <DashboardLoader />;
+  }
 
   return (
     <InternalLayout>
