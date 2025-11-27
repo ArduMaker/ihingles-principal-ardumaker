@@ -40,21 +40,21 @@ export const LevelCard = ({ level }: LevelCardProps) => {
   const colors = levelColors[level.levelId as keyof typeof levelColors];
 
   return (
-    <Card className={`${colors.bg} border-none shadow-lg p-6 space-y-4`}>
+    <Card className={`${colors.bg} border-none shadow-lg p-4 sm:p-5 md:p-6 space-y-3 md:space-y-4`}>
       <div className="relative rounded-lg overflow-hidden">
         <img 
           src={`/${level.levelId}/principal.png`} 
           alt={level.levelName}
-          className="w-full h-48 object-cover"
+          className="w-full h-36 sm:h-40 md:h-48 object-cover"
           onError={(e) => {
             e.currentTarget.src = '/placeholder.svg';
           }}
         />
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4">
           <img 
             src={level.isLocked ? '/candado_clouse.svg' : '/candado_open.svg'} 
             alt={level.isLocked ? 'Bloqueado' : 'Desbloqueado'}
-            className="w-8 h-8"
+            className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8"
             onError={(e) => {
               e.currentTarget.style.display = 'none';
             }}
@@ -62,11 +62,13 @@ export const LevelCard = ({ level }: LevelCardProps) => {
         </div>
       </div>
 
-      <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">{level.levelDescription}</p>
+      <div className="space-y-1 md:space-y-2">
+        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
+          {level.levelDescription}
+        </p>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2 md:space-y-3 max-h-[400px] md:max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
         {level.units.slice(0, 10).map((unit) => (
           <UnitCard 
             key={unit.id} 
@@ -79,7 +81,7 @@ export const LevelCard = ({ level }: LevelCardProps) => {
 
       <Button 
         variant="outline"
-        className={`w-full ${colors.buttonBorder} ${colors.buttonText} hover:bg-opacity-10`}
+        className={`w-full ${colors.buttonBorder} ${colors.buttonText} hover:bg-opacity-10 text-xs sm:text-sm md:text-base`}
         onClick={() => navigate(`/unidad/${level.levelId}`)}
       >
         Ver hasta unidad {level.totalUnits}
