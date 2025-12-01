@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,20 +13,57 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { MessageCircle } from 'lucide-react';
 import DashboardLoader from '@/components/dashboard/DashboardLoader';
+
+const COMMON_SELECT_OPTIONS = [
+  'Adjetivo',
+  'Adverbio',
+  'Artículo',
+  'Conjunción',
+  'Preposición',
+  'Pronombre',
+  'Sustantivo',
+  'Verbo',
+];
+
+const PRONOUNS = ['I', 'You', 'He', 'She', 'It', 'We', 'You', 'They'];
 
 interface Field {
   shown: boolean;
   value: string;
+  answer2?: string;
+  answer3?: string;
+  answer4?: string;
+  answer5?: string;
+  answer6?: string;
+  answer7?: string;
+  answer8?: string;
+  answer9?: string;
+  answer10?: string;
+  answer11?: string;
+  answer12?: string;
+  explanation?: string;
+  useCommonSelect?: boolean;
 }
 
 interface Column {
-  title: string;
+  title?: string;
   fields: Field[];
 }
 
 interface Section {
+  title?: string;
   includeSeparator?: number;
+  includePronouns?: number;
+  includeQuestionMark?: boolean;
   columns: Column[];
 }
 
@@ -51,60 +88,137 @@ export default function Eje1({ exercise: initialExercise }: Eje1Props) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [exercise, setExercise] = useState<ExerciseType1 | null>(initialExercise);
-  const [userAnswers, setUserAnswers] = useState<string[][]>([]);
+  const [userResponses, setUserResponses] = useState<string[]>([]);
   const [verified, setVerified] = useState(false);
-  const [results, setResults] = useState<boolean[][]>([]);
+  const [responses, setResponses] = useState<boolean[]>([]);
   const [gradeModalOpen, setGradeModalOpen] = useState(false);
   const [grade, setGrade] = useState(0);
   const [explanationModalOpen, setExplanationModalOpen] = useState(false);
   const [currentExplanation, setCurrentExplanation] = useState('');
 
+  // Initialize states based on total fields
   useEffect(() => {
-    if (initialExercise && initialExercise.sections && initialExercise.sections[0]) {
-      const numCols = initialExercise.sections[0].columns.length;
-      const numRows = initialExercise.sections[0].columns[0].fields.length;
-      const initialAnswers = Array(numCols).fill(null).map(() => Array(numRows).fill(''));
-      setUserAnswers(initialAnswers);
-      setResults(Array(numCols).fill(null).map(() => Array(numRows).fill(false)));
+    if (initialExercise && initialExercise.sections) {
+      const initialStates: string[] = [];
+      initialExercise.sections.forEach((section) =>
+        section.columns.forEach((column) =>
+          column.fields.forEach(() => initialStates.push(''))
+        )
+      );
+      setUserResponses(initialStates);
+      setResponses(new Array(initialStates.length).fill(false));
     }
   }, [initialExercise]);
 
-  const handleInputChange = (colIndex: number, rowIndex: number, value: string) => {
-    const newAnswers = [...userAnswers];
-    newAnswers[colIndex][rowIndex] = value;
-    setUserAnswers(newAnswers);
+  // Helper functions
+  const getFieldByIndex = (generalIndex: number): Field | undefined => {
+    let current = 0;
+    for (const section of exercise?.sections || []) {
+      for (const column of section.columns) {
+        for (const field of column.fields) {
+          if (current === generalIndex) return field;
+          else current++;
+        }
+      }
+    }
+  };
+
+  const getIndex = (iSection: number, iColumn: number, i: number): number => {
+    if (!exercise) return 0;
+    const sizes: number[] = [];
+    exercise.sections
+      .slice(0, iSection)
+      .forEach((section) =>
+        section.columns.forEach((column) => sizes.push(column.fields.length))
+      );
+    exercise.sections[iSection].columns
+      .slice(0, iColumn)
+      .forEach((column) => sizes.push(column.fields.length));
+    return sizes.reduce((a, b) => a + b, 0) + i;
+  };
+
+  const isShown = (generalIndex: number): boolean => {
+    const field = getFieldByIndex(generalIndex);
+    return field?.shown || false;
+  };
+
+  const shouldShowColumnTitle = (section: Section): boolean =>
+    section.columns.some((column) => column.title);
+
+  const shouldShowAnswer = (): boolean => 
+    verified && responses.some((x) => !x);
+
+  const getFontSize = (length: number): string => {
+    if (length < 10) return '16px';
+    switch (length) {
+      case 11:
+        return '15px';
+      case 12:
+        return '14px';
+      default:
+        return '13px';
+    }
+  };
+
+  const checkAnswer = (
+    userAnswer: string,
+    ...correctAnswers: (string | undefined)[]
+  ): boolean => {
+    const normalizedUser = normalizeAnswer(userAnswer);
+    return correctAnswers.some(
+      (answer) => answer && normalizeAnswer(answer) === normalizedUser
+    );
+  };
+
+  const handleChange = (i: number, value: string) => {
+    setUserResponses((old) => {
+      const copy = [...old];
+      copy[i] = value;
+      return copy;
+    });
   };
 
   const handleVerify = () => {
-    if (!exercise || !exercise.sections[0]) return;
+    if (!exercise) return;
 
-    const section = exercise.sections[0];
-    const newResults: boolean[][] = [];
-    let totalComputable = 0;
-    let correctAnswers = 0;
+    const answers: Field[] = [];
+    exercise.sections.forEach((section) =>
+      section.columns.forEach((column) =>
+        column.fields.forEach((field) => answers.push(field))
+      )
+    );
 
-    section.columns.forEach((column, colIndex) => {
-      const colResults: boolean[] = [];
-      column.fields.forEach((field, rowIndex) => {
-        if (field.shown) {
-          colResults.push(true);
-        } else {
-          totalComputable++;
-          const userAnswer = normalizeAnswer(userAnswers[colIndex][rowIndex]);
-          const correctAnswer = normalizeAnswer(field.value);
-          const isCorrect = userAnswer === correctAnswer;
-          colResults.push(isCorrect);
-          if (isCorrect) correctAnswers++;
-        }
-      });
-      newResults.push(colResults);
+    const responsesCheck: boolean[] = [];
+    answers.forEach((answer, iAns) => {
+      if (answer.shown) return responsesCheck.push(true);
+      responsesCheck.push(
+        checkAnswer(
+          userResponses[iAns],
+          answer.value,
+          answer.answer2,
+          answer.answer3,
+          answer.answer4,
+          answer.answer5,
+          answer.answer6,
+          answer.answer7,
+          answer.answer8,
+          answer.answer9,
+          answer.answer10,
+          answer.answer11,
+          answer.answer12
+        )
+      );
     });
 
-    setResults(newResults);
+    setResponses(responsesCheck);
     setVerified(true);
 
     // Calculate grade
-    const calculatedGrade = totalComputable > 0 ? correctAnswers / totalComputable : 1;
+    const computableResults = responsesCheck.filter((_, i) => !isShown(i));
+    const total = computableResults.length;
+    const successes = computableResults.filter((x) => x).length;
+    const calculatedGrade = total > 0 ? successes / total : 1;
+    
     setGrade(calculatedGrade);
     setGradeModalOpen(true);
   };
@@ -137,25 +251,29 @@ export default function Eje1({ exercise: initialExercise }: Eje1Props) {
   };
 
   const handleReset = () => {
-    if (exercise && exercise.sections[0]) {
-      const numCols = exercise.sections[0].columns.length;
-      const numRows = exercise.sections[0].columns[0].fields.length;
-      const initialAnswers = Array(numCols).fill(null).map(() => Array(numRows).fill(''));
-      setUserAnswers(initialAnswers);
-      setResults(Array(numCols).fill(null).map(() => Array(numRows).fill(false)));
+    if (exercise) {
+      const initialStates: string[] = [];
+      exercise.sections.forEach((section) =>
+        section.columns.forEach((column) =>
+          column.fields.forEach(() => initialStates.push(''))
+        )
+      );
+      setUserResponses(initialStates);
+      setResponses(new Array(initialStates.length).fill(false));
       setVerified(false);
     }
   };
 
-  if (!exercise) {
-    return (
-      <DashboardLoader />
-    );
-  }
+  const showExplanation = (text?: string) => {
+    if (text) {
+      setCurrentExplanation(text);
+      setExplanationModalOpen(true);
+    }
+  };
 
-  const section = exercise.sections[0];
-  const numRows = section.columns[0].fields.length;
-  const separator = section.includeSeparator;
+  if (!exercise) {
+    return <DashboardLoader />;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -173,71 +291,180 @@ export default function Eje1({ exercise: initialExercise }: Eje1Props) {
           <p className="text-muted-foreground mb-4" dangerouslySetInnerHTML={{ __html: exercise.description }} />
         </div>
 
-        {/* Table */}
-        <div className="bg-card rounded-lg border overflow-hidden mb-6">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-muted">
-                {section.columns.map((column, colIndex) => (
-                  <th key={colIndex} className="p-4 text-center font-semibold border-r last:border-r-0">
-                    {column.title}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: numRows }).map((_, rowIndex) => (
-                <>
-                  <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
-                    {section.columns.map((column, colIndex) => {
-                      const field = column.fields[rowIndex];
-                      const isCorrect = results[colIndex]?.[rowIndex];
-                      const showResult = verified && !field.shown;
-                      
-                      return (
-                        <td key={colIndex} className="p-2 border-r last:border-r-0">
-                          {field.shown ? (
-                            <div className="text-center py-2 px-3 bg-muted/50 rounded">
-                              {field.value}
+        {/* Sections */}
+        <div className="space-y-8">
+          {exercise.sections.map((section, iSection) => (
+            <div key={iSection}>
+              {section.title && (
+                <h4 className="text-xl font-semibold text-center mb-4">{section.title}</h4>
+              )}
+              
+              <div className="bg-card rounded-lg border overflow-x-auto">
+                <div className="flex">
+                  {section.columns.map((column, iColumn) => (
+                    <>
+                      {/* Include Pronouns Column */}
+                      {section.includePronouns === iColumn && (
+                        <div className="flex-shrink-0 border-r">
+                          {shouldShowColumnTitle(section) && (
+                            <div className="p-4 text-center font-semibold bg-muted border-b">
+                              Pronombres
                             </div>
-                          ) : (
-                            <Input
-                              value={userAnswers[colIndex]?.[rowIndex] || ''}
-                              onChange={(e) => handleInputChange(colIndex, rowIndex, e.target.value)}
-                              disabled={verified}
-                              className={`text-center ${
-                                showResult
-                                  ? isCorrect
-                                    ? 'border-green-500 bg-green-50 dark:bg-green-950/20'
-                                    : 'border-red-500 bg-red-50 dark:bg-red-950/20'
-                                  : ''
-                              }`}
-                            />
                           )}
-                          {showResult && !isCorrect && (
-                            <p className="text-xs text-green-600 dark:text-green-400 text-center mt-1">
-                              Correcto: {field.value}
-                            </p>
+                          <div>
+                            {PRONOUNS.map((pronoun, idx) => (
+                              <div key={pronoun}>
+                                <div className={`p-3 text-center ${idx % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`}>
+                                  {pronoun}
+                                </div>
+                                {shouldShowAnswer() && <div className="h-6"></div>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Include Separator Column */}
+                      {section.includeSeparator === iColumn && (
+                        <div className="flex-shrink-0 border-r">
+                          {shouldShowColumnTitle(section) && (
+                            <div className="p-4 text-center font-semibold bg-muted border-b">/</div>
                           )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                  {separator && rowIndex === separator - 1 && (
-                    <tr>
-                      <td colSpan={section.columns.length} className="p-0">
-                        <div className="h-1 bg-primary/20" />
-                      </td>
-                    </tr>
-                  )}
-                </>
-              ))}
-            </tbody>
-          </table>
+                          <div>
+                            {column.fields.map((_, idx) => (
+                              <div key={idx}>
+                                <div className={`p-3 text-center font-semibold ${idx % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`}>
+                                  /
+                                </div>
+                                {shouldShowAnswer() && <div className="h-6"></div>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Regular Column */}
+                      <div key={iColumn} className="flex-1 border-r last:border-r-0 min-w-[150px]">
+                        {shouldShowColumnTitle(section) && (
+                          <div className="p-4 text-center font-semibold bg-muted border-b">
+                            {column.title}
+                          </div>
+                        )}
+                        <div>
+                          {column.fields.map((field, i) => {
+                            const fieldIndex = getIndex(iSection, iColumn, i);
+                            const isCorrect = responses[fieldIndex];
+                            const showResult = verified && !field.shown;
+
+                            return (
+                              <div key={fieldIndex}>
+                                <div className={`p-2 ${i % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`}>
+                                  {field.shown ? (
+                                    <div 
+                                      className="text-center py-2 px-3 bg-muted/50 rounded"
+                                      style={{ fontSize: getFontSize(field.value.length) }}
+                                    >
+                                      {field.value}
+                                    </div>
+                                  ) : field.useCommonSelect ? (
+                                    <Select
+                                      value={userResponses[fieldIndex] || ''}
+                                      onValueChange={(value) => handleChange(fieldIndex, value)}
+                                      disabled={verified}
+                                    >
+                                      <SelectTrigger 
+                                        className={`${
+                                          showResult
+                                            ? isCorrect
+                                              ? 'border-green-500 bg-green-50 dark:bg-green-950/20'
+                                              : 'border-red-500 bg-red-50 dark:bg-red-950/20'
+                                            : ''
+                                        }`}
+                                      >
+                                        <SelectValue placeholder="Elegir" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {COMMON_SELECT_OPTIONS.map((option) => (
+                                          <SelectItem key={option} value={option}>
+                                            {option}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  ) : (
+                                    <Input
+                                      value={userResponses[fieldIndex] || ''}
+                                      onChange={(e) => handleChange(fieldIndex, e.target.value)}
+                                      disabled={verified}
+                                      className={`text-center ${
+                                        showResult
+                                          ? isCorrect
+                                            ? 'border-green-500 bg-green-50 dark:bg-green-950/20'
+                                            : 'border-red-500 bg-red-50 dark:bg-red-950/20'
+                                          : ''
+                                      }`}
+                                    />
+                                  )}
+                                </div>
+                                {shouldShowAnswer() && (
+                                  <div className="px-2 pb-2">
+                                    <div 
+                                      className={`text-xs text-center py-1 flex items-center justify-center gap-2 ${
+                                        isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                                      }`}
+                                    >
+                                      {!field.shown && (
+                                        <>
+                                          <span>Correcto: {field.value}</span>
+                                          {field.explanation && (
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="h-5 w-5 p-0"
+                                              onClick={() => showExplanation(field.explanation)}
+                                            >
+                                              <MessageCircle className="h-3 w-3" />
+                                            </Button>
+                                          )}
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Include Question Mark Column */}
+                      {section.includeQuestionMark && iColumn + 1 === section.columns.length && (
+                        <div className="flex-shrink-0">
+                          {shouldShowColumnTitle(section) && (
+                            <div className="p-4 text-center font-semibold bg-muted border-b"></div>
+                          )}
+                          <div>
+                            {column.fields.map((_, idx) => (
+                              <div key={idx}>
+                                <div className={`p-3 text-center ${idx % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`}>
+                                  ?
+                                </div>
+                                {shouldShowAnswer() && <div className="h-6"></div>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-4 justify-center">
+        <div className="flex gap-4 justify-center mt-8">
           <Button variant="outline" onClick={handleReset} disabled={!verified}>
             Reintentar
           </Button>
