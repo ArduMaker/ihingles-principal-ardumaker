@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import Eje1 from './Eje1';
 import Eje2 from './Eje2';
-import { Eje3 } from './Eje3';
+import Eje3 from './Eje3';
 import { Eje4 } from './Eje4';
 import { Eje5 } from './Eje5';
 import { Eje6 } from './Eje6';
