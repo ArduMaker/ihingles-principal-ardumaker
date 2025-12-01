@@ -223,7 +223,7 @@ export default function Eje1({ exercise: initialExercise }: Eje1Props) {
     setGradeModalOpen(true);
   };
 
-  const handleSaveGrade = async () => {
+  const handleSaveGrade = async (continueToNext: boolean = false) => {
     if (!exercise) return;
 
     try {
@@ -239,7 +239,14 @@ export default function Eje1({ exercise: initialExercise }: Eje1Props) {
       });
 
       setGradeModalOpen(false);
-      navigate(`/unidad/${id}`);
+      
+      if (continueToNext) {
+        // Navigate to next exercise
+        const nextExerciseNumber = exercise.number + 1;
+        navigate(`/ejercicio/${id}/${nextExerciseNumber}`);
+      } else {
+        navigate(`/unidad/${id}`);
+      }
     } catch (error) {
       console.error('Error saving grade:', error);
       toast({
@@ -493,12 +500,15 @@ export default function Eje1({ exercise: initialExercise }: Eje1Props) {
               </p>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="outline" onClick={() => setGradeModalOpen(false)}>
               Cerrar
             </Button>
-            <Button onClick={handleSaveGrade}>
-              Guardar y Continuar
+            <Button variant="secondary" onClick={() => handleSaveGrade(false)}>
+              Volver al Menú
+            </Button>
+            <Button onClick={() => handleSaveGrade(true)}>
+              Siguiente Ejercicio
             </Button>
           </DialogFooter>
         </DialogContent>
