@@ -70,7 +70,7 @@ export const InternalSidebar = () => {
                         : 'text-sidebar-foreground hover:bg-sidebar-accent/10'
                     }`}
                   >
-                    <Icon className="w-5 h-5 flex-shrink-0" active={!isActive} />
+                    <Icon className="w-5 h-5 flex-shrink-0" active={false}/>
                     <span>{item.label}</span>
                   </NavLink>
                 );
