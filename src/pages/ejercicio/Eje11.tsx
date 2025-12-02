@@ -1,135 +1,170 @@
-import { useState } from 'react';
-import { Exercise } from '@/data/unidades';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChevronLeft, HelpCircle } from 'lucide-react';
+import { ChevronLeft, HelpCircle, RotateCcw, Check, ArrowRight, Home, X } from 'lucide-react';
 import { postUserGrade, postUserPosition } from '@/lib/api';
 import { toast } from 'sonner';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import DashboardLoader from '@/components/dashboard/DashboardLoader';
+import { Calculate_index_exercise } from '@/hooks/calculate_index';
+
+const abcd = "abcdefghijklmnopqrstuvwxyz";
+
+interface SentenceItem {
+  sentence?: string;
+  answer?: boolean;
+  explanation?: string;
+  description?: string;
+  description2?: string;
+}
+
+interface Type11Exercise {
+  _id?: string;
+  type: number;
+  number: number;
+  unidad: number;
+  title?: string;
+  description?: string;
+  audio?: string;
+  sentences: SentenceItem[];
+}
 
 interface Eje11Props {
-  exercise: Exercise;
+  exercise: Type11Exercise | any;
 }
 
-interface SentenceState {
-  selectedValue: boolean | null;
-  validationState: 'idle' | 'correct' | 'incorrect';
-  showExplanation: boolean;
-}
+export const Eje11 = ({ exercise: initialExercise }: Eje11Props) => {
+  const navigate = useNavigate();
+  const [exercise, setExercise] = useState<Type11Exercise | null>(null);
+  const [loading, setLoading] = useState(true);
 
-export const Eje11 = ({ exercise }: Eje11Props) => {
-  const [sentencesState, setSentencesState] = useState<Record<number, SentenceState>>(() => {
-    const initial: Record<number, SentenceState> = {};
-    exercise.sentences?.forEach((item, idx) => {
-      if (item.sentence) {
-        initial[idx] = {
-          selectedValue: null,
-          validationState: 'idle',
-          showExplanation: false,
-        };
-      }
-    });
-    return initial;
-  });
-
+  // State for tracking responses and results
+  const [verified, setVerified] = useState(false);
+  const [responses, setResponses] = useState<(boolean | string)[]>([]);
+  const [userResponses, setUserResponses] = useState<(boolean | string)[]>([]);
+  
+  // Modal states
+  const [gradeModalOpen, setGradeModalOpen] = useState(false);
+  const [grade, setGrade] = useState(0);
+  const [explanationModalOpen, setExplanationModalOpen] = useState(false);
+  const [currentExplanation, setCurrentExplanation] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const updateSentenceState = (idx: number, updates: Partial<SentenceState>) => {
-    setSentencesState(prev => ({
-      ...prev,
-      [idx]: { ...prev[idx], ...updates },
-    }));
+  // Initialize exercise and states
+  useEffect(() => {
+    if (initialExercise) {
+      setExercise(initialExercise);
+      
+      // Initialize states based on sentences (only questions, not descriptions)
+      const initialStates: (boolean | string)[] = [];
+      initialExercise.sentences
+        ?.filter((sentence) => !sentence.description)
+        .forEach(() => initialStates.push(''));
+      
+      setUserResponses(initialStates);
+      setResponses(initialStates);
+      setVerified(false);
+      setLoading(false);
+    }
+  }, [initialExercise]);
+
+  // Get the index for a sentence (excluding description items)
+  const getIndex = (i: number): number => {
+    if (!exercise) return i;
+    let index = i;
+    exercise.sentences.slice(0, i).forEach((sentence) => {
+      if (sentence.description) index--;
+    });
+    return index;
   };
 
-  const handleOptionChange = (idx: number, value: boolean) => {
-    const currentValue = sentencesState[idx]?.selectedValue;
-    // Toggle: if clicking the same value, deselect it; otherwise select new value
-    const newValue = currentValue === value ? null : value;
-    
-    updateSentenceState(idx, {
-      selectedValue: newValue,
-      validationState: 'idle',
-      showExplanation: false,
+  // Check answer for type 11 (true/false comparison)
+  const checkAnswerType11 = (userAnswer: boolean | string, correctAnswer: boolean): boolean => {
+    if (userAnswer === '') return false;
+    return userAnswer === correctAnswer;
+  };
+
+  const handleChange = (i: number, value: boolean | string) => {
+    setUserResponses((old) => {
+      const data = [...old];
+      data[i] = value;
+      return data;
     });
   };
 
   const handleVerify = () => {
-    let allCorrect = true;
-    let hasUnanswered = false;
+    if (!exercise) return;
 
-    exercise.sentences?.forEach((item, idx) => {
-      if (!item.sentence) return; // Skip description items
-
-      const state = sentencesState[idx];
-      if (state.selectedValue === null) {
-        hasUnanswered = true;
-        return;
-      }
-
-      const isCorrect = state.selectedValue === item.answer;
-      
-      updateSentenceState(idx, {
-        validationState: isCorrect ? 'correct' : 'incorrect',
-        showExplanation: !isCorrect && !!item.explanation,
+    // Get all answers from sentences (excluding descriptions)
+    const answers: boolean[] = [];
+    exercise.sentences
+      .filter((sentence) => !sentence?.description)
+      .forEach((sentence) => {
+        if (sentence.answer !== undefined) {
+          answers.push(sentence.answer);
+        }
       });
 
-      if (!isCorrect) allCorrect = false;
+    // Check each response
+    const responsesCheck: boolean[] = [];
+    answers.forEach((answer, iAns) => {
+      responsesCheck.push(checkAnswerType11(userResponses[iAns], answer));
     });
 
-    if (hasUnanswered) {
-      toast.error('Por favor responde todas las preguntas');
-      return;
-    }
+    setResponses(responsesCheck);
+    setVerified(true);
 
-    if (allCorrect) {
-      toast.success('¡Todas las respuestas son correctas!');
-    } else {
-      toast.error('Algunas respuestas son incorrectas. Revisa los campos marcados.');
-    }
+    // Calculate and show grade
+    const total = responsesCheck.length;
+    const successes = responsesCheck.filter((x) => x).length;
+    const calculatedGrade = Math.round((successes / total) * 100);
+    
+    setGrade(calculatedGrade);
+    setGradeModalOpen(true);
+  };
+
+  const handleReset = () => {
+    if (!exercise) return;
+    
+    const initialStates: (boolean | string)[] = [];
+    exercise.sentences
+      ?.filter((sentence) => !sentence.description)
+      .forEach(() => initialStates.push(''));
+    
+    setUserResponses(initialStates);
+    setVerified(false);
+    setResponses(initialStates);
+  };
+
+  const showExplanation = (text: string) => {
+    setCurrentExplanation(text);
+    setExplanationModalOpen(true);
   };
 
   const handleSaveGrade = async () => {
-    // Calculate grade
-    let totalQuestions = 0;
-    let correctAnswers = 0;
-
-    exercise.sentences?.forEach((item, idx) => {
-      if (!item.sentence) return;
-      totalQuestions++;
-      if (sentencesState[idx]?.validationState === 'correct') {
-        correctAnswers++;
-      }
-    });
-
-    if (totalQuestions === 0) {
-      toast.error('No hay preguntas para evaluar');
-      return;
-    }
-
-    if (correctAnswers !== totalQuestions) {
-      toast.error('Debes completar correctamente todas las preguntas antes de guardar');
-      return;
-    }
+    if (!exercise) return;
 
     try {
       setIsSubmitting(true);
-      const grade = Math.round((correctAnswers / totalQuestions) * 100);
-
+      const index = await Calculate_index_exercise(exercise);
+      
       await postUserGrade(
-        exercise.number?.toString() || '0',
+        exercise._id || exercise.number?.toString() || '0',
         grade,
         exercise.unidad?.toString() || '0'
       );
 
       await postUserPosition({
         unidad: exercise.unidad,
-        position: exercise.number,
+        position: index,
       });
 
       toast.success('Progreso guardado correctamente');
@@ -141,22 +176,43 @@ export const Eje11 = ({ exercise }: Eje11Props) => {
     }
   };
 
-  const getLetter = (index: number) => {
-    return String.fromCharCode(97 + index); // a, b, c, d, ...
+  const handleNextExercise = () => {
+    if (!exercise) return;
+    const nextNumber = exercise.number + 1;
+    navigate(`/ejercicio/${nextNumber}`);
+    setGradeModalOpen(false);
   };
 
-  const getRowClassName = (idx: number, validationState: 'idle' | 'correct' | 'incorrect') => {
-    if (validationState === 'correct') {
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
+  const getTextColor = (idx: number): string => {
+    const index = getIndex(idx);
+    if (responses[index] === '') return 'text-foreground';
+    if (responses[index] === false) return 'text-red-600';
+    if (responses[index] === true) return 'text-green-600';
+    return 'text-foreground';
+  };
+
+  const getRowClassName = (idx: number): string => {
+    const index = getIndex(idx);
+    if (responses[index] === true) {
       return 'bg-green-50 dark:bg-green-950/20 border-l-4 border-green-500';
     }
-    if (validationState === 'incorrect') {
+    if (responses[index] === false) {
       return 'bg-red-50 dark:bg-red-950/20 border-l-4 border-red-500';
     }
     return idx % 2 === 0 ? 'bg-muted/30' : 'bg-muted/10';
   };
 
-  // Count only actual questions (not description items)
-  let questionCounter = 0;
+  if (loading || !exercise) {
+    return (
+      <div className="min-h-screen">
+        <DashboardLoader />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -174,13 +230,13 @@ export const Eje11 = ({ exercise }: Eje11Props) => {
               <CardTitle className="text-2xl">{exercise.title}</CardTitle>
               {exercise.number && (
                 <p className="text-sm text-muted-foreground">
-                  Ejercicios: {exercise.number}
+                  Ejercicio: {exercise.number}
                 </p>
               )}
             </div>
             <Button
               variant="outline"
-              onClick={() => window.history.back()}
+              onClick={handleGoBack}
               className="gap-2"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -200,10 +256,10 @@ export const Eje11 = ({ exercise }: Eje11Props) => {
         <CardContent className="space-y-3">
           {exercise.sentences?.map((item, idx) => {
             // If it's a description block (no sentence)
-            if (!item.sentence) {
+            if (item.description) {
               return (
                 <div
-                  key={idx}
+                  key={`desc-${idx}`}
                   className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg space-y-2 border-l-4 border-blue-500"
                 >
                   {item.description && (
@@ -217,33 +273,30 @@ export const Eje11 = ({ exercise }: Eje11Props) => {
             }
 
             // It's a question
-            const state = sentencesState[idx];
-            const letter = getLetter(questionCounter);
-            questionCounter++;
+            const index = getIndex(idx);
+            const letter = abcd[index];
 
             return (
               <div
-                key={idx}
-                className={`p-4 rounded-lg transition-colors ${getRowClassName(idx, state?.validationState || 'idle')}`}
+                key={`s-${idx}`}
+                className={`p-4 rounded-lg transition-colors ${getRowClassName(idx)}`}
               >
-                <div className="flex items-start gap-3">
-                  {/* Letter label */}
-                  <span className="font-semibold text-lg min-w-[2rem]">
-                    {letter})
-                  </span>
-
-                  {/* Sentence */}
-                  <p className="flex-1 text-base">{item.sentence}</p>
+                <div className="flex items-start gap-3 flex-wrap sm:flex-nowrap">
+                  {/* Letter label and Sentence */}
+                  <p className={`flex-1 text-base ${getTextColor(idx)}`}>
+                    <span className="font-semibold">({letter})</span> {item.sentence}
+                  </p>
 
                   {/* True/False options */}
                   <div className="flex items-center gap-4">
                     {/* True option */}
                     <div
-                      className="flex items-center gap-2 cursor-pointer"
-                      onClick={() => handleOptionChange(idx, true)}
+                      className={`flex items-center gap-2 ${verified ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
+                      onClick={() => !verified && handleChange(index, userResponses[index] === true ? '' : true)}
                     >
                       <Checkbox
-                        checked={state?.selectedValue === true}
+                        checked={userResponses[index] === true}
+                        disabled={verified}
                         className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
                       />
                       <span className="text-sm font-medium">True</span>
@@ -251,61 +304,114 @@ export const Eje11 = ({ exercise }: Eje11Props) => {
 
                     {/* False option */}
                     <div
-                      className="flex items-center gap-2 cursor-pointer"
-                      onClick={() => handleOptionChange(idx, false)}
+                      className={`flex items-center gap-2 ${verified ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
+                      onClick={() => !verified && handleChange(index, userResponses[index] === false ? '' : false)}
                     >
                       <Checkbox
-                        checked={state?.selectedValue === false}
+                        checked={userResponses[index] === false}
+                        disabled={verified}
                         className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
                       />
                       <span className="text-sm font-medium">False</span>
                     </div>
 
-                    {/* Help button */}
-                    {state?.showExplanation && item.explanation && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 rounded-full bg-muted"
-                            >
-                              <HelpCircle className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-sm">
-                            <p>{item.explanation}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                    {/* Help button - shown after verification if incorrect and has explanation */}
+                    {verified && item.explanation && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-full bg-muted hover:bg-muted/80"
+                        onClick={() => showExplanation(item.explanation!)}
+                      >
+                        <HelpCircle className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
                 </div>
-
-                {/* Explanation text (shown below) */}
-                {state?.showExplanation && item.explanation && (
-                  <div className="mt-3 ml-9 p-3 bg-background/50 rounded-md border">
-                    <p className="text-sm text-muted-foreground">
-                      {item.explanation}
-                    </p>
-                  </div>
-                )}
               </div>
             );
           })}
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
-            <Button onClick={handleVerify} variant="outline">
-              Verificar
+            <Button onClick={handleReset} variant="outline" className="gap-2">
+              <RotateCcw className="h-4 w-4" />
+              Reintentar
             </Button>
-            <Button onClick={handleSaveGrade} disabled={isSubmitting}>
-              {isSubmitting ? 'Guardando...' : 'Guardar Progreso'}
+            <Button onClick={handleVerify} className="gap-2">
+              <Check className="h-4 w-4" />
+              Verificar
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Grade Modal */}
+      <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl">
+              Resultado del Ejercicio
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center py-6">
+            <div className={`text-6xl font-bold mb-4 ${
+              grade >= 70 ? 'text-green-600' : grade >= 50 ? 'text-yellow-600' : 'text-red-600'
+            }`}>
+              {grade}%
+            </div>
+            <p className="text-muted-foreground text-center">
+              {grade >= 70 
+                ? '¡Excelente trabajo!' 
+                : grade >= 50 
+                  ? 'Buen intento, sigue practicando' 
+                  : 'Necesitas más práctica'}
+            </p>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setGradeModalOpen(false)} className="gap-2">
+              <X className="h-4 w-4" />
+              Cerrar
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/unidades')} className="gap-2">
+              <Home className="h-4 w-4" />
+              Volver al Menú
+            </Button>
+            <Button 
+              onClick={async () => {
+                await handleSaveGrade();
+                handleNextExercise();
+              }} 
+              disabled={isSubmitting}
+              className="gap-2"
+            >
+              {isSubmitting ? 'Guardando...' : (
+                <>
+                  <ArrowRight className="h-4 w-4" />
+                  Siguiente Ejercicio
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Explanation Modal */}
+      <Dialog open={explanationModalOpen} onOpenChange={setExplanationModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Explicación</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-muted-foreground">{currentExplanation}</p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setExplanationModalOpen(false)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
