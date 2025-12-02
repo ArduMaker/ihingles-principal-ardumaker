@@ -29,6 +29,7 @@ import { Eje22 } from './Eje22';
 import { Eje23 } from './Eje23';
 import { Eje27 } from './Eje27';
 import { Eje28 } from './Eje28';
+import { Eje29 } from './Eje29';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
 
@@ -136,6 +137,9 @@ export default function EjercicioView() {
       
       case 28:
         return <Eje28 exercise={exercise} />;
+      
+      case 29:
+        return <Eje29 exercise={exercise} />;
       
       case 31:
         return <Eje31 exercise={exercise} />;
