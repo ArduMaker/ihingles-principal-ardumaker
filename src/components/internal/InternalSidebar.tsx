@@ -22,7 +22,7 @@ const menuItems: { section: string; items: MenuItem[] }[] = [
   {
     section: 'APRENDIZAJE',
     items: [
-      { label: 'Dashboard', path: '/dashboard', icon: DashboardIcon },
+      { label: 'Dashboard', path: '/panel', icon: DashboardIcon },
       { label: 'Unidades', path: '/unidades', icon: UnidadesIcon },
       { label: 'Biblioteca', path: '/biblioteca', icon: BibliotecaIcon },
       { label: 'Vocabulario', path: '/vocabulario', icon: VocabularioIcon },
@@ -70,7 +70,7 @@ export const InternalSidebar = () => {
                         : 'text-sidebar-foreground hover:bg-sidebar-accent/10'
                     }`}
                   >
-                    <Icon className="w-5 h-5 flex-shrink-0" active={isActive} />
+                    <Icon className="w-5 h-5 flex-shrink-0" active={!isActive} />
                     <span>{item.label}</span>
                   </NavLink>
                 );
