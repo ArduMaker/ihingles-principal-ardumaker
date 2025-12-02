@@ -12,6 +12,7 @@ import Eje3 from './Eje3';
 import { Eje4 } from './Eje4';
 import { Eje5 } from './Eje5';
 import { Eje6 } from './Eje6';
+import { Eje7 } from './Eje7';
 import { Eje12 } from './Eje12';
 import { Eje18 } from './Eje18';
 import { Eje31 } from './Eje31';
@@ -77,6 +78,9 @@ export default function EjercicioView() {
       
       case 6:
         return <Eje6 exercise={exercise} />;
+      
+      case 7:
+        return <Eje7 exercise={exercise} />;
       
       case 8:
         return <Eje8 exercise={exercise} />;
