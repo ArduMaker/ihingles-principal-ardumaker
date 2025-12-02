@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect, Fragment } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Exercise } from '@/data/unidades';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { postUserGrade, postUserPosition } from '@/lib/api';
 import { toast } from 'sonner';
-import { AlertCircle, Info, CheckCircle2 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { normalizeAnswer } from '@/lib/exerciseUtils';
+import { Calculate_index_exercise } from '@/hooks/calculate_index';
+import DashboardLoader from '@/components/dashboard/DashboardLoader';
+import { ArrowRight, RotateCcw, Check, MessageCircle } from 'lucide-react';
 
 interface Eje5Props {
   exercise: Exercise;
@@ -17,25 +20,109 @@ interface SentenceData {
   answers: (string | [string, string[]])[];
   answers2?: (string | null)[];
   answers3?: (string | null)[];
+  answers4?: (string | null)[];
+  answers5?: (string | null)[];
+  answers6?: (string | null)[];
+  answers7?: (string | null)[];
+  answers8?: (string | null)[];
+  answers9?: (string | null)[];
+  answers10?: (string | null)[];
+  answers11?: (string | null)[];
+  answers12?: (string | null)[];
   explanation?: string;
   textToConjugate?: string;
 }
 
 type Type5Exercise = Exercise & {
   sentences: SentenceData[];
+  description?: string;
 };
 
 const isType5Exercise = (exercise: Exercise): exercise is Type5Exercise => {
-  return 'sentences' in exercise && Array.isArray(exercise.sentences);
+  return 'sentences' in exercise && Array.isArray((exercise as any).sentences);
+};
+
+// Get plain value from answer (handles complex structures)
+const getPlainValue = (answer: string | [string, string[]] | undefined): string => {
+  if (!answer) return '';
+  if (typeof answer === 'string') return answer;
+  if (Array.isArray(answer)) {
+    // [string, string[]] format - return the first value
+    return answer[0];
+  }
+  return '';
+};
+
+// Check answer function matching old logic with multiple alternative answers
+const checkAnswerOld = (
+  userAnswer: string,
+  answer: string | [string, string[]] | undefined,
+  answer2?: string | null,
+  answer3?: string | null,
+  answer4?: string | null,
+  answer5?: string | null,
+  answer6?: string | null,
+  answer7?: string | null,
+  answer8?: string | null,
+  answer9?: string | null,
+  answer10?: string | null,
+  answer11?: string | null,
+  answer12?: string | null
+): boolean => {
+  const normalized = normalizeAnswer(userAnswer);
+  if (!normalized) return false;
+
+  // Build list of valid answers
+  const validAnswers: string[] = [];
+
+  if (typeof answer === 'string') {
+    validAnswers.push(normalizeAnswer(answer));
+  } else if (Array.isArray(answer)) {
+    // Handle [string, string[]] format with permutables
+    const [base, permutables] = answer;
+    validAnswers.push(normalizeAnswer(base));
+    if (permutables) {
+      permutables.forEach(perm => validAnswers.push(normalizeAnswer(perm)));
+    }
+  }
+
+  // Add alternative answers (answers2 through answers12)
+  const alternatives = [answer2, answer3, answer4, answer5, answer6, answer7, answer8, answer9, answer10, answer11, answer12];
+  alternatives.forEach(alt => {
+    if (alt) validAnswers.push(normalizeAnswer(alt));
+  });
+
+  return validAnswers.includes(normalized);
 };
 
 export const Eje5 = ({ exercise: initialExercise }: Eje5Props) => {
-  const [userAnswers, setUserAnswers] = useState<{ [sentenceIndex: number]: { [blankIndex: number]: string } }>({});
-  const [validationState, setValidationState] = useState<{ 
-    [sentenceIndex: number]: { [blankIndex: number]: 'correct' | 'incorrect' | null } 
-  }>({});
-  const [showGradeModal, setShowGradeModal] = useState(false);
-  const [gradeInfo, setGradeInfo] = useState<{ grade: number; total: number; percentage: number } | null>(null);
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+
+  const [verified, setVerified] = useState(false);
+  const [responses, setResponses] = useState<(boolean | string)[]>([]);
+  const [userResponses, setUserResponses] = useState<string[]>([]);
+  const [gradeModalOpen, setGradeModalOpen] = useState(false);
+  const [grade, setGrade] = useState(0);
+  const [explanationModalOpen, setExplanationModalOpen] = useState(false);
+  const [currentExplanation, setCurrentExplanation] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  // Initialize responses
+  useEffect(() => {
+    if (!isType5Exercise(initialExercise)) return;
+    
+    const exercise = initialExercise;
+    const initialStates: string[] = [];
+    
+    exercise.sentences.forEach((sentence) =>
+      sentence.answers.forEach(() => initialStates.push(''))
+    );
+    
+    setUserResponses(initialStates);
+    setResponses(initialStates.map(() => ''));
+    setLoading(false);
+  }, [initialExercise]);
 
   if (!isType5Exercise(initialExercise)) {
     return (
@@ -47,172 +134,169 @@ export const Eje5 = ({ exercise: initialExercise }: Eje5Props) => {
 
   const exercise = initialExercise;
 
-  // Parse sentence to identify blanks
-  const parseSentence = (sentence: string) => {
-    const parts: Array<{ type: 'text' | 'blank'; content: string }> = [];
-    let current = '';
-    let i = 0;
+  // Should show the correct answer (when verified and there are errors)
+  const shouldShowAnswer = () => verified && responses.some((x) => !x);
 
-    while (i < sentence.length) {
-      if (sentence[i] === '_') {
-        // Found blank
-        if (current) {
-          parts.push({ type: 'text', content: current });
-          current = '';
-        }
-        // Count consecutive underscores
-        let underscoreCount = 0;
-        while (i < sentence.length && sentence[i] === '_') {
-          underscoreCount++;
-          i++;
-        }
-        parts.push({ type: 'blank', content: '_'.repeat(underscoreCount) });
-      } else {
-        current += sentence[i];
-        i++;
-      }
-    }
-
-    if (current) {
-      parts.push({ type: 'text', content: current });
-    }
-
-    return parts;
+  // Get linear index for a field (matching old logic exactly)
+  const getIndex = (iSentence: number, iAnswer: number): number => {
+    const sizes: number[] = [];
+    exercise.sentences
+      .slice(0, iSentence)
+      .forEach((sentence) => sizes.push(sentence.answers.length));
+    return sizes.reduce((a, b) => a + b, 0) + iAnswer;
   };
 
-  const handleInputChange = (sentenceIndex: number, blankIndex: number, value: string) => {
-    setUserAnswers(prev => ({
-      ...prev,
-      [sentenceIndex]: {
-        ...(prev[sentenceIndex] || {}),
-        [blankIndex]: value
-      }
-    }));
-
-    // Clear validation when user types
-    setValidationState(prev => ({
-      ...prev,
-      [sentenceIndex]: {
-        ...(prev[sentenceIndex] || {}),
-        [blankIndex]: null
-      }
-    }));
+  // Get the correct answer at a given linear index
+  const getAnswer = (i: number): string | [string, string[]] => {
+    const answers: (string | [string, string[]])[] = [];
+    exercise.sentences.forEach((sentence) =>
+      sentence.answers.forEach((answer) => answers.push(answer))
+    );
+    return answers[i];
   };
 
-  const normalizeAnswer = (answer: string) => {
-    return answer.trim().toLowerCase().replace(/\s+/g, ' ');
+  const handleChange = (index: number, value: string) => {
+    setUserResponses((old) => {
+      const data = [...old];
+      data[index] = value;
+      return data;
+    });
   };
 
-  const checkAnswer = (
-    userAnswer: string,
-    correctAnswers: (string | [string, string[]])[],
-    blankIndex: number,
-    answers2?: (string | null)[],
-    answers3?: (string | null)[]
-  ): boolean => {
-    const normalized = normalizeAnswer(userAnswer);
-
-    // Get the correct answer for this blank
-    const answerData = correctAnswers[blankIndex];
-
-    // Build list of valid answers
-    const validAnswers: string[] = [];
-
-    if (typeof answerData === 'string') {
-      validAnswers.push(normalizeAnswer(answerData));
-    } else if (Array.isArray(answerData)) {
-      // Handle [string, string[]] format with permutables
-      const [base, permutables] = answerData;
-      validAnswers.push(normalizeAnswer(base));
-      permutables.forEach(perm => validAnswers.push(normalizeAnswer(perm)));
-    }
-
-    // Add alternative answers
-    if (answers2 && answers2[blankIndex]) {
-      validAnswers.push(normalizeAnswer(answers2[blankIndex] as string));
-    }
-    if (answers3 && answers3[blankIndex]) {
-      validAnswers.push(normalizeAnswer(answers3[blankIndex] as string));
-    }
-
-    return validAnswers.includes(normalized);
+  const handleReset = () => {
+    const initialStates: string[] = [];
+    exercise.sentences.forEach((sentence) =>
+      sentence.answers.forEach(() => initialStates.push(''))
+    );
+    setUserResponses(initialStates);
+    setResponses(initialStates.map(() => ''));
+    setVerified(false);
   };
 
   const handleVerify = () => {
-    let correctCount = 0;
-    let totalCount = 0;
-    const newValidationState: { 
-      [sentenceIndex: number]: { [blankIndex: number]: 'correct' | 'incorrect' } 
-    } = {};
+    // Collect all answers
+    const answers: (string | [string, string[]])[] = [];
+    const answers2: (string | null | undefined)[] = [];
+    const answers3: (string | null | undefined)[] = [];
+    const answers4: (string | null | undefined)[] = [];
+    const answers5: (string | null | undefined)[] = [];
+    const answers6: (string | null | undefined)[] = [];
+    const answers7: (string | null | undefined)[] = [];
+    const answers8: (string | null | undefined)[] = [];
+    const answers9: (string | null | undefined)[] = [];
+    const answers10: (string | null | undefined)[] = [];
+    const answers11: (string | null | undefined)[] = [];
+    const answers12: (string | null | undefined)[] = [];
 
-    exercise.sentences.forEach((sentenceData, sentenceIndex) => {
-      const parts = parseSentence(sentenceData.sentence);
-      const blanks = parts.filter(p => p.type === 'blank');
-
-      blanks.forEach((_, blankIndex) => {
-        totalCount++;
-        const userAnswer = userAnswers[sentenceIndex]?.[blankIndex] || '';
-        
-        const isCorrect = checkAnswer(
-          userAnswer,
-          sentenceData.answers,
-          blankIndex,
-          sentenceData.answers2,
-          sentenceData.answers3
-        );
-
-        if (!newValidationState[sentenceIndex]) {
-          newValidationState[sentenceIndex] = {};
-        }
-
-        newValidationState[sentenceIndex][blankIndex] = isCorrect ? 'correct' : 'incorrect';
-
-        if (isCorrect) {
-          correctCount++;
-        }
+    exercise.sentences.forEach((sentence) => {
+      const s = sentence as any; // Cast to access dynamic answer properties
+      sentence.answers.forEach((answer, i) => {
+        answers.push(answer);
+        answers2.push(s.answers2?.[i]);
+        answers3.push(s.answers3?.[i]);
+        answers4.push(s.answers4?.[i]);
+        answers5.push(s.answers5?.[i]);
+        answers6.push(s.answers6?.[i]);
+        answers7.push(s.answers7?.[i]);
+        answers8.push(s.answers8?.[i]);
+        answers9.push(s.answers9?.[i]);
+        answers10.push(s.answers10?.[i]);
+        answers11.push(s.answers11?.[i]);
+        answers12.push(s.answers12?.[i]);
       });
     });
 
-    setValidationState(newValidationState);
+    // Check responses
+    const responsesCheck: boolean[] = [];
+    answers.forEach((answer, iAns) =>
+      responsesCheck.push(
+        checkAnswerOld(
+          userResponses[iAns],
+          answer,
+          answers2[iAns],
+          answers3[iAns],
+          answers4[iAns],
+          answers5[iAns],
+          answers6[iAns],
+          answers7[iAns],
+          answers8[iAns],
+          answers9[iAns],
+          answers10[iAns],
+          answers11[iAns],
+          answers12[iAns]
+        )
+      )
+    );
 
-    const percentage = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
-    setGradeInfo({ grade: correctCount, total: totalCount, percentage });
+    setResponses(responsesCheck);
+    setVerified(true);
 
-    if (correctCount === totalCount) {
-      toast.success('¡Perfecto! Todas las respuestas son correctas');
-      setShowGradeModal(true);
-    } else {
-      toast.error(`${correctCount}/${totalCount} respuestas correctas`);
-    }
+    // Calculate grade
+    const total = responsesCheck.length;
+    const successes = responsesCheck.filter((x) => x).length;
+    const gradeValue = total > 0 ? Math.round((successes / total) * 100) : 0;
+
+    setGrade(gradeValue);
+    setGradeModalOpen(true);
   };
 
-  const handleSaveGrade = async () => {
-    if (!gradeInfo) return;
-
+  const handleSaveGrade = async (continueToNext: boolean = false) => {
     try {
       await postUserGrade(
         (exercise.number || 0).toString(),
-        gradeInfo.percentage,
+        grade,
         (exercise.unidad || 0).toString()
       );
 
-      if (exercise.number && exercise.unidad) {
+      const exerciseIndex = await Calculate_index_exercise(exercise);
+      if (exerciseIndex !== -1) {
         await postUserPosition({
           unidad: exercise.unidad,
-          position: exercise.number
+          position: exerciseIndex
         });
       }
 
       toast.success('Progreso guardado correctamente');
-      setShowGradeModal(false);
+      setGradeModalOpen(false);
+
+      if (continueToNext) {
+        const nextExerciseNumber = (exercise.number || 0) + 1;
+        navigate(`/ejercicio/${id}/${nextExerciseNumber}`);
+      } else {
+        navigate(`/unidad/${id}`);
+      }
     } catch (error) {
       console.error('Error saving grade:', error);
       toast.error('Error al guardar el progreso');
     }
   };
 
+  const showExplanation = (text?: string) => {
+    if (text) {
+      setCurrentExplanation(text);
+      setExplanationModalOpen(true);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <DashboardLoader />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
+      {/* Hero Image */}
+      <div className="w-full rounded-xl overflow-hidden mb-6">
+        <img 
+          src="/ejercicio/principal2.png" 
+          alt="Exercise" 
+          className="w-full h-32 md:h-48 object-cover"
+        />
+      </div>
+
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-2xl md:text-3xl font-bold text-foreground">{exercise.title}</h1>
@@ -222,111 +306,138 @@ export const Eje5 = ({ exercise: initialExercise }: Eje5Props) => {
       </div>
 
       {/* Sentences */}
-      <div className="space-y-6">
-        {exercise.sentences.map((sentenceData, sentenceIndex) => {
-          const parts = parseSentence(sentenceData.sentence);
-          let blankCounter = 0;
-
-          return (
-            <div key={sentenceIndex} className="border border-border rounded-lg p-6 bg-card space-y-3">
-              {/* Sentence with blanks */}
-              <div className="flex flex-wrap items-center gap-2 text-lg">
-                <span className="font-medium text-muted-foreground mr-2">
-                  {String.fromCharCode(97 + sentenceIndex)})
-                </span>
-                {parts.map((part, partIndex) => {
-                  if (part.type === 'text') {
-                    return <span key={partIndex} className="text-foreground">{part.content}</span>;
-                  } else {
-                    const blankIndex = blankCounter++;
-                    const validationStatus = validationState[sentenceIndex]?.[blankIndex];
-                    const userAnswer = userAnswers[sentenceIndex]?.[blankIndex] || '';
-
-                    return (
-                      <div key={partIndex} className="relative inline-flex items-center">
-                        <Input
-                          value={userAnswer}
-                          onChange={(e) => handleInputChange(sentenceIndex, blankIndex, e.target.value)}
-                          className={`w-32 h-10 ${
-                            validationStatus === 'correct' 
-                              ? 'border-green-500 bg-green-50' 
-                              : validationStatus === 'incorrect'
-                              ? 'border-red-500 bg-red-50'
-                              : ''
-                          }`}
-                          placeholder="..."
-                        />
-                        {validationStatus === 'correct' && (
-                          <CheckCircle2 className="h-4 w-4 text-green-500 absolute -right-6" />
-                        )}
-                        {validationStatus === 'incorrect' && (
-                          <AlertCircle className="h-4 w-4 text-red-500 absolute -right-6" />
-                        )}
-                      </div>
-                    );
-                  }
-                })}
-              </div>
-
-              {/* Text to conjugate */}
-              {sentenceData.textToConjugate && (
-                <div className="text-sm text-muted-foreground italic bg-muted px-3 py-2 rounded">
-                  {sentenceData.textToConjugate}
-                </div>
-              )}
-
-              {/* Explanation tooltip */}
-              {sentenceData.explanation && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center gap-2 text-sm text-blue-600 cursor-help">
-                        <Info className="h-4 w-4" />
-                        <span>Ver explicación</span>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-md bg-background border border-border z-50">
-                      <p className="text-sm">{sentenceData.explanation}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+      <div className="space-y-4">
+        {exercise.sentences.map((sentenceData, iSentence) => (
+          <div 
+            key={iSentence} 
+            className="border border-border rounded-lg p-4 md:p-6 bg-card"
+          >
+            {/* Sentence with blanks */}
+            <div className="flex flex-wrap items-center gap-2 text-lg">
+              <span className="font-bold text-primary mr-2 min-w-[24px]">
+                {iSentence + 1}.
+              </span>
+              {sentenceData.sentence.split('___').map((part, index) => (
+                <Fragment key={index}>
+                  {index !== 0 && (
+                    <div className="inline-flex flex-col items-center">
+                      <Input
+                        value={userResponses[getIndex(iSentence, index - 1)] || ''}
+                        onChange={(e) => handleChange(getIndex(iSentence, index - 1), e.target.value)}
+                        disabled={verified}
+                        className="w-32 h-9 text-center"
+                        style={{
+                          borderColor: !verified ? 'hsl(var(--border))' :
+                            responses[getIndex(iSentence, index - 1)] ? '#22c55e' : '#ef4444',
+                          borderWidth: verified ? '2px' : '1px',
+                          backgroundColor: !verified ? 'transparent' :
+                            responses[getIndex(iSentence, index - 1)] ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                        }}
+                      />
+                      {/* Show correct answer when verified and wrong */}
+                      {shouldShowAnswer() && !responses[getIndex(iSentence, index - 1)] && (
+                        <span 
+                          className="text-xs text-green-600 mt-1 cursor-pointer hover:underline"
+                          onClick={() => showExplanation(sentenceData.explanation)}
+                        >
+                          {getPlainValue(getAnswer(getIndex(iSentence, index - 1)))}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <span className="text-foreground">{part}</span>
+                </Fragment>
+              ))}
             </div>
-          );
-        })}
+
+            {/* Text to conjugate */}
+            {sentenceData.textToConjugate && (
+              <div className="mt-3 text-sm text-muted-foreground italic bg-muted/50 px-3 py-2 rounded inline-block">
+                {sentenceData.textToConjugate}
+              </div>
+            )}
+
+            {/* Explanation button (only show if verified, has explanation, and there's an error in this sentence) */}
+            {verified && sentenceData.explanation && (
+              <button
+                onClick={() => showExplanation(sentenceData.explanation)}
+                className="mt-2 flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Ver explicación
+              </button>
+            )}
+          </div>
+        ))}
       </div>
 
       {/* Action Buttons */}
       <div className="flex justify-center gap-4 pt-6">
-        <Button onClick={handleVerify} size="lg">
+        <Button 
+          onClick={handleReset} 
+          variant="outline" 
+          size="lg"
+          className="gap-2"
+        >
+          <RotateCcw className="h-4 w-4" />
+          Reintentar
+        </Button>
+        <Button 
+          onClick={handleVerify} 
+          size="lg"
+          className="gap-2"
+          disabled={verified}
+        >
+          <Check className="h-4 w-4" />
           Verificar
         </Button>
       </div>
 
       {/* Grade Modal */}
-      <Dialog open={showGradeModal} onOpenChange={setShowGradeModal}>
+      <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
         <DialogContent className="bg-background">
           <DialogHeader>
             <DialogTitle>Resultado del Ejercicio</DialogTitle>
           </DialogHeader>
-          {gradeInfo && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <p className="text-4xl font-bold text-primary">{gradeInfo.percentage}%</p>
-                <p className="text-muted-foreground mt-2">
-                  {gradeInfo.grade} de {gradeInfo.total} respuestas correctas
-                </p>
-              </div>
-              <div className="flex justify-center gap-4">
-                <Button onClick={handleSaveGrade}>Guardar Progreso</Button>
-                <Button variant="outline" onClick={() => setShowGradeModal(false)}>
-                  Cerrar
-                </Button>
-              </div>
+          <div className="space-y-4">
+            <div className="text-center py-6">
+              <p className="text-5xl font-bold text-primary">{grade}%</p>
+              <p className="text-muted-foreground mt-2">
+                Respuestas correctas
+              </p>
             </div>
-          )}
+          </div>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button variant="ghost" onClick={() => setGradeModalOpen(false)}>
+              Cerrar
+            </Button>
+            <Button variant="outline" onClick={() => handleSaveGrade(false)}>
+              Volver al Menú
+            </Button>
+            <Button onClick={() => handleSaveGrade(true)} className="gap-2">
+              Siguiente Ejercicio
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Explanation Modal */}
+      <Dialog open={explanationModalOpen} onOpenChange={setExplanationModalOpen}>
+        <DialogContent className="bg-background">
+          <DialogHeader>
+            <DialogTitle>Explicación</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-foreground">{currentExplanation}</p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setExplanationModalOpen(false)}>Cerrar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 };
+
+export default Eje5;
