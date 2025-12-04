@@ -2,15 +2,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { Exercise } from '@/data/unidades';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CheckCircle2, XCircle, ChevronLeft, ChevronRight, MessageCircle, GripVertical, RotateCcw } from 'lucide-react';
-import { postUserGrade, postUserPosition } from '@/lib/api';
-import { toast } from 'sonner';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Calculate_index_exercise } from '@/hooks/calculate_index';
+import { CheckCircle2, XCircle, ChevronLeft, MessageCircle, GripVertical, RotateCcw } from 'lucide-react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import DashboardLoader from '@/components/dashboard/DashboardLoader';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { checkAnswer } from '@/lib/exerciseUtils';
+import { useExerciseGrade } from '@/hooks/useExerciseGrade';
+import { GradeModal } from '@/components/ejercicio/GradeModal';
+import { ExplanationModal } from '@/components/ejercicio/ExplanationModal';
 
 interface Type8Exercise extends Exercise {
   sentence?: string;
@@ -118,8 +116,11 @@ const checkAnswerType8 = (userAnswer: string, ...validAnswers: (string | undefin
 export const Eje8 = ({ exercise: initialExercise }: Eje8Props) => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const [exercise, setExercise] = useState<Type8Exercise>(initialExercise);
   const [loading, setLoading] = useState(false);
+  
+  const currentExerciseIndex = parseInt(searchParams.get('exerciseIndex') || '0');
   
   // Crear items iniciales
   const createInitialItems = (answer?: string, groupLength?: number): DraggableItem[] => {
@@ -135,9 +136,23 @@ export const Eje8 = ({ exercise: initialExercise }: Eje8Props) => {
   );
   const [verified, setVerified] = useState(false);
   const [result, setResult] = useState<number | null>(null);
-  const [gradeModalOpen, setGradeModalOpen] = useState(false);
   const [explanationModalOpen, setExplanationModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Hook modular de calificación
+  const {
+    grade,
+    gradeModalOpen,
+    saving,
+    openGradeModal,
+    setGradeModalOpen,
+    handleClose,
+    handleGoBack,
+    handleNextExercise,
+  } = useExerciseGrade({
+    exerciseId: exercise._id || exercise.number?.toString() || '0',
+    unidad: exercise.unidad || Number(id) || 1,
+    exerciseNumber: exercise.number || currentExerciseIndex,
+  });
 
   useEffect(() => {
     setExercise(initialExercise);
@@ -161,7 +176,7 @@ export const Eje8 = ({ exercise: initialExercise }: Eje8Props) => {
   const handleVerify = () => {
     const userAnswer = items.map((item) => item.content).join(" ");
     
-    const grade = checkAnswerType8(
+    const calculatedGrade = checkAnswerType8(
       userAnswer,
       exercise.answer,
       exercise.answer2,
@@ -177,9 +192,9 @@ export const Eje8 = ({ exercise: initialExercise }: Eje8Props) => {
       exercise.answer12
     );
 
-    setResult(grade);
+    setResult(calculatedGrade);
     setVerified(true);
-    setGradeModalOpen(true);
+    openGradeModal(calculatedGrade); // Ya es 0-1
   };
 
   const handleReset = () => {
@@ -188,59 +203,12 @@ export const Eje8 = ({ exercise: initialExercise }: Eje8Props) => {
     setVerified(false);
   };
 
-  const handleSaveGrade = async () => {
-    try {
-      setIsSubmitting(true);
-      const grade = (result || 0) * 100;
-
-      await postUserGrade(
-        exercise.number.toString(),
-        grade,
-        exercise.unidad.toString()
-      );
-
-      await postUserPosition({
-        unidad: exercise.unidad,
-        position: exercise.number
-      });
-
-      toast.success('Progreso guardado correctamente');
-    } catch (error) {
-      console.error('Error saving grade:', error);
-      toast.error('Error al guardar el progreso');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleNextExercise = async () => {
-    try {
-      setLoading(true);
-      const nextIndex = await Calculate_index_exercise({
-        ...exercise,
-        number: exercise.number + 1
-      });
-      setGradeModalOpen(false);
-      navigate(`/modulo/${id}/ejercicio?exerciseIndex=${nextIndex}`);
-    } catch (error) {
-      console.error('Error navigating to next exercise:', error);
-      toast.error('Error al cargar el siguiente ejercicio');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoBack = () => {
-    setGradeModalOpen(false);
-    navigate(`/modulo/${id}`);
-  };
-
   const showExplanation = () => {
     setExplanationModalOpen(true);
   };
 
   const getItemClassName = (isDragging: boolean): string => {
-    let base = "px-4 py-3 rounded-xl text-base font-semibold cursor-grab select-none transition-all flex items-center gap-2";
+    let base = "px-3 py-2 sm:px-4 sm:py-3 rounded-xl text-sm sm:text-base font-semibold cursor-grab select-none transition-all flex items-center gap-1 sm:gap-2";
     
     if (result !== null) {
       if (result >= 0.99) {
@@ -262,53 +230,54 @@ export const Eje8 = ({ exercise: initialExercise }: Eje8Props) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       {/* Header con imagen */}
-      <div className="relative h-32 bg-gradient-to-r from-yellow-800/40 to-yellow-700/40 rounded-lg overflow-hidden">
+      <div className="relative h-24 sm:h-32 bg-gradient-to-r from-yellow-800/40 to-yellow-700/40 rounded-lg overflow-hidden">
         <img
           src="/ejercicio/grammar.png"
           alt="Grammar"
           className="absolute right-0 top-0 h-full w-auto object-contain opacity-80"
         />
-        <div className="absolute inset-0 flex items-center px-8">
-          <h1 className="text-4xl font-bold text-white drop-shadow-lg">Grammar</h1>
+        <div className="absolute inset-0 flex items-center px-4 sm:px-8">
+          <h1 className="text-2xl sm:text-4xl font-bold text-white drop-shadow-lg">Grammar</h1>
         </div>
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div className="space-y-2">
-              <CardTitle className="text-2xl">{exercise.title}</CardTitle>
-              <p className="text-sm text-muted-foreground">
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+            <div className="space-y-2 flex-1">
+              <CardTitle className="text-xl sm:text-2xl">{exercise.title}</CardTitle>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Ejercicio: {exercise.number}/{exercise.groupLength || 'N/A'}
               </p>
             </div>
             <Button
               variant="outline"
               onClick={() => navigate(`/modulo/${id}`)}
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto"
+              size="sm"
             >
               <ChevronLeft className="h-4 w-4" />
               Atrás
             </Button>
           </div>
           {exercise.description && (
-            <p className="text-muted-foreground mt-4">{exercise.description}</p>
+            <p className="text-muted-foreground mt-4 text-sm sm:text-base">{exercise.description}</p>
           )}
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">
           {/* Oración en español */}
-          <div className="bg-muted/50 rounded-lg p-6 text-center">
-            <p className="text-xl font-medium text-foreground">
+          <div className="bg-muted/50 rounded-lg p-4 sm:p-6 text-center">
+            <p className="text-lg sm:text-xl font-medium text-foreground">
               {exercise.sentence}
             </p>
           </div>
 
           {/* Área de Drag and Drop */}
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground text-center">
+          <div className="space-y-3 sm:space-y-4">
+            <p className="text-xs sm:text-sm text-muted-foreground text-center">
               Arrastra y ordena las palabras para formar la traducción correcta
             </p>
             
@@ -319,8 +288,8 @@ export const Eje8 = ({ exercise: initialExercise }: Eje8Props) => {
                     {...provided.droppableProps}
                     ref={provided.innerRef}
                     className={`
-                      min-h-[120px] p-6 rounded-xl border-2 border-dashed
-                      flex flex-wrap justify-center items-center gap-3
+                      min-h-[100px] sm:min-h-[120px] p-4 sm:p-6 rounded-xl border-2 border-dashed
+                      flex flex-wrap justify-center items-center gap-2 sm:gap-3
                       transition-colors
                       ${snapshot.isDraggingOver 
                         ? 'bg-primary/10 border-primary' 
@@ -342,7 +311,7 @@ export const Eje8 = ({ exercise: initialExercise }: Eje8Props) => {
                             {...provided.dragHandleProps}
                             className={getItemClassName(snapshot.isDragging)}
                           >
-                            <GripVertical className="h-4 w-4 opacity-50" />
+                            <GripVertical className="h-3 w-3 sm:h-4 sm:w-4 opacity-50" />
                             {item.content}
                           </div>
                         )}
@@ -358,17 +327,17 @@ export const Eje8 = ({ exercise: initialExercise }: Eje8Props) => {
           {/* Mostrar respuesta correcta si se verificó y está incorrecto */}
           {verified && result !== null && result < 0.99 && (
             <div 
-              className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+              className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 sm:p-4 cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
               onClick={showExplanation}
             >
               <div className="flex items-center gap-2 text-green-700 dark:text-green-300 mb-2">
-                <CheckCircle2 className="h-5 w-5" />
-                <span className="font-semibold">Respuesta correcta:</span>
+                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="font-semibold text-sm sm:text-base">Respuesta correcta:</span>
                 {exercise.explanation && (
-                  <MessageCircle className="h-4 w-4 ml-auto" />
+                  <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 ml-auto" />
                 )}
               </div>
-              <p className="text-green-800 dark:text-green-200 font-medium">
+              <p className="text-green-800 dark:text-green-200 font-medium text-sm sm:text-base">
                 {getPlainValue(exercise.answer)}
               </p>
             </div>
@@ -376,19 +345,19 @@ export const Eje8 = ({ exercise: initialExercise }: Eje8Props) => {
 
           {/* Resultado visual */}
           {verified && (
-            <div className={`flex items-center gap-2 p-3 rounded-lg ${
+            <div className={`flex items-center gap-2 p-3 rounded-lg text-sm sm:text-base ${
               result !== null && result >= 0.99 
                 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                 : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
             }`}>
               {result !== null && result >= 0.99 ? (
                 <>
-                  <CheckCircle2 className="h-5 w-5" />
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span className="font-medium">¡Correcto!</span>
                 </>
               ) : (
                 <>
-                  <XCircle className="h-5 w-5" />
+                  <XCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span className="font-medium">Incorrecto</span>
                 </>
               )}
@@ -396,11 +365,11 @@ export const Eje8 = ({ exercise: initialExercise }: Eje8Props) => {
           )}
 
           {/* Botones de acción */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4">
             <Button
               variant="outline"
               onClick={handleReset}
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto"
             >
               <RotateCcw className="h-4 w-4" />
               Reintentar
@@ -408,6 +377,7 @@ export const Eje8 = ({ exercise: initialExercise }: Eje8Props) => {
             <Button
               onClick={handleVerify}
               disabled={verified}
+              className="w-full sm:w-auto"
             >
               Verificar
             </Button>
@@ -416,70 +386,22 @@ export const Eje8 = ({ exercise: initialExercise }: Eje8Props) => {
       </Card>
 
       {/* Modal de Calificación */}
-      <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {result !== null && result >= 0.99 ? (
-                <>
-                  <CheckCircle2 className="h-6 w-6 text-green-500" />
-                  ¡Excelente!
-                </>
-              ) : (
-                <>
-                  <XCircle className="h-6 w-6 text-red-500" />
-                  Resultado
-                </>
-              )}
-            </DialogTitle>
-            <DialogDescription>
-              Tu calificación en este ejercicio es:
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-center py-6">
-            <div className={`text-6xl font-bold ${
-              result !== null && result >= 0.99 ? 'text-green-500' : 'text-red-500'
-            }`}>
-              {Math.round((result || 0) * 100)}%
-            </div>
-          </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setGradeModalOpen(false)}>
-              Cerrar
-            </Button>
-            <Button variant="outline" onClick={handleGoBack}>
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Volver al Menú
-            </Button>
-            <Button onClick={handleNextExercise} disabled={loading}>
-              Siguiente Ejercicio
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GradeModal
+        open={gradeModalOpen}
+        onOpenChange={setGradeModalOpen}
+        grade={grade}
+        saving={saving}
+        onClose={handleClose}
+        onGoBack={handleGoBack}
+        onNextExercise={handleNextExercise}
+      />
 
       {/* Modal de Explicación */}
-      <Dialog open={explanationModalOpen} onOpenChange={setExplanationModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 text-primary" />
-              Explicación
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-muted-foreground">
-              {exercise.explanation || 'No hay explicación disponible para este ejercicio.'}
-            </p>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setExplanationModalOpen(false)}>
-              Cerrar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ExplanationModal
+        open={explanationModalOpen}
+        onOpenChange={setExplanationModalOpen}
+        explanation={exercise.explanation}
+      />
     </div>
   );
 };

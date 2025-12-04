@@ -1,20 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChevronLeft, HelpCircle, RotateCcw, Check, ArrowRight, Home, X } from 'lucide-react';
-import { postUserGrade, postUserPosition } from '@/lib/api';
-import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { ChevronLeft, HelpCircle, RotateCcw, Check } from 'lucide-react';
 import DashboardLoader from '@/components/dashboard/DashboardLoader';
-import { Calculate_index_exercise } from '@/hooks/calculate_index';
+import { useExerciseGrade } from '@/hooks/useExerciseGrade';
+import { GradeModal } from '@/components/ejercicio/GradeModal';
+import { ExplanationModal } from '@/components/ejercicio/ExplanationModal';
 
 const abcd = "abcdefghijklmnopqrstuvwxyz";
 
@@ -43,8 +36,12 @@ interface Eje11Props {
 
 export const Eje11 = ({ exercise: initialExercise }: Eje11Props) => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const [exercise, setExercise] = useState<Type11Exercise | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const currentExerciseIndex = parseInt(searchParams.get('exerciseIndex') || '0');
 
   // State for tracking responses and results
   const [verified, setVerified] = useState(false);
@@ -52,11 +49,24 @@ export const Eje11 = ({ exercise: initialExercise }: Eje11Props) => {
   const [userResponses, setUserResponses] = useState<(boolean | string)[]>([]);
   
   // Modal states
-  const [gradeModalOpen, setGradeModalOpen] = useState(false);
-  const [grade, setGrade] = useState(0);
   const [explanationModalOpen, setExplanationModalOpen] = useState(false);
   const [currentExplanation, setCurrentExplanation] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Hook modular de calificación
+  const {
+    grade,
+    gradeModalOpen,
+    saving,
+    openGradeModal,
+    setGradeModalOpen,
+    handleClose,
+    handleGoBack,
+    handleNextExercise,
+  } = useExerciseGrade({
+    exerciseId: initialExercise?._id || initialExercise?.number?.toString() || '0',
+    unidad: initialExercise?.unidad || Number(id) || 1,
+    exerciseNumber: initialExercise?.number || currentExerciseIndex,
+  });
 
   // Initialize exercise and states
   useEffect(() => {
@@ -125,10 +135,9 @@ export const Eje11 = ({ exercise: initialExercise }: Eje11Props) => {
     // Calculate and show grade
     const total = responsesCheck.length;
     const successes = responsesCheck.filter((x) => x).length;
-    const calculatedGrade = Math.round((successes / total) * 100);
+    const calculatedGrade = total > 0 ? successes / total : 0; // 0-1 normalizado
     
-    setGrade(calculatedGrade);
-    setGradeModalOpen(true);
+    openGradeModal(calculatedGrade);
   };
 
   const handleReset = () => {
@@ -147,44 +156,6 @@ export const Eje11 = ({ exercise: initialExercise }: Eje11Props) => {
   const showExplanation = (text: string) => {
     setCurrentExplanation(text);
     setExplanationModalOpen(true);
-  };
-
-  const handleSaveGrade = async () => {
-    if (!exercise) return;
-
-    try {
-      setIsSubmitting(true);
-      const index = await Calculate_index_exercise(exercise);
-      
-      await postUserGrade(
-        exercise._id || exercise.number?.toString() || '0',
-        grade,
-        exercise.unidad?.toString() || '0'
-      );
-
-      await postUserPosition({
-        unidad: exercise.unidad,
-        position: index,
-      });
-
-      toast.success('Progreso guardado correctamente');
-    } catch (error) {
-      console.error('Error saving grade:', error);
-      toast.error('Error al guardar el progreso');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleNextExercise = () => {
-    if (!exercise) return;
-    const nextNumber = exercise.number + 1;
-    navigate(`/ejercicio/${nextNumber}`);
-    setGradeModalOpen(false);
-  };
-
-  const handleGoBack = () => {
-    navigate(-1);
   };
 
   const getTextColor = (idx: number): string => {
@@ -215,58 +186,59 @@ export const Eje11 = ({ exercise: initialExercise }: Eje11Props) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       {/* Header */}
-      <div className="relative h-32 bg-gradient-to-r from-yellow-800/40 to-yellow-700/40 rounded-lg overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-end px-8">
-          <h1 className="text-4xl font-bold text-white">Grammar</h1>
+      <div className="relative h-24 sm:h-32 bg-gradient-to-r from-yellow-800/40 to-yellow-700/40 rounded-lg overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-end px-4 sm:px-8">
+          <h1 className="text-2xl sm:text-4xl font-bold text-white">Grammar</h1>
         </div>
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div className="space-y-2">
-              <CardTitle className="text-2xl">{exercise.title}</CardTitle>
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+            <div className="space-y-2 flex-1">
+              <CardTitle className="text-xl sm:text-2xl">{exercise.title}</CardTitle>
               {exercise.number && (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Ejercicio: {exercise.number}
                 </p>
               )}
             </div>
             <Button
               variant="outline"
-              onClick={handleGoBack}
-              className="gap-2"
+              onClick={() => navigate(`/modulo/${id}`)}
+              className="gap-2 w-full sm:w-auto"
+              size="sm"
             >
               <ChevronLeft className="h-4 w-4" />
               Atrás
             </Button>
           </div>
           {exercise.description && (
-            <p className="text-muted-foreground mt-4">{exercise.description}</p>
+            <p className="text-muted-foreground mt-4 text-sm sm:text-base">{exercise.description}</p>
           )}
           {exercise.audio && (
-            <div className="mt-2 text-sm text-muted-foreground">
+            <div className="mt-2 text-xs sm:text-sm text-muted-foreground">
               Audio: {exercise.audio}
             </div>
           )}
         </CardHeader>
 
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
           {exercise.sentences?.map((item, idx) => {
             // If it's a description block (no sentence)
             if (item.description) {
               return (
                 <div
                   key={`desc-${idx}`}
-                  className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg space-y-2 border-l-4 border-blue-500"
+                  className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg space-y-2 border-l-4 border-blue-500"
                 >
                   {item.description && (
-                    <p className="text-sm font-medium">{item.description}</p>
+                    <p className="text-xs sm:text-sm font-medium">{item.description}</p>
                   )}
                   {item.description2 && (
-                    <p className="text-sm text-muted-foreground">{item.description2}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">{item.description2}</p>
                   )}
                 </div>
               );
@@ -279,40 +251,40 @@ export const Eje11 = ({ exercise: initialExercise }: Eje11Props) => {
             return (
               <div
                 key={`s-${idx}`}
-                className={`p-4 rounded-lg transition-colors ${getRowClassName(idx)}`}
+                className={`p-3 sm:p-4 rounded-lg transition-colors ${getRowClassName(idx)}`}
               >
-                <div className="flex items-start gap-3 flex-wrap sm:flex-nowrap">
+                <div className="flex items-start gap-2 sm:gap-3 flex-wrap">
                   {/* Letter label and Sentence */}
-                  <p className={`flex-1 text-base ${getTextColor(idx)}`}>
+                  <p className={`flex-1 text-sm sm:text-base ${getTextColor(idx)}`}>
                     <span className="font-semibold">({letter})</span> {item.sentence}
                   </p>
 
                   {/* True/False options */}
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
                     {/* True option */}
                     <div
-                      className={`flex items-center gap-2 ${verified ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
+                      className={`flex items-center gap-1.5 sm:gap-2 ${verified ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
                       onClick={() => !verified && handleChange(index, userResponses[index] === true ? '' : true)}
                     >
                       <Checkbox
                         checked={userResponses[index] === true}
                         disabled={verified}
-                        className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                        className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600 h-4 w-4 sm:h-5 sm:w-5"
                       />
-                      <span className="text-sm font-medium">True</span>
+                      <span className="text-xs sm:text-sm font-medium">True</span>
                     </div>
 
                     {/* False option */}
                     <div
-                      className={`flex items-center gap-2 ${verified ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
+                      className={`flex items-center gap-1.5 sm:gap-2 ${verified ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
                       onClick={() => !verified && handleChange(index, userResponses[index] === false ? '' : false)}
                     >
                       <Checkbox
                         checked={userResponses[index] === false}
                         disabled={verified}
-                        className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+                        className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 h-4 w-4 sm:h-5 sm:w-5"
                       />
-                      <span className="text-sm font-medium">False</span>
+                      <span className="text-xs sm:text-sm font-medium">False</span>
                     </div>
 
                     {/* Help button - shown after verification if incorrect and has explanation */}
@@ -320,10 +292,10 @@ export const Eje11 = ({ exercise: initialExercise }: Eje11Props) => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-full bg-muted hover:bg-muted/80"
+                        className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-muted hover:bg-muted/80"
                         onClick={() => showExplanation(item.explanation!)}
                       >
-                        <HelpCircle className="h-4 w-4" />
+                        <HelpCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </Button>
                     )}
                   </div>
@@ -333,12 +305,12 @@ export const Eje11 = ({ exercise: initialExercise }: Eje11Props) => {
           })}
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
-            <Button onClick={handleReset} variant="outline" className="gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4">
+            <Button onClick={handleReset} variant="outline" className="gap-2 w-full sm:w-auto">
               <RotateCcw className="h-4 w-4" />
               Reintentar
             </Button>
-            <Button onClick={handleVerify} className="gap-2">
+            <Button onClick={handleVerify} className="gap-2 w-full sm:w-auto">
               <Check className="h-4 w-4" />
               Verificar
             </Button>
@@ -347,71 +319,22 @@ export const Eje11 = ({ exercise: initialExercise }: Eje11Props) => {
       </Card>
 
       {/* Grade Modal */}
-      <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center text-2xl">
-              Resultado del Ejercicio
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col items-center py-6">
-            <div className={`text-6xl font-bold mb-4 ${
-              grade >= 70 ? 'text-green-600' : grade >= 50 ? 'text-yellow-600' : 'text-red-600'
-            }`}>
-              {grade}%
-            </div>
-            <p className="text-muted-foreground text-center">
-              {grade >= 70 
-                ? '¡Excelente trabajo!' 
-                : grade >= 50 
-                  ? 'Buen intento, sigue practicando' 
-                  : 'Necesitas más práctica'}
-            </p>
-          </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setGradeModalOpen(false)} className="gap-2">
-              <X className="h-4 w-4" />
-              Cerrar
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/unidades')} className="gap-2">
-              <Home className="h-4 w-4" />
-              Volver al Menú
-            </Button>
-            <Button 
-              onClick={async () => {
-                await handleSaveGrade();
-                handleNextExercise();
-              }} 
-              disabled={isSubmitting}
-              className="gap-2"
-            >
-              {isSubmitting ? 'Guardando...' : (
-                <>
-                  <ArrowRight className="h-4 w-4" />
-                  Siguiente Ejercicio
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GradeModal
+        open={gradeModalOpen}
+        onOpenChange={setGradeModalOpen}
+        grade={grade}
+        saving={saving}
+        onClose={handleClose}
+        onGoBack={handleGoBack}
+        onNextExercise={handleNextExercise}
+      />
 
       {/* Explanation Modal */}
-      <Dialog open={explanationModalOpen} onOpenChange={setExplanationModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Explicación</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-muted-foreground">{currentExplanation}</p>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setExplanationModalOpen(false)}>
-              Cerrar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ExplanationModal
+        open={explanationModalOpen}
+        onOpenChange={setExplanationModalOpen}
+        explanation={currentExplanation}
+      />
     </div>
   );
 };
