@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { MessageCircle } from 'lucide-react';
-import { postUserGrade, postUserPosition } from '@/lib/api';
-import { toast } from 'sonner';
-import { Calculate_index_exercise } from '@/hooks/calculate_index.ts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MessageCircle, ChevronLeft, RotateCcw } from 'lucide-react';
 import DashboardLoader from '@/components/dashboard/DashboardLoader';
 import { normalizeAnswer } from '@/lib/exerciseUtils';
+import { useExerciseGrade } from '@/hooks/useExerciseGrade';
+import { GradeModal } from '@/components/ejercicio/GradeModal';
+import { ExplanationModal } from '@/components/ejercicio/ExplanationModal';
 
 const PRONOUNS = ['I', 'You', 'He', 'She', 'It', 'We', 'You', 'They'];
 
@@ -104,10 +103,13 @@ const checkAnswerType16 = (
 };
 
 export function Eje16({ exercise: initialExercise }: Eje16Props) {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [exercise, setExercise] = useState<Type16Exercise | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const currentExerciseIndex = parseInt(searchParams.get('exerciseIndex') || '0');
 
   // State for user responses and verification
   const [userResponses, setUserResponses] = useState<(string | null)[]>([]);
@@ -115,11 +117,24 @@ export function Eje16({ exercise: initialExercise }: Eje16Props) {
   const [responses, setResponses] = useState<(boolean | null)[]>([]);
 
   // Modal states
-  const [gradeModalOpen, setGradeModalOpen] = useState(false);
-  const [grade, setGrade] = useState(0);
   const [explanationModalOpen, setExplanationModalOpen] = useState(false);
   const [currentExplanation, setCurrentExplanation] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Hook modular de calificación
+  const {
+    grade,
+    gradeModalOpen,
+    saving,
+    openGradeModal,
+    setGradeModalOpen,
+    handleClose,
+    handleGoBack,
+    handleNextExercise,
+  } = useExerciseGrade({
+    exerciseId: initialExercise?._id || initialExercise?.number?.toString() || '0',
+    unidad: initialExercise?.unidad || Number(id) || 1,
+    exerciseNumber: initialExercise?.number || currentExerciseIndex,
+  });
 
   // Initialize exercise data
   useEffect(() => {
@@ -181,22 +196,6 @@ export function Eje16({ exercise: initialExercise }: Eje16Props) {
       }
     }
     return false;
-  };
-
-  // Get field at specific index
-  const getFieldByIndex = (generalIndex: number): Field | undefined => {
-    let current = 0;
-    for (const group of exercise.sectionGroups) {
-      for (const section of group.sections) {
-        for (const column of section.columns) {
-          for (const field of column.fields) {
-            if (current === generalIndex) return field;
-            current++;
-          }
-        }
-      }
-    }
-    return undefined;
   };
 
   const shouldShowColumnTitle = (section: Section): boolean =>
@@ -266,8 +265,7 @@ export function Eje16({ exercise: initialExercise }: Eje16Props) {
     const successes = computableResults.filter((x) => x).length;
     const calculatedGrade = total > 0 ? successes / total : 1;
 
-    setGrade(calculatedGrade);
-    setGradeModalOpen(true);
+    openGradeModal(calculatedGrade);
   };
 
   const handleReset = () => {
@@ -291,40 +289,6 @@ export function Eje16({ exercise: initialExercise }: Eje16Props) {
     }
   };
 
-  const handleSaveGrade = async () => {
-    setIsSubmitting(true);
-    try {
-      await postUserGrade(
-        exercise._id,
-        grade,
-        exercise.unidad?.toString() || '0'
-      );
-
-      await postUserPosition({
-        unidad: exercise.unidad || 0,
-        position: await Calculate_index_exercise(exercise)
-      });
-
-      toast.success('Progreso guardado correctamente');
-      setGradeModalOpen(false);
-    } catch (error) {
-      toast.error('Error al guardar el progreso');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleNextExercise = async () => {
-    await handleSaveGrade();
-    const nextNumber = (exercise.number || 0) + 1;
-    navigate(`/ejercicio/${nextNumber}`);
-  };
-
-  const handleGoBack = () => {
-    setGradeModalOpen(false);
-    navigate(-1);
-  };
-
   const getInputBorderColor = (index: number): string => {
     if (!verified) return 'border-border';
     if (responses[index] === null) return 'border-border';
@@ -338,9 +302,9 @@ export function Eje16({ exercise: initialExercise }: Eje16Props) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       {/* Header Image */}
-      <div className="relative w-full h-48 rounded-lg overflow-hidden">
+      <div className="relative w-full h-32 sm:h-48 rounded-lg overflow-hidden">
         <img
           src="/ejercicio/grammar.png"
           alt="Grammar"
@@ -349,57 +313,68 @@ export function Eje16({ exercise: initialExercise }: Eje16Props) {
       </div>
 
       {/* Title and Info */}
-      <div className="space-y-2">
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <h1 className="text-2xl font-bold text-foreground">{exercise.title || 'Ejercicio Tipo 16'}</h1>
-          <span className="text-sm text-muted-foreground">
-            Ejercicio: {exercise.number || 0}
-          </span>
-        </div>
+      <Card>
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+            <div className="space-y-2 flex-1">
+              <CardTitle className="text-xl sm:text-2xl">{exercise.title || 'Ejercicio Tipo 16'}</CardTitle>
+              <span className="text-xs sm:text-sm text-muted-foreground">
+                Ejercicio: {exercise.number || 0}
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/modulo/${id}`)}
+              className="gap-2 w-full sm:w-auto"
+              size="sm"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Atrás
+            </Button>
+          </div>
 
-        {exercise.description && (
-          <div
-            className="text-muted-foreground"
-            dangerouslySetInnerHTML={{ __html: exercise.description }}
-          />
-        )}
-      </div>
+          {exercise.description && (
+            <div
+              className="text-muted-foreground mt-4 text-sm sm:text-base"
+              dangerouslySetInnerHTML={{ __html: exercise.description }}
+            />
+          )}
+        </CardHeader>
 
-      {/* Section Groups */}
-      <div className="space-y-8">
-        {exercise.sectionGroups.map((group, iGroup) => (
-          <div key={`group-${iGroup}`}>
-            {/* Group Title */}
-            <h2 className="text-xl font-bold text-center mb-4 text-primary">{group.title}</h2>
+        <CardContent className="p-4 sm:p-6 pt-0 space-y-6 sm:space-y-8">
+          {/* Section Groups */}
+          {exercise.sectionGroups.map((group, iGroup) => (
+            <div key={`group-${iGroup}`}>
+              {/* Group Title */}
+              <h2 className="text-lg sm:text-xl font-bold text-center mb-3 sm:mb-4 text-primary">{group.title}</h2>
 
-            {/* Sections within group */}
-            <div className="space-y-6">
-              {group.sections.map((section, iSection) => (
-                <Card key={`section-${iGroup}-${iSection}`}>
-                  <CardContent className="p-4">
+              {/* Sections within group */}
+              <div className="space-y-4 sm:space-y-6">
+                {group.sections.map((section, iSection) => (
+                  <div key={`section-${iGroup}-${iSection}`} className="bg-muted/20 rounded-lg p-3 sm:p-4">
                     {section.title && (
-                      <h4 className="text-lg font-semibold text-center mb-4">{section.title}</h4>
+                      <h4 className="text-base sm:text-lg font-semibold text-center mb-3 sm:mb-4">{section.title}</h4>
                     )}
 
-                    <div className="overflow-x-auto">
-                      <div className="flex min-w-fit">
+                    <div className="overflow-x-auto -mx-3 sm:mx-0">
+                      <div className="flex min-w-fit px-3 sm:px-0">
                         {section.columns.map((column, iColumn) => (
                           <div key={`col-wrapper-${iColumn}`} className="flex">
                             {/* Include Pronouns Column */}
                             {section.includePronouns === iColumn && (
                               <div className="flex-shrink-0 border-r border-border">
                                 {shouldShowColumnTitle(section) && (
-                                  <div className="p-3 text-center font-semibold bg-muted border-b border-border text-sm">
+                                  <div className="p-2 sm:p-3 text-center font-semibold bg-muted border-b border-border text-xs sm:text-sm">
                                     Pronombres
                                   </div>
                                 )}
                                 <div>
                                   {PRONOUNS.map((pronoun, idx) => (
                                     <div key={`pronoun-${idx}`}>
-                                      <div className={`p-2 text-center text-sm min-w-[80px] ${idx % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`}>
+                                      <div className={`p-1.5 sm:p-2 text-center text-xs sm:text-sm min-w-[60px] sm:min-w-[80px] ${idx % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`}>
                                         {pronoun}
                                       </div>
-                                      {shouldShowAnswer() && <div className="h-6"></div>}
+                                      {shouldShowAnswer() && <div className="h-5 sm:h-6"></div>}
                                     </div>
                                   ))}
                                 </div>
@@ -410,15 +385,15 @@ export function Eje16({ exercise: initialExercise }: Eje16Props) {
                             {section.includeSeparator === iColumn && (
                               <div className="flex-shrink-0 border-r border-border">
                                 {shouldShowColumnTitle(section) && (
-                                  <div className="p-3 text-center font-semibold bg-muted border-b border-border text-sm">/</div>
+                                  <div className="p-2 sm:p-3 text-center font-semibold bg-muted border-b border-border text-xs sm:text-sm">/</div>
                                 )}
                                 <div>
                                   {column.fields.map((_, idx) => (
                                     <div key={`sep-${idx}`}>
-                                      <div className={`p-2 text-center font-semibold text-sm ${idx % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`}>
+                                      <div className={`p-1.5 sm:p-2 text-center font-semibold text-xs sm:text-sm ${idx % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`}>
                                         /
                                       </div>
-                                      {shouldShowAnswer() && <div className="h-6"></div>}
+                                      {shouldShowAnswer() && <div className="h-5 sm:h-6"></div>}
                                     </div>
                                   ))}
                                 </div>
@@ -426,9 +401,9 @@ export function Eje16({ exercise: initialExercise }: Eje16Props) {
                             )}
 
                             {/* Regular Column */}
-                            <div className="flex-1 border-r border-border last:border-r-0 min-w-[120px]">
+                            <div className="flex-1 border-r border-border last:border-r-0 min-w-[90px] sm:min-w-[120px]">
                               {shouldShowColumnTitle(section) && (
-                                <div className="p-3 text-center font-semibold bg-muted border-b border-border text-sm">
+                                <div className="p-2 sm:p-3 text-center font-semibold bg-muted border-b border-border text-xs sm:text-sm">
                                   {column.title || ''}
                                 </div>
                               )}
@@ -440,10 +415,10 @@ export function Eje16({ exercise: initialExercise }: Eje16Props) {
 
                                   return (
                                     <div key={`field-${fieldIndex}`}>
-                                      <div className={`p-2 ${i % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`}>
+                                      <div className={`p-1.5 sm:p-2 ${i % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`}>
                                         {field.shown ? (
                                           <div
-                                            className="text-center py-1 px-2 bg-muted/50 rounded text-sm"
+                                            className="text-center py-1 px-1 sm:px-2 bg-muted/50 rounded text-xs sm:text-sm"
                                             style={{ fontSize: getFontSize(getPlainValue(field.value).length) }}
                                           >
                                             {getPlainValue(field.value)}
@@ -453,23 +428,23 @@ export function Eje16({ exercise: initialExercise }: Eje16Props) {
                                             value={userResponses[fieldIndex] || ''}
                                             onChange={(e) => handleChange(fieldIndex, e.target.value)}
                                             disabled={verified}
-                                            className={`text-center text-sm h-8 ${getInputBorderColor(fieldIndex)} ${getInputBgColor(fieldIndex)}`}
+                                            className={`text-center text-xs sm:text-sm h-7 sm:h-8 ${getInputBorderColor(fieldIndex)} ${getInputBgColor(fieldIndex)}`}
                                           />
                                         )}
                                       </div>
                                       {shouldShowAnswer() && (
-                                        <div className="px-2 pb-1">
+                                        <div className="px-1 sm:px-2 pb-1">
                                           <div
-                                            className={`text-xs text-center py-1 flex items-center justify-center gap-1 cursor-pointer ${
+                                            className={`text-xs text-center py-0.5 sm:py-1 flex items-center justify-center gap-1 cursor-pointer ${
                                               isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                                             }`}
                                             onClick={() => showExplanation(field.explanation)}
                                           >
                                             {!field.shown && (
                                               <>
-                                                <span>{getPlainValue(field.value)}</span>
+                                                <span className="truncate">{getPlainValue(field.value)}</span>
                                                 {field.explanation && (
-                                                  <MessageCircle className="h-3 w-3" />
+                                                  <MessageCircle className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
                                                 )}
                                               </>
                                             )}
@@ -481,110 +456,48 @@ export function Eje16({ exercise: initialExercise }: Eje16Props) {
                                 })}
                               </div>
                             </div>
-
-                            {/* Include Question Mark Column */}
-                            {section.includeQuestionMark && iColumn + 1 === section.columns.length && (
-                              <div className="flex-shrink-0">
-                                {shouldShowColumnTitle(section) && (
-                                  <div className="p-3 text-center font-semibold bg-muted border-b border-border text-sm"></div>
-                                )}
-                                <div>
-                                  {column.fields.map((_, idx) => (
-                                    <div key={`qm-${idx}`}>
-                                      <div className={`p-2 text-center text-sm ${idx % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`}>
-                                        ?
-                                      </div>
-                                      {shouldShowAnswer() && <div className="h-6"></div>}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
                           </div>
                         ))}
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
 
-      {/* Actions */}
-      <div className="flex justify-end gap-4">
-        {verified && (
-          <Button variant="outline" onClick={handleReset}>
-            Reintentar
-          </Button>
-        )}
-        <Button onClick={verified ? () => setGradeModalOpen(true) : handleVerify} size="lg">
-          {verified ? 'Ver Calificación' : 'Verificar'}
-        </Button>
-      </div>
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 pt-4">
+            {verified && (
+              <Button variant="outline" onClick={handleReset} className="gap-2 w-full sm:w-auto">
+                <RotateCcw className="h-4 w-4" />
+                Reintentar
+              </Button>
+            )}
+            <Button onClick={verified ? () => setGradeModalOpen(true) : handleVerify} className="w-full sm:w-auto">
+              {verified ? 'Ver Calificación' : 'Verificar'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Grade Modal */}
-      <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Calificación</DialogTitle>
-            <DialogDescription>
-              Resultado de tu ejercicio
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-6 text-center">
-            <div className="text-6xl font-bold text-primary mb-4">
-              {Math.round(grade * 100)}%
-            </div>
-            <p className="text-muted-foreground">
-              {grade >= 0.8 ? '¡Excelente trabajo!' : grade >= 0.6 ? '¡Bien hecho!' : 'Sigue practicando'}
-            </p>
-          </div>
-
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setGradeModalOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Cerrar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleGoBack}
-              className="w-full sm:w-auto"
-            >
-              Volver al Menú
-            </Button>
-            <Button
-              onClick={handleNextExercise}
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              {isSubmitting ? 'Guardando...' : 'Siguiente Ejercicio'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GradeModal
+        open={gradeModalOpen}
+        onOpenChange={setGradeModalOpen}
+        grade={grade}
+        saving={saving}
+        onClose={handleClose}
+        onGoBack={handleGoBack}
+        onNextExercise={handleNextExercise}
+      />
 
       {/* Explanation Modal */}
-      <Dialog open={explanationModalOpen} onOpenChange={setExplanationModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Explicación</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-foreground">{currentExplanation}</p>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setExplanationModalOpen(false)}>
-              Cerrar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ExplanationModal
+        open={explanationModalOpen}
+        onOpenChange={setExplanationModalOpen}
+        explanation={currentExplanation}
+      />
     </div>
   );
 }

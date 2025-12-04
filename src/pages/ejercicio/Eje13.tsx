@@ -1,14 +1,13 @@
 import { useState, useEffect, Fragment } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { HelpCircle, CheckCircle2, XCircle, Volume2 } from 'lucide-react';
-import { postUserGrade, postUserPosition } from '@/lib/api';
-import { toast } from 'sonner';
-import { Calculate_index_exercise } from '@/hooks/calculate_index.ts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { HelpCircle, CheckCircle2, XCircle, Volume2, ChevronLeft, RotateCcw } from 'lucide-react';
 import DashboardLoader from '@/components/dashboard/DashboardLoader';
+import { useExerciseGrade } from '@/hooks/useExerciseGrade';
+import { GradeModal } from '@/components/ejercicio/GradeModal';
+import { ExplanationModal } from '@/components/ejercicio/ExplanationModal';
 
 interface SentenceData {
   sentence: string;
@@ -72,8 +71,12 @@ const checkAnswerType13 = (
 
 export function Eje13({ exercise: initialExercise }: Eje13Props) {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const [exercise, setExercise] = useState<Type13Exercise | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const currentExerciseIndex = parseInt(searchParams.get('exerciseIndex') || '0');
 
   // State for user responses and verification
   const [userResponses, setUserResponses] = useState<string[]>([]);
@@ -81,15 +84,28 @@ export function Eje13({ exercise: initialExercise }: Eje13Props) {
   const [responses, setResponses] = useState<(boolean | '')[]>([]);
 
   // Modal states
-  const [gradeModalOpen, setGradeModalOpen] = useState(false);
-  const [grade, setGrade] = useState(0);
   const [explanationModalOpen, setExplanationModalOpen] = useState(false);
   const [currentExplanation, setCurrentExplanation] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Audio state
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  // Hook modular de calificación
+  const {
+    grade,
+    gradeModalOpen,
+    saving,
+    openGradeModal,
+    setGradeModalOpen,
+    handleClose,
+    handleGoBack,
+    handleNextExercise,
+  } = useExerciseGrade({
+    exerciseId: initialExercise?._id || initialExercise?.number?.toString() || '0',
+    unidad: initialExercise?.unidad || Number(id) || 1,
+    exerciseNumber: initialExercise?.number || currentExerciseIndex,
+  });
 
   // Initialize exercise data
   useEffect(() => {
@@ -145,32 +161,6 @@ export function Eje13({ exercise: initialExercise }: Eje13Props) {
     return answers[i] || '';
   };
 
-  // Get explanation for a sentence by index
-  const getExplanationForIndex = (globalIndex: number): string | undefined => {
-    let count = 0;
-    for (const sentence of exercise.sentences) {
-      const answersLength = sentence.answers?.length || 0;
-      if (globalIndex < count + answersLength) {
-        return sentence.explanation;
-      }
-      count += answersLength;
-    }
-    return undefined;
-  };
-
-  // Get sentence data by global index
-  const getSentenceByIndex = (globalIndex: number): SentenceData | undefined => {
-    let count = 0;
-    for (const sentence of exercise.sentences) {
-      const answersLength = sentence.answers?.length || 0;
-      if (globalIndex < count + answersLength) {
-        return sentence;
-      }
-      count += answersLength;
-    }
-    return undefined;
-  };
-
   const handleChange = (index: number, value: string) => {
     setUserResponses(prev => {
       const newResponses = [...prev];
@@ -211,11 +201,10 @@ export function Eje13({ exercise: initialExercise }: Eje13Props) {
     const total = exercise.calificationSobre ?? responsesCheck.length;
     const successes = responsesCheck.filter(x => x).length;
 
-    let calculatedGrade = successes / total;
+    let calculatedGrade = total > 0 ? successes / total : 0;
     if (calculatedGrade > 1) calculatedGrade = 1;
 
-    setGrade(calculatedGrade);
-    setGradeModalOpen(true);
+    openGradeModal(calculatedGrade);
   };
 
   const handleReset = () => {
@@ -238,40 +227,6 @@ export function Eje13({ exercise: initialExercise }: Eje13Props) {
 
   const shouldShowAnswer = (): boolean => {
     return verified && responses.some(x => x === false);
-  };
-
-  const handleSaveGrade = async () => {
-    setIsSubmitting(true);
-    try {
-      await postUserGrade(
-        exercise._id,
-        grade,
-        exercise.unidad?.toString() || '0'
-      );
-
-      await postUserPosition({
-        unidad: exercise.unidad || 0,
-        position: await Calculate_index_exercise(exercise)
-      });
-
-      toast.success('Progreso guardado correctamente');
-      setGradeModalOpen(false);
-    } catch (error) {
-      toast.error('Error al guardar el progreso');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleNextExercise = async () => {
-    await handleSaveGrade();
-    const nextNumber = (exercise.number || 0) + 1;
-    navigate(`/ejercicio/${nextNumber}`);
-  };
-
-  const handleGoBack = () => {
-    setGradeModalOpen(false);
-    navigate(-1);
   };
 
   const toggleAudio = () => {
@@ -299,9 +254,9 @@ export function Eje13({ exercise: initialExercise }: Eje13Props) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       {/* Header Image */}
-      <div className="relative w-full h-48 rounded-lg overflow-hidden">
+      <div className="relative w-full h-32 sm:h-48 rounded-lg overflow-hidden">
         <img
           src="/ejercicio/grammar.png"
           alt="Listening"
@@ -310,173 +265,139 @@ export function Eje13({ exercise: initialExercise }: Eje13Props) {
       </div>
 
       {/* Title and Info */}
-      <div className="space-y-2">
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <h1 className="text-2xl font-bold text-foreground">{exercise.title || 'Ejercicio Tipo 13'}</h1>
-          <span className="text-sm text-muted-foreground">
-            Ejercicio: {exercise.number || 0}
-          </span>
-        </div>
+      <Card>
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+            <div className="space-y-2 flex-1">
+              <CardTitle className="text-xl sm:text-2xl">{exercise.title || 'Ejercicio Tipo 13'}</CardTitle>
+              <span className="text-xs sm:text-sm text-muted-foreground">
+                Ejercicio: {exercise.number || 0}
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/modulo/${id}`)}
+              className="gap-2 w-full sm:w-auto"
+              size="sm"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Atrás
+            </Button>
+          </div>
 
-        {exercise.description && (
-          <div
-            className="text-muted-foreground"
-            dangerouslySetInnerHTML={{ __html: exercise.description }}
-          />
-        )}
-      </div>
+          {exercise.description && (
+            <div
+              className="text-muted-foreground mt-4 text-sm sm:text-base"
+              dangerouslySetInnerHTML={{ __html: exercise.description }}
+            />
+          )}
+        </CardHeader>
 
-      {/* Audio Player */}
-      {exercise.audio && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
+        <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
+          {/* Audio Player */}
+          {exercise.audio && (
+            <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-muted/30 rounded-lg">
               <Button
                 variant={isPlaying ? 'default' : 'outline'}
                 size="icon"
                 onClick={toggleAudio}
-                className="h-12 w-12 rounded-full"
+                className="h-10 w-10 sm:h-12 sm:w-12 rounded-full shrink-0"
               >
-                <Volume2 className={`h-6 w-6 ${isPlaying ? 'animate-pulse' : ''}`} />
+                <Volume2 className={`h-5 w-5 sm:h-6 sm:w-6 ${isPlaying ? 'animate-pulse' : ''}`} />
               </Button>
               <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">Audio del ejercicio</p>
+                <p className="text-xs sm:text-sm font-medium text-foreground">Audio del ejercicio</p>
                 <p className="text-xs text-muted-foreground">
                   {isPlaying ? 'Reproduciendo...' : 'Haz clic para escuchar'}
                 </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
 
-      {/* Sentences */}
-      <Card>
-        <CardContent className="p-4 md:p-6 space-y-4">
-          {exercise.sentences.map((sentence, iSentence) => (
-            <div key={iSentence} className="flex flex-wrap items-center gap-2 py-2 border-b border-border last:border-b-0">
-              {sentence.sentence.split('___').map((part, index) => (
-                <Fragment key={index}>
-                  {index !== 0 && (
-                    <div className="inline-flex flex-col items-center gap-1">
-                      <div className="flex items-center gap-1">
-                        <Input
-                          value={userResponses[getIndex(iSentence, index - 1)] || ''}
-                          onChange={(e) => handleChange(getIndex(iSentence, index - 1), e.target.value)}
-                          disabled={verified}
-                          className={`w-32 md:w-40 text-center ${getInputBorderColor(getIndex(iSentence, index - 1))} ${getInputBgColor(getIndex(iSentence, index - 1))}`}
-                          placeholder="..."
-                        />
-                        {verified && (
-                          <span className="shrink-0">
-                            {responses[getIndex(iSentence, index - 1)] ? (
-                              <CheckCircle2 className="h-5 w-5 text-green-500" />
-                            ) : (
-                              <XCircle className="h-5 w-5 text-red-500" />
-                            )}
-                          </span>
-                        )}
-                      </div>
-                      {shouldShowAnswer() && responses[getIndex(iSentence, index - 1)] === false && (
+          {/* Sentences */}
+          <div className="space-y-3 sm:space-y-4">
+            {exercise.sentences.map((sentence, iSentence) => (
+              <div key={iSentence} className="flex flex-wrap items-center gap-1 sm:gap-2 py-2 border-b border-border last:border-b-0">
+                {sentence.sentence.split('___').map((part, index) => (
+                  <Fragment key={index}>
+                    {index !== 0 && (
+                      <div className="inline-flex flex-col items-center gap-1">
                         <div className="flex items-center gap-1">
-                          <span className="text-xs text-red-500 font-medium">
-                            {getPlainValue(getAnswer(getIndex(iSentence, index - 1)))}
-                          </span>
-                          {sentence.explanation && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => showExplanation(sentence.explanation)}
-                            >
-                              <HelpCircle className="h-3 w-3 text-muted-foreground" />
-                            </Button>
+                          <Input
+                            value={userResponses[getIndex(iSentence, index - 1)] || ''}
+                            onChange={(e) => handleChange(getIndex(iSentence, index - 1), e.target.value)}
+                            disabled={verified}
+                            className={`w-24 sm:w-32 md:w-40 text-center text-sm ${getInputBorderColor(getIndex(iSentence, index - 1))} ${getInputBgColor(getIndex(iSentence, index - 1))}`}
+                            placeholder="..."
+                          />
+                          {verified && (
+                            <span className="shrink-0">
+                              {responses[getIndex(iSentence, index - 1)] ? (
+                                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
+                              ) : (
+                                <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
+                              )}
+                            </span>
                           )}
                         </div>
-                      )}
-                    </div>
-                  )}
-                  <span className="text-foreground">{part}</span>
-                </Fragment>
-              ))}
-            </div>
-          ))}
+                        {shouldShowAnswer() && responses[getIndex(iSentence, index - 1)] === false && (
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-red-500 font-medium">
+                              {getPlainValue(getAnswer(getIndex(iSentence, index - 1)))}
+                            </span>
+                            {sentence.explanation && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5 sm:h-6 sm:w-6"
+                                onClick={() => showExplanation(sentence.explanation)}
+                              >
+                                <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <span className="text-foreground text-sm sm:text-base">{part}</span>
+                  </Fragment>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 pt-4">
+            {verified && (
+              <Button variant="outline" onClick={handleReset} className="gap-2 w-full sm:w-auto">
+                <RotateCcw className="h-4 w-4" />
+                Reintentar
+              </Button>
+            )}
+            <Button onClick={verified ? () => setGradeModalOpen(true) : handleVerify} className="w-full sm:w-auto">
+              {verified ? 'Ver Calificación' : 'Verificar'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Actions */}
-      <div className="flex justify-end gap-4">
-        {verified && (
-          <Button variant="outline" onClick={handleReset}>
-            Reintentar
-          </Button>
-        )}
-        <Button onClick={verified ? () => setGradeModalOpen(true) : handleVerify} size="lg">
-          {verified ? 'Ver Calificación' : 'Verificar'}
-        </Button>
-      </div>
-
       {/* Grade Modal */}
-      <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Calificación</DialogTitle>
-            <DialogDescription>
-              Resultado de tu ejercicio
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-6 text-center">
-            <div className="text-6xl font-bold text-primary mb-4">
-              {Math.round(grade * 100)}%
-            </div>
-            <p className="text-muted-foreground">
-              {grade >= 0.8 ? '¡Excelente trabajo!' : grade >= 0.6 ? '¡Bien hecho!' : 'Sigue practicando'}
-            </p>
-          </div>
-
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setGradeModalOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Cerrar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleGoBack}
-              className="w-full sm:w-auto"
-            >
-              Volver al Menú
-            </Button>
-            <Button
-              onClick={handleNextExercise}
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              {isSubmitting ? 'Guardando...' : 'Siguiente Ejercicio'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GradeModal
+        open={gradeModalOpen}
+        onOpenChange={setGradeModalOpen}
+        grade={grade}
+        saving={saving}
+        onClose={handleClose}
+        onGoBack={handleGoBack}
+        onNextExercise={handleNextExercise}
+      />
 
       {/* Explanation Modal */}
-      <Dialog open={explanationModalOpen} onOpenChange={setExplanationModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Explicación</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-foreground">{currentExplanation}</p>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setExplanationModalOpen(false)}>
-              Cerrar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ExplanationModal
+        open={explanationModalOpen}
+        onOpenChange={setExplanationModalOpen}
+        explanation={currentExplanation}
+      />
     </div>
   );
 }

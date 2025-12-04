@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { CheckCircle2, XCircle, Volume2 } from 'lucide-react';
-import { postUserGrade, postUserPosition } from '@/lib/api';
-import { toast } from 'sonner';
-import { Calculate_index_exercise } from '@/hooks/calculate_index.ts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CheckCircle2, XCircle, Volume2, ChevronLeft, RotateCcw } from 'lucide-react';
 import DashboardLoader from '@/components/dashboard/DashboardLoader';
+import { useExerciseGrade } from '@/hooks/useExerciseGrade';
+import { GradeModal } from '@/components/ejercicio/GradeModal';
 
 const defaultDescription = `Reproduce el audio para escuchar las instrucciones. Te indican que oirás cada oración dos veces seguidas. Tienes que poner las comas (,) exclamaciones (!) e interrogaciones (?) cuando el audio te lo indique. Por comodidad para el alumno, no poner los puntos (.) nunca al final de cada oración. Solo cuando lo escuches en el audio (seguramente entre dos oraciones).`;
 
@@ -112,22 +110,37 @@ const calculateSimilarity = (str1: string, str2: string): number => {
 
 export function Eje15({ exercise: initialExercise }: Eje15Props) {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const [exercise, setExercise] = useState<Type15Exercise | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const currentExerciseIndex = parseInt(searchParams.get('exerciseIndex') || '0');
 
   // State for user responses and verification
   const [userResponses, setUserResponses] = useState<string[]>([]);
   const [verified, setVerified] = useState(false);
   const [responses, setResponses] = useState<(number | '')[]>([]);
 
-  // Modal states
-  const [gradeModalOpen, setGradeModalOpen] = useState(false);
-  const [grade, setGrade] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   // Audio state
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  // Hook modular de calificación
+  const {
+    grade,
+    gradeModalOpen,
+    saving,
+    openGradeModal,
+    setGradeModalOpen,
+    handleClose,
+    handleGoBack,
+    handleNextExercise,
+  } = useExerciseGrade({
+    exerciseId: initialExercise?._id || initialExercise?.number?.toString() || '0',
+    unidad: initialExercise?.unidad || Number(id) || 1,
+    exerciseNumber: initialExercise?.number || currentExerciseIndex,
+  });
 
   // Initialize exercise data
   useEffect(() => {
@@ -198,11 +211,10 @@ export function Eje15({ exercise: initialExercise }: Eje15Props) {
 
     // Calculate grade as average of scores
     const total = responsesCheck.length;
-    let calculatedGrade = responsesCheck.reduce((a, b) => a + b, 0) / total;
+    let calculatedGrade = total > 0 ? responsesCheck.reduce((a, b) => a + b, 0) / total : 0;
     if (calculatedGrade > 1) calculatedGrade = 1;
 
-    setGrade(calculatedGrade);
-    setGradeModalOpen(true);
+    openGradeModal(calculatedGrade);
   };
 
   const handleReset = () => {
@@ -210,40 +222,6 @@ export function Eje15({ exercise: initialExercise }: Eje15Props) {
     setUserResponses(initialStates);
     setResponses(initialStates.map(() => ''));
     setVerified(false);
-  };
-
-  const handleSaveGrade = async () => {
-    setIsSubmitting(true);
-    try {
-      await postUserGrade(
-        exercise._id,
-        grade,
-        exercise.unidad?.toString() || '0'
-      );
-
-      await postUserPosition({
-        unidad: exercise.unidad || 0,
-        position: await Calculate_index_exercise(exercise)
-      });
-
-      toast.success('Progreso guardado correctamente');
-      setGradeModalOpen(false);
-    } catch (error) {
-      toast.error('Error al guardar el progreso');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleNextExercise = async () => {
-    await handleSaveGrade();
-    const nextNumber = (exercise.number || 0) + 1;
-    navigate(`/ejercicio/${nextNumber}`);
-  };
-
-  const handleGoBack = () => {
-    setGradeModalOpen(false);
-    navigate(-1);
   };
 
   const toggleAudio = () => {
@@ -280,9 +258,9 @@ export function Eje15({ exercise: initialExercise }: Eje15Props) {
   const description = exercise.description || (exercise.imagen ? exercise.description : defaultDescription);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       {/* Header Image */}
-      <div className="relative w-full h-48 rounded-lg overflow-hidden">
+      <div className="relative w-full h-32 sm:h-48 rounded-lg overflow-hidden">
         <img
           src="/ejercicio/grammar.png"
           alt="Dictation"
@@ -291,154 +269,130 @@ export function Eje15({ exercise: initialExercise }: Eje15Props) {
       </div>
 
       {/* Title and Info */}
-      <div className="space-y-2">
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <h1 className="text-2xl font-bold text-foreground">{exercise.title || 'Ejercicio Tipo 15 - Dictado'}</h1>
-          <span className="text-sm text-muted-foreground">
-            Ejercicio: {exercise.number || 0}
-          </span>
-        </div>
+      <Card>
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+            <div className="space-y-2 flex-1">
+              <CardTitle className="text-xl sm:text-2xl">{exercise.title || 'Ejercicio Tipo 15 - Dictado'}</CardTitle>
+              <span className="text-xs sm:text-sm text-muted-foreground">
+                Ejercicio: {exercise.number || 0}
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/modulo/${id}`)}
+              className="gap-2 w-full sm:w-auto"
+              size="sm"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Atrás
+            </Button>
+          </div>
 
-        {description && (
-          <div
-            className="text-muted-foreground text-sm"
-            dangerouslySetInnerHTML={{ __html: description }}
-          />
-        )}
-      </div>
+          {description && (
+            <div
+              className="text-muted-foreground text-xs sm:text-sm mt-4"
+              dangerouslySetInnerHTML={{ __html: description }}
+            />
+          )}
+        </CardHeader>
 
-      {/* Audio Player */}
-      {exercise.audio && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
+        <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
+          {/* Audio Player */}
+          {exercise.audio && (
+            <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-muted/30 rounded-lg">
               <Button
                 variant={isPlaying ? 'default' : 'outline'}
                 size="icon"
                 onClick={toggleAudio}
-                className="h-12 w-12 rounded-full"
+                className="h-10 w-10 sm:h-12 sm:w-12 rounded-full shrink-0"
               >
-                <Volume2 className={`h-6 w-6 ${isPlaying ? 'animate-pulse' : ''}`} />
+                <Volume2 className={`h-5 w-5 sm:h-6 sm:w-6 ${isPlaying ? 'animate-pulse' : ''}`} />
               </Button>
               <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">Audio del dictado</p>
+                <p className="text-xs sm:text-sm font-medium text-foreground">Audio del dictado</p>
                 <p className="text-xs text-muted-foreground">
                   {isPlaying ? 'Reproduciendo...' : 'Haz clic para escuchar'}
                 </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
 
-      {/* Sentences Input */}
-      <Card>
-        <CardContent className="p-4 md:p-6 space-y-4">
-          {exercise.answers.map((answer, index) => (
-            <div key={index} className="space-y-2">
-              <div className="flex items-start gap-3">
-                {/* Number indicator */}
-                <div 
-                  className={`w-8 h-8 flex items-center justify-center rounded-full text-white font-semibold text-sm shrink-0 ${getScoreColor(responses[index])}`}
-                >
-                  {index + 1}
-                </div>
+          {/* Sentences Input */}
+          <div className="space-y-3 sm:space-y-4">
+            {exercise.answers.map((answer, index) => (
+              <div key={index} className="space-y-2">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  {/* Number indicator */}
+                  <div 
+                    className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-white font-semibold text-xs sm:text-sm shrink-0 ${getScoreColor(responses[index])}`}
+                  >
+                    {index + 1}
+                  </div>
 
-                {/* Input field */}
-                <div className="flex-1 space-y-1">
-                  <Input
-                    value={userResponses[index] || ''}
-                    onChange={(e) => handleChange(index, e.target.value)}
-                    disabled={verified}
-                    placeholder={`Ingrese oración ${index + 1}`}
-                    className={`w-full ${getInputClassName(index)}`}
-                  />
+                  {/* Input field */}
+                  <div className="flex-1 space-y-1">
+                    <Input
+                      value={userResponses[index] || ''}
+                      onChange={(e) => handleChange(index, e.target.value)}
+                      disabled={verified}
+                      placeholder={`Ingrese oración ${index + 1}`}
+                      className={`w-full text-sm sm:text-base ${getInputClassName(index)}`}
+                    />
 
-                  {/* Show result after verification */}
-                  {verified && (
-                    <div className="flex items-center gap-2">
-                      {typeof responses[index] === 'number' && responses[index] >= 0.8 ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-red-500 shrink-0" />
-                      )}
-                      <span className={`text-sm ${
-                        typeof responses[index] === 'number' && responses[index] >= 0.8
-                          ? 'text-green-600 dark:text-green-400'
-                          : 'text-red-600 dark:text-red-400'
-                      }`}>
-                        {answer}
-                      </span>
-                      {typeof responses[index] === 'number' && (
-                        <span className="text-xs text-muted-foreground ml-2">
-                          ({Math.round(responses[index] * 100)}% coincidencia)
+                    {/* Show result after verification */}
+                    {verified && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {typeof responses[index] === 'number' && responses[index] >= 0.8 ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-500 shrink-0" />
+                        )}
+                        <span className={`text-xs sm:text-sm ${
+                          typeof responses[index] === 'number' && responses[index] >= 0.8
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }`}>
+                          {answer}
                         </span>
-                      )}
-                    </div>
-                  )}
+                        {typeof responses[index] === 'number' && (
+                          <span className="text-xs text-muted-foreground ml-2">
+                            ({Math.round(responses[index] * 100)}% coincidencia)
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 pt-4">
+            {verified && (
+              <Button variant="outline" onClick={handleReset} className="gap-2 w-full sm:w-auto">
+                <RotateCcw className="h-4 w-4" />
+                Reintentar
+              </Button>
+            )}
+            <Button onClick={verified ? () => setGradeModalOpen(true) : handleVerify} className="w-full sm:w-auto">
+              {verified ? 'Ver Calificación' : 'Verificar'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Actions */}
-      <div className="flex justify-end gap-4">
-        {verified && (
-          <Button variant="outline" onClick={handleReset}>
-            Reintentar
-          </Button>
-        )}
-        <Button onClick={verified ? () => setGradeModalOpen(true) : handleVerify} size="lg">
-          {verified ? 'Ver Calificación' : 'Verificar'}
-        </Button>
-      </div>
-
       {/* Grade Modal */}
-      <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Calificación</DialogTitle>
-            <DialogDescription>
-              Resultado de tu ejercicio
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-6 text-center">
-            <div className="text-6xl font-bold text-primary mb-4">
-              {Math.round(grade * 100)}%
-            </div>
-            <p className="text-muted-foreground">
-              {grade >= 0.8 ? '¡Excelente trabajo!' : grade >= 0.6 ? '¡Bien hecho!' : 'Sigue practicando'}
-            </p>
-          </div>
-
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setGradeModalOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Cerrar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleGoBack}
-              className="w-full sm:w-auto"
-            >
-              Volver al Menú
-            </Button>
-            <Button
-              onClick={handleNextExercise}
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              {isSubmitting ? 'Guardando...' : 'Siguiente Ejercicio'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GradeModal
+        open={gradeModalOpen}
+        onOpenChange={setGradeModalOpen}
+        grade={grade}
+        saving={saving}
+        onClose={handleClose}
+        onGoBack={handleGoBack}
+        onNextExercise={handleNextExercise}
+      />
     </div>
   );
 }
