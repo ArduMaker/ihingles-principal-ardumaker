@@ -218,25 +218,6 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
         </div>
       </div>
 
-      
-      {/* Botón de siguiente ejercicio en la parte superior para videos */}
-      <div className="flex justify-end">
-        <Button
-          onClick={handleSkipVideo}
-          disabled={isSubmitting}
-          variant="outline"
-          className="gap-2"
-        >
-          {isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <ArrowRight className="h-4 w-4" />
-          )}
-          Siguiente Ejercicio
-        </Button>
-      </div>
-
-      
 
       {/* Title and Info */}
       <div className="space-y-2">

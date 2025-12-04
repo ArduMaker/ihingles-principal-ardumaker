@@ -239,22 +239,6 @@ export const Eje30 = ({ exercise: initialExercise }: Eje30Props) => {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Botón de siguiente ejercicio en la parte superior para lecturas */}
-      <div className="flex justify-end">
-        <Button
-          onClick={handleNextExercise}
-          disabled={isSubmitting}
-          variant="outline"
-          className="gap-2"
-        >
-          {isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <ArrowRight className="h-4 w-4" />
-          )}
-          Siguiente Ejercicio
-        </Button>
-      </div>
 
       {/* Header Image */}
       <div className="relative w-full h-32 sm:h-40 md:h-48 rounded-lg overflow-hidden">

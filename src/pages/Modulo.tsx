@@ -118,7 +118,7 @@ const Modulo = () => {
                             <div
                               key={item._id}
                               className="border rounded-lg p-4 flex items-center justify-between transition-all hover:bg-accent cursor-pointer"
-                              onClick={() => navigate(`/modulo/${id}?exerciseIndex=${item.indicePosition}`)}
+                              onClick={() => navigate(`/modulo/${id}?exerciseIndex=${item.number}`)}
                             >
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
