@@ -1,14 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Volume2, CheckCircle2, XCircle } from 'lucide-react';
-import { postUserGrade, postUserPosition } from '@/lib/api';
-import { toast } from 'sonner';
-import { Calculate_index_exercise } from '@/hooks/calculate_index.ts';
+import { GradeModal } from '@/components/ejercicio/GradeModal';
+import { useExerciseGrade } from '@/hooks/useExerciseGrade';
 import DashboardLoader from '@/components/dashboard/DashboardLoader';
 import { normalizeAnswer } from '@/lib/exerciseUtils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const AUDIO_PAISES = {
   ingles: 'ingles',
@@ -37,13 +36,11 @@ interface Eje17Props {
   exercise: Type17Exercise | any;
 }
 
-// Check answer
 const checkAnswerType17 = (userAnswer: string, correctAnswer: string): boolean => {
   if (!userAnswer || userAnswer.trim() === '') return false;
   return normalizeAnswer(userAnswer) === normalizeAnswer(correctAnswer);
 };
 
-// Shuffle array utility
 const shuffleArray = <T,>(array: T[]): T[] => {
   const shuffledArray = [...array];
   for (let i = shuffledArray.length - 1; i > 0; i--) {
@@ -54,32 +51,39 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 };
 
 export function Eje17({ exercise: initialExercise }: Eje17Props) {
-  const navigate = useNavigate();
+  const { id } = useParams();
+  const isMobile = useIsMobile();
   const [exercise, setExercise] = useState<Type17Exercise | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // State for user responses and verification
   const [userResponses, setUserResponses] = useState<string[]>([]);
   const [verified, setVerified] = useState(false);
   const [responses, setResponses] = useState<boolean[]>([]);
   const [answerSelected, setAnswerSelected] = useState<number | null>(null);
 
-  // Audio state
   const [audioPais, setAudioPais] = useState<string>(AUDIO_PAISES.ingles);
   const [playingAudio, setPlayingAudio] = useState<number | null>(null);
 
-  // Modal states
-  const [gradeModalOpen, setGradeModalOpen] = useState(false);
-  const [grade, setGrade] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    grade,
+    gradeModalOpen,
+    saving,
+    setGradeModalOpen,
+    openGradeModal,
+    handleClose,
+    handleGoBack,
+    handleNextExercise,
+  } = useExerciseGrade({
+    exerciseId: exercise?._id || '',
+    unidad: exercise?.unidad || Number(id) || 0,
+    exerciseNumber: exercise?.number || 0,
+  });
 
-  // Shuffled fields (memoized to prevent re-shuffle on re-render)
   const shuffledFields = useMemo(() => {
     if (!exercise) return [];
     return shuffleArray(exercise.fields);
   }, [exercise]);
 
-  // Initialize exercise data
   useEffect(() => {
     if (initialExercise) {
       const exerciseWithIds = {
@@ -112,13 +116,11 @@ export function Eje17({ exercise: initialExercise }: Eje17Props) {
     setResponses(responsesCheck);
     setVerified(true);
 
-    // Calculate grade
     const total = responsesCheck.length;
     const successes = responsesCheck.filter((x) => x).length;
     const calculatedGrade = total > 0 ? successes / total : 1;
 
-    setGrade(calculatedGrade);
-    setGradeModalOpen(true);
+    openGradeModal(calculatedGrade);
   };
 
   const handleReset = () => {
@@ -134,12 +136,10 @@ export function Eje17({ exercise: initialExercise }: Eje17Props) {
 
     let value = '';
 
-    // If slot is empty and an answer is selected, fill it
     if (userResponses[i] === '' && answerSelected !== null) {
       const selectedField = exercise.fields.find((x) => x.id === answerSelected);
       value = selectedField?.answer || '';
     } else {
-      // If slot has value, clear it
       value = '';
     }
 
@@ -162,7 +162,6 @@ export function Eje17({ exercise: initialExercise }: Eje17Props) {
     
     setPlayingAudio(index);
     audio.play().catch(() => {
-      // Fallback to alternative path
       const fallbackAudio = new Audio(`/audios/${audioName}.mp3`);
       fallbackAudio.play().catch(console.error);
     });
@@ -170,49 +169,14 @@ export function Eje17({ exercise: initialExercise }: Eje17Props) {
     audio.addEventListener('ended', () => setPlayingAudio(null));
   };
 
-  const handleSaveGrade = async () => {
-    setIsSubmitting(true);
-    try {
-      await postUserGrade(
-        exercise._id,
-        grade,
-        exercise.unidad?.toString() || '0'
-      );
-
-      await postUserPosition({
-        unidad: exercise.unidad || 0,
-        position: await Calculate_index_exercise(exercise)
-      });
-
-      toast.success('Progreso guardado correctamente');
-      setGradeModalOpen(false);
-    } catch (error) {
-      toast.error('Error al guardar el progreso');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleNextExercise = async () => {
-    await handleSaveGrade();
-    const nextNumber = (exercise.number || 0) + 1;
-    navigate(`/ejercicio/${nextNumber}`);
-  };
-
-  const handleGoBack = () => {
-    setGradeModalOpen(false);
-    navigate(-1);
-  };
-
-  // Get available answers (not yet used)
   const availableAnswers = shuffledFields.filter(
     ({ answer }) => !userResponses.some((x) => x === answer)
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header Image */}
-      <div className="relative w-full h-48 rounded-lg overflow-hidden">
+      <div className="relative w-full h-32 sm:h-40 md:h-48 rounded-lg overflow-hidden">
         <img
           src="/ejercicio/principal1.png"
           alt="Listening"
@@ -222,8 +186,8 @@ export function Eje17({ exercise: initialExercise }: Eje17Props) {
 
       {/* Title and Info */}
       <div className="space-y-2">
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <h1 className="text-2xl font-bold text-foreground">{exercise.title || 'Ejercicio Tipo 17'}</h1>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{exercise.title || 'Ejercicio Tipo 17'}</h1>
           <span className="text-sm text-muted-foreground">
             Ejercicio: {exercise.number || 0}
           </span>
@@ -231,7 +195,7 @@ export function Eje17({ exercise: initialExercise }: Eje17Props) {
 
         {exercise.description && (
           <div
-            className="text-muted-foreground"
+            className="text-sm sm:text-base text-muted-foreground"
             dangerouslySetInnerHTML={{ __html: exercise.description }}
           />
         )}
@@ -239,14 +203,15 @@ export function Eje17({ exercise: initialExercise }: Eje17Props) {
 
       {/* Audio Country Selector */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-4 flex-wrap">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
             <span className="text-sm font-medium text-foreground">Acento del audio:</span>
             <div className="flex gap-2">
               <Button
                 variant={audioPais === AUDIO_PAISES.ingles ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setAudioPais(AUDIO_PAISES.ingles)}
+                className="flex-1 sm:flex-none"
               >
                 🇬🇧 Británico
               </Button>
@@ -254,6 +219,7 @@ export function Eje17({ exercise: initialExercise }: Eje17Props) {
                 variant={audioPais === AUDIO_PAISES.americano ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setAudioPais(AUDIO_PAISES.americano)}
+                className="flex-1 sm:flex-none"
               >
                 🇺🇸 Americano
               </Button>
@@ -264,17 +230,17 @@ export function Eje17({ exercise: initialExercise }: Eje17Props) {
 
       {/* Answer Selection Area */}
       <Card className="bg-muted/50">
-        <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground mb-3">Selecciona una palabra y haz clic en la imagen correspondiente:</p>
-          <div className="flex flex-wrap gap-2 justify-center min-h-[60px]">
+        <CardContent className="p-3 sm:p-4">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-3">Selecciona una palabra y haz clic en la imagen correspondiente:</p>
+          <div className="flex flex-wrap gap-2 justify-center min-h-[50px] sm:min-h-[60px]">
             {availableAnswers.map((field) => (
               <button
                 key={`answer-${field.id}`}
                 onClick={() => handleSelectAnswer(field.id!)}
                 disabled={verified}
-                className={`px-4 py-2 rounded-full transition-all duration-200 font-medium ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full transition-all duration-200 text-sm sm:text-base font-medium ${
                   answerSelected === field.id
-                    ? 'bg-primary text-primary-foreground scale-110 shadow-lg'
+                    ? 'bg-primary text-primary-foreground scale-105 sm:scale-110 shadow-lg'
                     : 'bg-background text-foreground hover:bg-accent border border-border'
                 } ${verified ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
@@ -282,14 +248,18 @@ export function Eje17({ exercise: initialExercise }: Eje17Props) {
               </button>
             ))}
             {availableAnswers.length === 0 && !verified && (
-              <p className="text-muted-foreground italic">Todas las palabras han sido asignadas</p>
+              <p className="text-muted-foreground italic text-sm">Todas las palabras han sido asignadas</p>
             )}
           </div>
         </CardContent>
       </Card>
 
       {/* Image Cards Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      <div className={`grid gap-3 sm:gap-4 ${
+        isMobile 
+          ? 'grid-cols-2' 
+          : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4'
+      }`}>
         {exercise.fields.map((field, i) => (
           <Card
             key={`card-${i}`}
@@ -298,7 +268,7 @@ export function Eje17({ exercise: initialExercise }: Eje17Props) {
             }`}
             onClick={() => handleChange(i)}
           >
-            <CardContent className="p-3">
+            <CardContent className="p-2 sm:p-3">
               {/* Image with audio button */}
               <div className="relative aspect-square mb-2">
                 <img
@@ -312,19 +282,19 @@ export function Eje17({ exercise: initialExercise }: Eje17Props) {
                 <Button
                   variant="secondary"
                   size="icon"
-                  className="absolute bottom-2 right-2 h-8 w-8 rounded-full shadow-md"
+                  className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 h-7 w-7 sm:h-8 sm:w-8 rounded-full shadow-md"
                   onClick={(e) => {
                     e.stopPropagation();
                     playAudio(field.audio, i);
                   }}
                 >
-                  <Volume2 className={`h-4 w-4 ${playingAudio === i ? 'animate-pulse text-primary' : ''}`} />
+                  <Volume2 className={`h-3 w-3 sm:h-4 sm:w-4 ${playingAudio === i ? 'animate-pulse text-primary' : ''}`} />
                 </Button>
               </div>
 
               {/* User response area */}
               <div
-                className={`min-h-[40px] flex items-center justify-center rounded-lg border-2 border-dashed p-2 ${
+                className={`min-h-[32px] sm:min-h-[40px] flex items-center justify-center rounded-lg border-2 border-dashed p-1.5 sm:p-2 ${
                   userResponses[i]
                     ? verified
                       ? responses[i]
@@ -335,8 +305,8 @@ export function Eje17({ exercise: initialExercise }: Eje17Props) {
                 }`}
               >
                 {userResponses[i] ? (
-                  <div className="flex items-center gap-2">
-                    <span className={`font-medium ${
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <span className={`text-xs sm:text-sm font-medium ${
                       verified
                         ? responses[i]
                           ? 'text-green-600 dark:text-green-400'
@@ -347,18 +317,18 @@ export function Eje17({ exercise: initialExercise }: Eje17Props) {
                     </span>
                     {verified && (
                       responses[i]
-                        ? <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        : <XCircle className="h-4 w-4 text-red-500" />
+                        ? <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
+                        : <XCircle className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
                     )}
                   </div>
                 ) : (
-                  <span className="text-muted-foreground text-sm">Haz clic aquí</span>
+                  <span className="text-muted-foreground text-xs sm:text-sm">Haz clic aquí</span>
                 )}
               </div>
 
               {/* Show correct answer if wrong */}
               {shouldShowAnswer() && !responses[i] && (
-                <p className="text-xs text-center text-red-500 mt-1 font-medium">
+                <p className="text-[10px] sm:text-xs text-center text-red-500 mt-1 font-medium">
                   Correcto: {field.answer}
                 </p>
               )}
@@ -368,61 +338,31 @@ export function Eje17({ exercise: initialExercise }: Eje17Props) {
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-4">
+      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4">
         {verified && (
-          <Button variant="outline" onClick={handleReset}>
+          <Button variant="outline" onClick={handleReset} className="w-full sm:w-auto">
             Reintentar
           </Button>
         )}
-        <Button onClick={verified ? () => setGradeModalOpen(true) : handleVerify} size="lg">
+        <Button 
+          onClick={verified ? () => setGradeModalOpen(true) : handleVerify} 
+          size="lg"
+          className="w-full sm:w-auto"
+        >
           {verified ? 'Ver Calificación' : 'Verificar'}
         </Button>
       </div>
 
       {/* Grade Modal */}
-      <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Calificación</DialogTitle>
-            <DialogDescription>
-              Resultado de tu ejercicio
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-6 text-center">
-            <div className="text-6xl font-bold text-primary mb-4">
-              {Math.round(grade * 100)}%
-            </div>
-            <p className="text-muted-foreground">
-              {grade >= 0.8 ? '¡Excelente trabajo!' : grade >= 0.6 ? '¡Bien hecho!' : 'Sigue practicando'}
-            </p>
-          </div>
-
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setGradeModalOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Cerrar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleGoBack}
-              className="w-full sm:w-auto"
-            >
-              Volver al Menú
-            </Button>
-            <Button
-              onClick={handleNextExercise}
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              {isSubmitting ? 'Guardando...' : 'Siguiente Ejercicio'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GradeModal
+        open={gradeModalOpen}
+        onOpenChange={setGradeModalOpen}
+        grade={grade}
+        saving={saving}
+        onClose={handleClose}
+        onGoBack={handleGoBack}
+        onNextExercise={handleNextExercise}
+      />
     </div>
   );
 }
