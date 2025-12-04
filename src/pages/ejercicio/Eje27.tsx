@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Volume2, HelpCircle, CheckCircle2, XCircle } from 'lucide-react';
-import { postUserGrade, postUserPosition } from '@/lib/api';
-import { toast } from 'sonner';
-import { Calculate_index_exercise } from '@/hooks/calculate_index.ts';
+import { GradeModal } from '@/components/ejercicio/GradeModal';
+import { ExplanationModal } from '@/components/ejercicio/ExplanationModal';
+import { useExerciseGrade } from '@/hooks/useExerciseGrade';
 import DashboardLoader from '@/components/dashboard/DashboardLoader';
 import { normalizeAnswer } from '@/lib/exerciseUtils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Answer {
   answer: string;
@@ -56,7 +56,6 @@ interface Eje27Props {
   exercise: Type27Exercise | any;
 }
 
-// Check answer against multiple valid answers
 const checkAnswerType27 = (
   userAnswer: string,
   ...correctAnswers: (string | undefined)[]
@@ -71,27 +70,36 @@ const checkAnswerType27 = (
 };
 
 export function Eje27({ exercise: initialExercise }: Eje27Props) {
-  const navigate = useNavigate();
+  const { id } = useParams();
+  const isMobile = useIsMobile();
   const [exercise, setExercise] = useState<Type27Exercise | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // State for user responses and verification
   const [responses, setResponses] = useState<{ [key: number]: string }>({});
   const [selectState, setSelectState] = useState<(boolean | null)[]>([]);
   const [verified, setVerified] = useState(false);
 
-  // Audio state
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Modal states
-  const [gradeModalOpen, setGradeModalOpen] = useState(false);
-  const [grade, setGrade] = useState(0);
   const [explanationModalOpen, setExplanationModalOpen] = useState(false);
   const [currentExplanation, setCurrentExplanation] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize exercise data
+  const {
+    grade,
+    gradeModalOpen,
+    saving,
+    setGradeModalOpen,
+    openGradeModal,
+    handleClose,
+    handleGoBack,
+    handleNextExercise,
+  } = useExerciseGrade({
+    exerciseId: exercise?._id || '',
+    unidad: exercise?.unidad || Number(id) || 0,
+    exerciseNumber: exercise?.number || 0,
+  });
+
   useEffect(() => {
     if (initialExercise) {
       setExercise(initialExercise);
@@ -109,7 +117,6 @@ export function Eje27({ exercise: initialExercise }: Eje27Props) {
       setSelectState(initialStates);
       setResponses(initialResponses);
 
-      // Setup audio if available
       if (initialExercise.audio) {
         const audio = new Audio(`/audios/${initialExercise.audio}.mp3`);
         audio.addEventListener('ended', () => setIsPlaying(false));
@@ -124,7 +131,6 @@ export function Eje27({ exercise: initialExercise }: Eje27Props) {
     return <DashboardLoader />;
   }
 
-  // Get linear index from sentence and answer indices
   const getIndex = (iSentence: number, i: number): number => {
     const sizes: number[] = [];
     exercise.sentences
@@ -133,7 +139,6 @@ export function Eje27({ exercise: initialExercise }: Eje27Props) {
     return sizes.reduce((a, b) => a + b, 0) + i;
   };
 
-  // Check if field at index is shown
   const isShown = (generalIndex: number): boolean => {
     let current = 0;
     for (const sentence of exercise.sentences) {
@@ -178,14 +183,12 @@ export function Eje27({ exercise: initialExercise }: Eje27Props) {
     setSelectState(results);
     setVerified(true);
 
-    // Calculate grade (excluding shown fields)
     const computableResults = results.filter((_, i) => !isShown(i));
     const total = computableResults.length;
     const successes = computableResults.filter((x) => x).length;
     const calculatedGrade = total > 0 ? successes / total : 1;
 
-    setGrade(calculatedGrade);
-    setGradeModalOpen(true);
+    openGradeModal(calculatedGrade);
   };
 
   const handleReset = () => {
@@ -228,40 +231,6 @@ export function Eje27({ exercise: initialExercise }: Eje27Props) {
     }
   };
 
-  const handleSaveGrade = async () => {
-    setIsSubmitting(true);
-    try {
-      await postUserGrade(
-        exercise._id,
-        grade,
-        exercise.unidad?.toString() || '0'
-      );
-
-      await postUserPosition({
-        unidad: exercise.unidad || 0,
-        position: await Calculate_index_exercise(exercise)
-      });
-
-      toast.success('Progreso guardado correctamente');
-      setGradeModalOpen(false);
-    } catch (error) {
-      toast.error('Error al guardar el progreso');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleNextExercise = async () => {
-    await handleSaveGrade();
-    const nextNumber = (exercise.number || 0) + 1;
-    navigate(`/ejercicio/${nextNumber}`);
-  };
-
-  const handleGoBack = () => {
-    setGradeModalOpen(false);
-    navigate(-1);
-  };
-
   const getBorderColor = (index: number): string => {
     if (selectState[index] === null) return 'border-border';
     return selectState[index] ? 'border-green-500' : 'border-red-500';
@@ -273,9 +242,9 @@ export function Eje27({ exercise: initialExercise }: Eje27Props) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header Image */}
-      <div className="relative w-full h-48 rounded-lg overflow-hidden">
+      <div className="relative w-full h-32 sm:h-40 md:h-48 rounded-lg overflow-hidden">
         <img
           src="/ejercicio/grammar.png"
           alt="Grammar"
@@ -285,8 +254,8 @@ export function Eje27({ exercise: initialExercise }: Eje27Props) {
 
       {/* Title and Info */}
       <div className="space-y-2">
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <h1 className="text-2xl font-bold text-foreground">{exercise.title || 'Ejercicio Tipo 27'}</h1>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{exercise.title || 'Ejercicio Tipo 27'}</h1>
           <span className="text-sm text-muted-foreground">
             Ejercicio: {exercise.number || 0}
           </span>
@@ -300,7 +269,7 @@ export function Eje27({ exercise: initialExercise }: Eje27Props) {
 
         {exercise.description && (
           <div
-            className="text-muted-foreground mt-2"
+            className="text-sm sm:text-base text-muted-foreground mt-2"
             dangerouslySetInnerHTML={{ __html: exercise.description }}
           />
         )}
@@ -309,19 +278,19 @@ export function Eje27({ exercise: initialExercise }: Eje27Props) {
       {/* Audio Player */}
       {exercise.audio && (
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <Button
                 variant={isPlaying ? 'default' : 'outline'}
                 size="icon"
                 onClick={toggleAudio}
-                className="h-12 w-12 rounded-full"
+                className="h-10 w-10 sm:h-12 sm:w-12 rounded-full shrink-0"
               >
-                <Volume2 className={`h-6 w-6 ${isPlaying ? 'animate-pulse' : ''}`} />
+                <Volume2 className={`h-5 w-5 sm:h-6 sm:w-6 ${isPlaying ? 'animate-pulse' : ''}`} />
               </Button>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground">Audio del ejercicio</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground truncate">
                   {isPlaying ? 'Reproduciendo...' : 'Haz clic para escuchar'}
                 </p>
               </div>
@@ -332,16 +301,16 @@ export function Eje27({ exercise: initialExercise }: Eje27Props) {
 
       {/* Sentences */}
       <Card>
-        <CardContent className="p-4 md:p-6 space-y-4">
+        <CardContent className="p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4">
           {exercise.sentences.map((sentence, iSentence) => (
             <div
               key={iSentence}
-              className={`flex gap-4 py-4 border-b border-border last:border-b-0 ${
-                exercise.reverted ? 'flex-row-reverse' : 'flex-row'
-              } flex-wrap md:flex-nowrap`}
+              className={`flex gap-3 sm:gap-4 py-3 sm:py-4 border-b border-border last:border-b-0 ${
+                exercise.reverted ? 'flex-col-reverse sm:flex-row-reverse' : 'flex-col sm:flex-row'
+              }`}
             >
               {/* Sentence text */}
-              <p className="flex-1 min-w-[200px] text-foreground">{sentence.sentence}</p>
+              <p className="flex-1 text-sm sm:text-base text-foreground">{sentence.sentence}</p>
 
               {/* Answer inputs */}
               <div className="flex flex-wrap gap-2 items-start">
@@ -352,41 +321,39 @@ export function Eje27({ exercise: initialExercise }: Eje27Props) {
                   return (
                     <div key={`ans-${index}`} className="flex flex-col gap-1">
                       {answer.isText ? (
-                        // Text input
                         answer.shown ? (
-                          <div className={`px-3 py-2 rounded-md border-2 border-green-500 bg-green-50 dark:bg-green-900/20 min-w-[200px]`}>
+                          <div className="px-3 py-2 rounded-md border-2 border-green-500 bg-green-50 dark:bg-green-900/20 min-w-[150px] sm:min-w-[200px] text-sm">
                             {answer.answer}
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1 sm:gap-2">
                             <Input
                               value={responses[index] || ''}
                               onChange={(e) => handleChange(index, e.target.value)}
                               disabled={verified}
-                              className={`min-w-[200px] ${getBorderColor(index)} ${getBgColor(index)}`}
+                              className={`min-w-[150px] sm:min-w-[200px] text-sm ${getBorderColor(index)} ${getBgColor(index)}`}
                               placeholder="Escribe tu respuesta"
                             />
                             {verified && (
                               isCorrect ? (
-                                <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+                                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 shrink-0" />
                               ) : (
-                                <XCircle className="h-5 w-5 text-red-500 shrink-0" />
+                                <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 shrink-0" />
                               )
                             )}
                           </div>
                         )
                       ) : (
-                        // Select dropdown
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 sm:gap-2">
                           <Select
                             value={answer.shown ? answer.answer : (responses[index] || '')}
                             onValueChange={(value) => handleChange(index, value)}
                             disabled={verified || answer.shown}
                           >
                             <SelectTrigger 
-                              className={`min-w-[120px] ${
-                                exercise.adjustToSize ? 'w-auto' : 'w-[180px]'
-                              } ${getBorderColor(index)} ${getBgColor(index)}`}
+                              className={`min-w-[100px] sm:min-w-[120px] ${
+                                exercise.adjustToSize ? 'w-auto' : 'w-[140px] sm:w-[180px]'
+                              } text-sm ${getBorderColor(index)} ${getBgColor(index)}`}
                             >
                               <SelectValue placeholder="Seleccionar" />
                             </SelectTrigger>
@@ -400,9 +367,9 @@ export function Eje27({ exercise: initialExercise }: Eje27Props) {
                           </Select>
                           {verified && !answer.shown && (
                             isCorrect ? (
-                              <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+                              <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 shrink-0" />
                             ) : (
-                              <XCircle className="h-5 w-5 text-red-500 shrink-0" />
+                              <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 shrink-0" />
                             )
                           )}
                         </div>
@@ -411,7 +378,7 @@ export function Eje27({ exercise: initialExercise }: Eje27Props) {
                       {/* Show correct answer */}
                       {shouldShowAnswer() && !answer.shown && (
                         <div 
-                          className={`flex items-center gap-1 text-xs font-semibold cursor-pointer ${
+                          className={`flex items-center gap-1 text-[10px] sm:text-xs font-semibold cursor-pointer ${
                             isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                           }`}
                           onClick={() => showExplanation(answer.explanation)}
@@ -432,78 +399,38 @@ export function Eje27({ exercise: initialExercise }: Eje27Props) {
       </Card>
 
       {/* Actions */}
-      <div className="flex justify-end gap-4">
+      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4">
         {verified && (
-          <Button variant="outline" onClick={handleReset}>
+          <Button variant="outline" onClick={handleReset} className="w-full sm:w-auto">
             Reintentar
           </Button>
         )}
-        <Button onClick={verified ? () => setGradeModalOpen(true) : handleVerify} size="lg">
+        <Button 
+          onClick={verified ? () => setGradeModalOpen(true) : handleVerify} 
+          size="lg"
+          className="w-full sm:w-auto"
+        >
           {verified ? 'Ver Calificación' : 'Verificar'}
         </Button>
       </div>
 
       {/* Grade Modal */}
-      <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Calificación</DialogTitle>
-            <DialogDescription>
-              Resultado de tu ejercicio
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-6 text-center">
-            <div className="text-6xl font-bold text-primary mb-4">
-              {Math.round(grade * 100)}%
-            </div>
-            <p className="text-muted-foreground">
-              {grade >= 0.8 ? '¡Excelente trabajo!' : grade >= 0.6 ? '¡Bien hecho!' : 'Sigue practicando'}
-            </p>
-          </div>
-
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setGradeModalOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Cerrar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleGoBack}
-              className="w-full sm:w-auto"
-            >
-              Volver al Menú
-            </Button>
-            <Button
-              onClick={handleNextExercise}
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              {isSubmitting ? 'Guardando...' : 'Siguiente Ejercicio'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GradeModal
+        open={gradeModalOpen}
+        onOpenChange={setGradeModalOpen}
+        grade={grade}
+        saving={saving}
+        onClose={handleClose}
+        onGoBack={handleGoBack}
+        onNextExercise={handleNextExercise}
+      />
 
       {/* Explanation Modal */}
-      <Dialog open={explanationModalOpen} onOpenChange={setExplanationModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Explicación</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-foreground">{currentExplanation}</p>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setExplanationModalOpen(false)}>
-              Cerrar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ExplanationModal
+        open={explanationModalOpen}
+        onOpenChange={setExplanationModalOpen}
+        explanation={currentExplanation}
+      />
     </div>
   );
 }

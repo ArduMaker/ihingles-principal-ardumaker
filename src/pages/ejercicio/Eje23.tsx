@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Mic, MicOff, CheckCircle2, XCircle, Volume2 } from 'lucide-react';
-import { postUserGrade, postUserPosition } from '@/lib/api';
-import { toast } from 'sonner';
-import { Calculate_index_exercise } from '@/hooks/calculate_index.ts';
+import { GradeModal } from '@/components/ejercicio/GradeModal';
+import { useExerciseGrade } from '@/hooks/useExerciseGrade';
 import DashboardLoader from '@/components/dashboard/DashboardLoader';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Type23Exercise {
   _id: string;
@@ -139,25 +138,33 @@ const useSpeechRecognition = () => {
 };
 
 export function Eje23({ exercise: initialExercise }: Eje23Props) {
-  const navigate = useNavigate();
+  const { id } = useParams();
+  const isMobile = useIsMobile();
   const [exercise, setExercise] = useState<Type23Exercise | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // State for user responses and verification
   const [userResponses, setUserResponses] = useState<string[]>([]);
   const [verified, setVerified] = useState(false);
   const [responses, setResponses] = useState<(number | '')[]>([]);
   
-  // Recording state
   const [recordingIndex, setRecordingIndex] = useState<number | null>(null);
   const { isSupported, startRecognition, stopRecognition } = useSpeechRecognition();
 
-  // Modal states
-  const [gradeModalOpen, setGradeModalOpen] = useState(false);
-  const [grade, setGrade] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    grade,
+    gradeModalOpen,
+    saving,
+    setGradeModalOpen,
+    openGradeModal,
+    handleClose,
+    handleGoBack,
+    handleNextExercise,
+  } = useExerciseGrade({
+    exerciseId: exercise?._id || '',
+    unidad: exercise?.unidad || Number(id) || 0,
+    exerciseNumber: exercise?.number || 0,
+  });
 
-  // Initialize exercise data
   useEffect(() => {
     if (initialExercise) {
       setExercise(initialExercise);
@@ -204,7 +211,6 @@ export function Eje23({ exercise: initialExercise }: Eje23Props) {
     answers.forEach((answer, iAns) => {
       const possibleResponses: (string | undefined)[] = [answer];
 
-      // Add alternative answers
       if (exercise.answers2) possibleResponses.push(exercise.answers2[iAns]);
       if (exercise.answers3) possibleResponses.push(exercise.answers3[iAns]);
       if (exercise.answers4) possibleResponses.push(exercise.answers4[iAns]);
@@ -223,12 +229,11 @@ export function Eje23({ exercise: initialExercise }: Eje23Props) {
     setResponses(responsesCheck);
     setVerified(true);
 
-    // Calculate grade as average of similarity scores
+    // Calculate grade as average of similarity scores (0-1)
     const total = responsesCheck.length;
     const calculatedGrade = total > 0 ? responsesCheck.reduce((a, b) => a + b, 0) / total : 0;
 
-    setGrade(calculatedGrade);
-    setGradeModalOpen(true);
+    openGradeModal(calculatedGrade);
   };
 
   const handleReset = () => {
@@ -247,40 +252,6 @@ export function Eje23({ exercise: initialExercise }: Eje23Props) {
     }
   };
 
-  const handleSaveGrade = async () => {
-    setIsSubmitting(true);
-    try {
-      await postUserGrade(
-        exercise._id,
-        grade,
-        exercise.unidad?.toString() || '0'
-      );
-
-      await postUserPosition({
-        unidad: exercise.unidad || 0,
-        position: await Calculate_index_exercise(exercise)
-      });
-
-      toast.success('Progreso guardado correctamente');
-      setGradeModalOpen(false);
-    } catch (error) {
-      toast.error('Error al guardar el progreso');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleNextExercise = async () => {
-    await handleSaveGrade();
-    const nextNumber = (exercise.number || 0) + 1;
-    navigate(`/ejercicio/${nextNumber}`);
-  };
-
-  const handleGoBack = () => {
-    setGradeModalOpen(false);
-    navigate(-1);
-  };
-
   const getScoreColor = (score: number | ''): string => {
     if (score === '') return '';
     if (score > 0.6) return 'green';
@@ -295,9 +266,9 @@ export function Eje23({ exercise: initialExercise }: Eje23Props) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header Image */}
-      <div className="relative w-full h-48 rounded-lg overflow-hidden">
+      <div className="relative w-full h-32 sm:h-40 md:h-48 rounded-lg overflow-hidden">
         <img
           src="/ejercicio/principal3.png"
           alt="Pronunciation"
@@ -307,8 +278,8 @@ export function Eje23({ exercise: initialExercise }: Eje23Props) {
 
       {/* Title and Info */}
       <div className="space-y-2">
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <h1 className="text-2xl font-bold text-foreground">{exercise.title || 'Ejercicio Tipo 23'}</h1>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{exercise.title || 'Ejercicio Tipo 23'}</h1>
           <span className="text-sm text-muted-foreground">
             Ejercicio: {exercise.number || 0}
           </span>
@@ -322,7 +293,7 @@ export function Eje23({ exercise: initialExercise }: Eje23Props) {
 
         {exercise.description && (
           <div
-            className="text-muted-foreground mt-2"
+            className="text-sm sm:text-base text-muted-foreground mt-2"
             dangerouslySetInnerHTML={{ __html: exercise.description }}
           />
         )}
@@ -331,8 +302,8 @@ export function Eje23({ exercise: initialExercise }: Eje23Props) {
       {/* Speech Recognition Support Warning */}
       {!isSupported && (
         <Card className="border-amber-500/50 bg-amber-500/10">
-          <CardContent className="p-4">
-            <p className="text-amber-700 dark:text-amber-300 text-sm">
+          <CardContent className="p-3 sm:p-4">
+            <p className="text-amber-700 dark:text-amber-300 text-xs sm:text-sm">
               Tu navegador no soporta reconocimiento de voz. Prueba con Chrome o Edge.
             </p>
           </CardContent>
@@ -340,7 +311,7 @@ export function Eje23({ exercise: initialExercise }: Eje23Props) {
       )}
 
       {/* Sentences */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {exercise.answers.map((sentence, i) => {
           const score = responses[i];
           const isRecording = recordingIndex === i;
@@ -357,10 +328,10 @@ export function Eje23({ exercise: initialExercise }: Eje23Props) {
                     : ''
               }`}
             >
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 {/* Sentence with number */}
-                <div className="flex items-start gap-3 mb-4">
-                  <span className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold shrink-0 ${
+                <div className="flex items-start gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <span className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs sm:text-sm font-bold shrink-0 ${
                     verified && color === 'green'
                       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                       : verified && color === 'red'
@@ -369,60 +340,64 @@ export function Eje23({ exercise: initialExercise }: Eje23Props) {
                   }`}>
                     {i + 1}
                   </span>
-                  <div className="flex-1">
-                    <p className="text-foreground text-lg">{sentence}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-foreground text-base sm:text-lg break-words">{sentence}</p>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="mt-1 h-7 px-2"
+                      className="mt-1 h-6 sm:h-7 px-2 text-xs sm:text-sm"
                       onClick={() => speakSentence(sentence)}
                     >
-                      <Volume2 className="h-4 w-4 mr-1" />
+                      <Volume2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                       Escuchar
                     </Button>
                   </div>
                 </div>
 
                 {/* Recording controls */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                   <Button
                     variant={isRecording ? 'destructive' : 'outline'}
-                    className={`flex-1 ${isRecording ? 'animate-pulse' : ''}`}
+                    size={isMobile ? 'sm' : 'default'}
+                    className={`flex-1 text-xs sm:text-sm ${isRecording ? 'animate-pulse' : ''}`}
                     onClick={() => isRecording ? handleRecordStop() : handleRecordStart(i)}
                     disabled={!isSupported || verified || (recordingIndex !== null && !isRecording)}
                   >
                     {isRecording ? (
                       <>
-                        <MicOff className="h-4 w-4 mr-2" />
-                        Detener grabación
+                        <MicOff className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Detener grabación</span>
+                        <span className="sm:hidden">Detener</span>
                       </>
                     ) : (
                       <>
-                        <Mic className="h-4 w-4 mr-2" />
-                        {userResponses[i] ? 'Grabar de nuevo' : 'Grabar pronunciación'}
+                        <Mic className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        <span className="truncate">
+                          {userResponses[i] ? 'Grabar de nuevo' : 'Grabar'}
+                        </span>
                       </>
                     )}
                   </Button>
                   
                   {verified && (
                     score !== '' && score > 0.6 ? (
-                      <CheckCircle2 className="h-6 w-6 text-green-500 shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-green-500 shrink-0" />
                     ) : (
-                      <XCircle className="h-6 w-6 text-red-500 shrink-0" />
+                      <XCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-500 shrink-0" />
                     )
                   )}
                 </div>
 
                 {/* User's recorded text */}
                 {userResponses[i] && (
-                  <div className={`mt-3 p-3 rounded-lg ${
+                  <div className={`mt-2 sm:mt-3 p-2 sm:p-3 rounded-lg ${
                     verified && color === 'green'
                       ? 'bg-green-100 dark:bg-green-900/30'
                       : verified && color === 'red'
                         ? 'bg-red-100 dark:bg-red-900/30'
                         : 'bg-muted'
                   }`}>
-                    <p className="text-sm">
+                    <p className="text-xs sm:text-sm">
                       <span className="font-medium">Tu pronunciación:</span>{' '}
                       <span className={
                         verified && color === 'green'
@@ -435,7 +410,7 @@ export function Eje23({ exercise: initialExercise }: Eje23Props) {
                       </span>
                     </p>
                     {verified && score !== '' && (
-                      <p className={`text-xs mt-1 ${
+                      <p className={`text-[10px] sm:text-xs mt-1 ${
                         color === 'green' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                       }`}>
                         Similitud: {Math.round(score * 100)}% - {getScoreLabel(score)}
@@ -450,61 +425,31 @@ export function Eje23({ exercise: initialExercise }: Eje23Props) {
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-4">
+      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4">
         {verified && (
-          <Button variant="outline" onClick={handleReset}>
+          <Button variant="outline" onClick={handleReset} className="w-full sm:w-auto">
             Reintentar
           </Button>
         )}
-        <Button onClick={verified ? () => setGradeModalOpen(true) : handleVerify} size="lg">
+        <Button 
+          onClick={verified ? () => setGradeModalOpen(true) : handleVerify} 
+          size="lg"
+          className="w-full sm:w-auto"
+        >
           {verified ? 'Ver Calificación' : 'Verificar'}
         </Button>
       </div>
 
       {/* Grade Modal */}
-      <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Calificación</DialogTitle>
-            <DialogDescription>
-              Resultado de tu ejercicio
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-6 text-center">
-            <div className="text-6xl font-bold text-primary mb-4">
-              {Math.round(grade * 100)}%
-            </div>
-            <p className="text-muted-foreground">
-              {grade >= 0.8 ? '¡Excelente trabajo!' : grade >= 0.6 ? '¡Bien hecho!' : 'Sigue practicando'}
-            </p>
-          </div>
-
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setGradeModalOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Cerrar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleGoBack}
-              className="w-full sm:w-auto"
-            >
-              Volver al Menú
-            </Button>
-            <Button
-              onClick={handleNextExercise}
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              {isSubmitting ? 'Guardando...' : 'Siguiente Ejercicio'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GradeModal
+        open={gradeModalOpen}
+        onOpenChange={setGradeModalOpen}
+        grade={grade}
+        saving={saving}
+        onClose={handleClose}
+        onGoBack={handleGoBack}
+        onNextExercise={handleNextExercise}
+      />
     </div>
   );
 }
