@@ -1,21 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from '@/hooks/use-toast';
 import { normalizeAnswer } from '@/lib/exerciseUtils';
-import { postUserGrade, postUserPosition } from '@/lib/api';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { MessageCircle } from 'lucide-react';
 import DashboardLoader from '@/components/dashboard/DashboardLoader';
+import { useExerciseGrade } from '@/hooks/useExerciseGrade';
+import { GradeModal } from '@/components/ejercicio/GradeModal';
+import { ExplanationModal } from '@/components/ejercicio/ExplanationModal';
 
 interface Field {
   shown: boolean;
@@ -66,16 +58,29 @@ interface Eje2Props {
 }
 
 export default function Eje2({ exercise: initialExercise }: Eje2Props) {
-  const { id } = useParams();
-  const navigate = useNavigate();
   const [exercise, setExercise] = useState<ExerciseType2 | null>(initialExercise);
   const [userResponses, setUserResponses] = useState<string[]>([]);
   const [verified, setVerified] = useState(false);
   const [responses, setResponses] = useState<boolean[]>([]);
-  const [gradeModalOpen, setGradeModalOpen] = useState(false);
-  const [grade, setGrade] = useState(0);
   const [explanationModalOpen, setExplanationModalOpen] = useState(false);
   const [currentExplanation, setCurrentExplanation] = useState('');
+
+  // Hook modular para calificación y navegación
+  const {
+    grade,
+    gradeModalOpen,
+    saving,
+    setGradeModalOpen,
+    openGradeModal,
+    saveGrade,
+    handleClose,
+    handleGoBack,
+    handleNextExercise,
+  } = useExerciseGrade({
+    exerciseId: exercise?._id || '',
+    unidad: exercise?.unidad || 0,
+    exerciseNumber: exercise?.number || 0,
+  });
 
   // Initialize states based on total fields
   useEffect(() => {
@@ -184,42 +189,15 @@ export default function Eje2({ exercise: initialExercise }: Eje2Props) {
     const successes = computableResults.filter((x) => x).length;
     const calculatedGrade = total > 0 ? successes / total : 1;
     
-    setGrade(calculatedGrade);
-    setGradeModalOpen(true);
+    openGradeModal(calculatedGrade);
   };
 
-  const handleSaveGrade = async (continueToNext: boolean = false) => {
-    if (!exercise) return;
+  const handleSaveAndContinue = async () => {
+    await saveGrade(true);
+  };
 
-    try {
-      await postUserGrade(exercise._id, grade, String(exercise.unidad));
-      await postUserPosition({
-        unidad: Number(id),
-        position: exercise.number,
-      });
-
-      toast({
-        title: 'Progreso guardado',
-        description: 'Tu calificación ha sido registrada correctamente',
-      });
-
-      setGradeModalOpen(false);
-      
-      if (continueToNext) {
-        // Navigate to next exercise
-        const nextExerciseNumber = exercise.number + 1;
-        navigate(`/ejercicio/${id}/${nextExerciseNumber}`);
-      } else {
-        navigate(`/unidad/${id}`);
-      }
-    } catch (error) {
-      console.error('Error saving grade:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo guardar tu progreso',
-        variant: 'destructive',
-      });
-    }
+  const handleSaveAndBack = async () => {
+    await saveGrade(false);
   };
 
   const handleReset = () => {
@@ -249,35 +227,43 @@ export default function Eje2({ exercise: initialExercise }: Eje2Props) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Image */}
-      <div className="w-full h-48 bg-cover bg-center" style={{ backgroundImage: 'url(/ejercicio/grammar.png)' }}>
-        <div className="h-full flex items-center justify-end px-8">
-          <h1 className="text-4xl font-bold text-white">{exercise.skill}</h1>
+      {/* Hero Image - Responsive */}
+      <div 
+        className="w-full h-32 sm:h-40 md:h-48 bg-cover bg-center" 
+        style={{ backgroundImage: 'url(/ejercicio/grammar.png)' }}
+      >
+        <div className="h-full flex items-center justify-end px-4 sm:px-6 md:px-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white drop-shadow-lg">
+            {exercise.skill}
+          </h1>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-2">{exercise.title}</h2>
-          <p className="text-muted-foreground mb-4" dangerouslySetInnerHTML={{ __html: exercise.description }} />
+      {/* Content - Responsive */}
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8 max-w-6xl">
+        <div className="mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2">{exercise.title}</h2>
+          <p 
+            className="text-sm sm:text-base text-muted-foreground mb-4" 
+            dangerouslySetInnerHTML={{ __html: exercise.description }} 
+          />
         </div>
 
-        {/* Sections */}
-        <div className="space-y-8">
+        {/* Sections - Responsive */}
+        <div className="space-y-6 sm:space-y-8">
           {exercise.sections.map((section, iSection) => (
-            <div key={iSection} className="bg-card rounded-lg border p-6">
-              <h3 className="text-xl font-semibold text-center mb-6 text-primary">
+            <div key={iSection} className="bg-card rounded-lg border p-3 sm:p-4 md:p-6">
+              <h3 className="text-base sm:text-lg md:text-xl font-semibold text-center mb-4 sm:mb-6 text-primary">
                 {section.title}
               </h3>
               
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
+              <div className="overflow-x-auto -mx-3 sm:-mx-4 md:-mx-6 px-3 sm:px-4 md:px-6">
+                <table className="w-full border-collapse min-w-max">
                   <thead>
                     <tr className="bg-muted">
-                      <th className="p-4 text-left font-semibold border"></th>
+                      <th className="p-2 sm:p-3 md:p-4 text-left text-xs sm:text-sm font-semibold border min-w-[80px] sm:min-w-[100px]"></th>
                       {section.top.map((topLabel, idx) => (
-                        <th key={idx} className="p-4 text-center font-semibold border">
+                        <th key={idx} className="p-2 sm:p-3 md:p-4 text-center text-xs sm:text-sm font-semibold border min-w-[100px] sm:min-w-[120px]">
                           {topLabel}
                         </th>
                       ))}
@@ -286,7 +272,7 @@ export default function Eje2({ exercise: initialExercise }: Eje2Props) {
                   <tbody>
                     {section.left.map((leftLabel, iLeft) => (
                       <tr key={iLeft} className={iLeft % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
-                        <td className="p-4 font-semibold border bg-muted">
+                        <td className="p-2 sm:p-3 md:p-4 text-xs sm:text-sm font-semibold border bg-muted">
                           {leftLabel}
                         </td>
                         {iLeft < section.rows.length &&
@@ -297,11 +283,11 @@ export default function Eje2({ exercise: initialExercise }: Eje2Props) {
                             const showResult = verified && !field.shown;
 
                             return (
-                              <td key={iField} className="p-3 border">
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
+                              <td key={iField} className="p-2 sm:p-3 border">
+                                <div className="space-y-1 sm:space-y-2">
+                                  <div className="flex items-center gap-1 sm:gap-2">
                                     {field.shown ? (
-                                      <div className="text-center py-2 px-3 bg-muted/50 rounded w-full">
+                                      <div className="text-center py-1.5 sm:py-2 px-2 sm:px-3 bg-muted/50 rounded w-full text-xs sm:text-sm">
                                         {field.answer}
                                       </div>
                                     ) : field.options ? (
@@ -311,7 +297,7 @@ export default function Eje2({ exercise: initialExercise }: Eje2Props) {
                                         disabled={verified}
                                       >
                                         <SelectTrigger 
-                                          className={`${
+                                          className={`text-xs sm:text-sm h-8 sm:h-10 ${
                                             showResult
                                               ? isCorrect
                                                 ? 'border-green-500 bg-green-50 dark:bg-green-950/20'
@@ -334,7 +320,7 @@ export default function Eje2({ exercise: initialExercise }: Eje2Props) {
                                         value={userResponses[fieldIndex] || ''}
                                         onChange={(e) => handleChange(fieldIndex, e.target.value)}
                                         disabled={verified}
-                                        className={`${
+                                        className={`text-xs sm:text-sm h-8 sm:h-10 ${
                                           showResult
                                             ? isCorrect
                                               ? 'border-green-500 bg-green-50 dark:bg-green-950/20'
@@ -344,23 +330,23 @@ export default function Eje2({ exercise: initialExercise }: Eje2Props) {
                                       />
                                     )}
                                     {field.includeQuestionMark && (
-                                      <span className="text-lg font-semibold">?</span>
+                                      <span className="text-sm sm:text-lg font-semibold flex-shrink-0">?</span>
                                     )}
                                   </div>
                                   {shouldShowAnswer() && (
                                     <div 
-                                      className={`text-xs flex items-center gap-2 ${
+                                      className={`text-[10px] sm:text-xs flex items-center gap-1 sm:gap-2 ${
                                         isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                                       }`}
                                     >
                                       {!field.shown && (
                                         <>
-                                          <span>Correcto: {field.answer}</span>
+                                          <span className="truncate">Correcto: {field.answer}</span>
                                           {field.explanation && (
                                             <Button
                                               variant="ghost"
                                               size="sm"
-                                              className="h-5 w-5 p-0"
+                                              className="h-4 w-4 sm:h-5 sm:w-5 p-0 flex-shrink-0"
                                               onClick={() => showExplanation(field.explanation)}
                                             >
                                               <MessageCircle className="h-3 w-3" />
@@ -383,67 +369,43 @@ export default function Eje2({ exercise: initialExercise }: Eje2Props) {
           ))}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 justify-center mt-8">
-          <Button variant="outline" onClick={handleReset} disabled={!verified}>
+        {/* Action Buttons - Responsive */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mt-6 sm:mt-8">
+          <Button 
+            variant="outline" 
+            onClick={handleReset} 
+            disabled={!verified}
+            className="w-full sm:w-auto"
+          >
             Reintentar
           </Button>
-          <Button onClick={handleVerify} disabled={verified}>
+          <Button 
+            onClick={handleVerify} 
+            disabled={verified}
+            className="w-full sm:w-auto"
+          >
             Verificar
           </Button>
         </div>
       </div>
 
       {/* Grade Modal */}
-      <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Resultado del Ejercicio</DialogTitle>
-            <DialogDescription>
-              Has obtenido una calificación de {(grade * 100).toFixed(0)}%
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <div className="text-center">
-              <div className="text-6xl font-bold text-primary mb-2">
-                {(grade * 100).toFixed(0)}%
-              </div>
-              <p className="text-muted-foreground">
-                {grade >= 0.7 ? '¡Excelente trabajo!' : 'Sigue practicando'}
-              </p>
-            </div>
-          </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setGradeModalOpen(false)}>
-              Cerrar
-            </Button>
-            <Button variant="secondary" onClick={() => handleSaveGrade(false)}>
-              Volver al Menú
-            </Button>
-            <Button onClick={() => handleSaveGrade(true)}>
-              Siguiente Ejercicio
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GradeModal
+        open={gradeModalOpen}
+        onOpenChange={setGradeModalOpen}
+        grade={grade}
+        saving={saving}
+        onClose={handleClose}
+        onGoBack={handleSaveAndBack}
+        onNextExercise={handleSaveAndContinue}
+      />
 
       {/* Explanation Modal */}
-      <Dialog open={explanationModalOpen} onOpenChange={setExplanationModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Explicación</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p dangerouslySetInnerHTML={{ __html: currentExplanation }} />
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setExplanationModalOpen(false)}>
-              Cerrar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ExplanationModal
+        open={explanationModalOpen}
+        onOpenChange={setExplanationModalOpen}
+        explanation={currentExplanation}
+      />
     </div>
   );
 }
-

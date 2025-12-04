@@ -1,20 +1,12 @@
 import { useState, useEffect, Fragment } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from '@/hooks/use-toast';
 import { normalizeAnswer } from '@/lib/exerciseUtils';
-import { postUserGrade, postUserPosition } from '@/lib/api';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { CheckSquare, XSquare, HelpCircle, MessageCircle } from 'lucide-react';
 import DashboardLoader from '@/components/dashboard/DashboardLoader';
+import { useExerciseGrade } from '@/hooks/useExerciseGrade';
+import { GradeModal } from '@/components/ejercicio/GradeModal';
+import { ExplanationModal } from '@/components/ejercicio/ExplanationModal';
 
 interface Answer {
   value: string;
@@ -62,16 +54,29 @@ interface Eje3Props {
 }
 
 export default function Eje3({ exercise: initialExercise }: Eje3Props) {
-  const { id } = useParams();
-  const navigate = useNavigate();
   const [exercise, setExercise] = useState<ExerciseType3 | null>(initialExercise);
   const [responses, setResponses] = useState<{ [key: number]: string }>({});
   const [selectState, setSelectState] = useState<(boolean | null)[]>([]);
   const [verified, setVerified] = useState(false);
-  const [gradeModalOpen, setGradeModalOpen] = useState(false);
-  const [grade, setGrade] = useState(0);
   const [explanationModalOpen, setExplanationModalOpen] = useState(false);
   const [currentExplanation, setCurrentExplanation] = useState('');
+
+  // Hook modular para calificación y navegación
+  const {
+    grade,
+    gradeModalOpen,
+    saving,
+    setGradeModalOpen,
+    openGradeModal,
+    saveGrade,
+    handleClose,
+    handleGoBack,
+    handleNextExercise,
+  } = useExerciseGrade({
+    exerciseId: exercise?._id || '',
+    unidad: exercise?.unidad || 0,
+    exerciseNumber: exercise?.number || 0,
+  });
 
   // Initialize states
   useEffect(() => {
@@ -159,41 +164,15 @@ export default function Eje3({ exercise: initialExercise }: Eje3Props) {
     const successes = computableResults.filter((x) => x).length;
     const calculatedGrade = total > 0 ? successes / total : 1;
 
-    setGrade(calculatedGrade);
-    setGradeModalOpen(true);
+    openGradeModal(calculatedGrade);
   };
 
-  const handleSaveGrade = async (continueToNext: boolean = false) => {
-    if (!exercise) return;
+  const handleSaveAndContinue = async () => {
+    await saveGrade(true);
+  };
 
-    try {
-      await postUserGrade(exercise._id, grade, String(exercise.unidad));
-      await postUserPosition({
-        unidad: Number(id),
-        position: exercise.number,
-      });
-
-      toast({
-        title: 'Progreso guardado',
-        description: 'Tu calificación ha sido registrada correctamente',
-      });
-
-      setGradeModalOpen(false);
-
-      if (continueToNext) {
-        const nextExerciseNumber = exercise.number + 1;
-        navigate(`/ejercicio/${id}/${nextExerciseNumber}`);
-      } else {
-        navigate(`/unidad/${id}`);
-      }
-    } catch (error) {
-      console.error('Error saving grade:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo guardar tu progreso',
-        variant: 'destructive',
-      });
-    }
+  const handleSaveAndBack = async () => {
+    await saveGrade(false);
   };
 
   const handleReset = () => {
@@ -218,11 +197,11 @@ export default function Eje3({ exercise: initialExercise }: Eje3Props) {
   const getFormulaIcon = (name: string) => {
     switch (name) {
       case 'AFF':
-        return <CheckSquare className="h-6 w-6" style={{ color: '#037bfc' }} />;
+        return <CheckSquare className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: '#037bfc' }} />;
       case 'NEG':
-        return <XSquare className="h-6 w-6" style={{ color: '#fc0398' }} />;
+        return <XSquare className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: '#fc0398' }} />;
       case '¿?':
-        return <HelpCircle className="h-6 w-6" style={{ color: '#c203fc' }} />;
+        return <HelpCircle className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: '#c203fc' }} />;
       default:
         return null;
     }
@@ -262,39 +241,47 @@ export default function Eje3({ exercise: initialExercise }: Eje3Props) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Image */}
-      <div className="w-full h-48 bg-cover bg-center" style={{ backgroundImage: 'url(/ejercicio/grammar.png)' }}>
-        <div className="h-full flex items-center justify-end px-8">
-          <h1 className="text-4xl font-bold text-white">{exercise.skill}</h1>
+      {/* Hero Image - Responsive */}
+      <div 
+        className="w-full h-32 sm:h-40 md:h-48 bg-cover bg-center" 
+        style={{ backgroundImage: 'url(/ejercicio/grammar.png)' }}
+      >
+        <div className="h-full flex items-center justify-end px-4 sm:px-6 md:px-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white drop-shadow-lg">
+            {exercise.skill}
+          </h1>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-2">{exercise.title}</h2>
-          <p className="text-muted-foreground mb-4" dangerouslySetInnerHTML={{ __html: exercise.description }} />
+      {/* Content - Responsive */}
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8 max-w-6xl">
+        <div className="mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2">{exercise.title}</h2>
+          <p 
+            className="text-sm sm:text-base text-muted-foreground mb-4" 
+            dangerouslySetInnerHTML={{ __html: exercise.description }} 
+          />
         </div>
 
-        {/* Formulas */}
-        <div className="space-y-6">
+        {/* Formulas - Responsive */}
+        <div className="space-y-4 sm:space-y-6">
           {exercise.formulas.map((formula, iFormula) => (
-            <div key={iFormula} className="bg-card rounded-lg border p-6">
+            <div key={iFormula} className="bg-card rounded-lg border p-3 sm:p-4 md:p-6">
               {/* Formula Header */}
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
                 {getFormulaIcon(formula.name)}
                 <h3 
-                  className="text-2xl font-bold"
+                  className="text-lg sm:text-xl md:text-2xl font-bold"
                   style={{ color: getFormulaColor(formula.name) }}
                 >
                   {formula.name}
                 </h3>
               </div>
 
-              {/* Formula Content */}
-              <div className="space-y-4">
-                {/* Answers Row */}
-                <div className="flex flex-wrap items-center gap-3">
+              {/* Formula Content - Responsive wrap */}
+              <div className="space-y-3 sm:space-y-4">
+                {/* Answers Row - Flex wrap for mobile */}
+                <div className="flex flex-wrap items-start gap-2 sm:gap-3">
                   {formula.answers.map((answer, i) => {
                     const fieldIndex = getIndex(iFormula, i);
                     const isCorrect = selectState[fieldIndex];
@@ -304,8 +291,8 @@ export default function Eje3({ exercise: initialExercise }: Eje3Props) {
                       <Fragment key={i}>
                         {answer.shown ? (
                           <div className="flex items-center">
-                            {answer.parentesis && <span className="text-xl mr-1">(</span>}
-                            <div className="px-4 py-2 bg-muted/50 rounded-md font-medium">
+                            {answer.parentesis && <span className="text-lg sm:text-xl mr-0.5 sm:mr-1">(</span>}
+                            <div className="px-2 sm:px-4 py-1.5 sm:py-2 bg-muted/50 rounded-md font-medium text-xs sm:text-sm">
                               {!answer.black ? (
                                 <span className={getTextColor(answer.color)}>{answer.value}</span>
                               ) : (
@@ -319,22 +306,22 @@ export default function Eje3({ exercise: initialExercise }: Eje3Props) {
                                 ))
                               )}
                             </div>
-                            {answer.parentesis && <span className="text-xl ml-1">)</span>}
+                            {answer.parentesis && <span className="text-lg sm:text-xl ml-0.5 sm:ml-1">)</span>}
                             {answer.asterisco && (
-                              <sup className="text-red-600 font-bold text-sm ml-1">*</sup>
+                              <sup className="text-red-600 font-bold text-xs sm:text-sm ml-0.5 sm:ml-1">*</sup>
                             )}
                           </div>
                         ) : (
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-2">
-                              {answer.parentesis && <span className="text-xl">(</span>}
+                          <div className="flex flex-col gap-1 sm:gap-2">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              {answer.parentesis && <span className="text-lg sm:text-xl">(</span>}
                               <Select
                                 value={responses[fieldIndex] || ''}
                                 onValueChange={(value) => handleSelectChange(fieldIndex, value)}
                                 disabled={verified}
                               >
                                 <SelectTrigger
-                                  className={`w-48 ${
+                                  className={`w-32 sm:w-40 md:w-48 text-xs sm:text-sm h-8 sm:h-10 ${
                                     isCorrect === null
                                       ? ''
                                       : isCorrect === false
@@ -352,23 +339,23 @@ export default function Eje3({ exercise: initialExercise }: Eje3Props) {
                                   ))}
                                 </SelectContent>
                               </Select>
-                              {answer.parentesis && <span className="text-xl">)</span>}
+                              {answer.parentesis && <span className="text-lg sm:text-xl">)</span>}
                               {answer.asterisco && (
-                                <sup className="text-red-600 font-bold text-sm">*</sup>
+                                <sup className="text-red-600 font-bold text-xs sm:text-sm">*</sup>
                               )}
                             </div>
                             {shouldShowAnswer() && (
                               <div
-                                className={`text-xs flex items-center gap-2 ${
+                                className={`text-[10px] sm:text-xs flex items-center gap-1 sm:gap-2 ${
                                   isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                                 }`}
                               >
-                                <span>Correcto: {answer.value}</span>
+                                <span className="truncate">Correcto: {answer.value}</span>
                                 {answer.explanation && (
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-5 w-5 p-0"
+                                    className="h-4 w-4 sm:h-5 sm:w-5 p-0 flex-shrink-0"
                                     onClick={() => showExplanation(answer.explanation)}
                                   >
                                     <MessageCircle className="h-3 w-3" />
@@ -379,7 +366,7 @@ export default function Eje3({ exercise: initialExercise }: Eje3Props) {
                           </div>
                         )}
                         {i < formula.answers.length - 1 && (
-                          <span className="text-2xl font-semibold text-primary">+</span>
+                          <span className="text-lg sm:text-xl md:text-2xl font-semibold text-primary self-center">+</span>
                         )}
                       </Fragment>
                     );
@@ -388,7 +375,7 @@ export default function Eje3({ exercise: initialExercise }: Eje3Props) {
 
                 {/* Texto Auxiliar */}
                 {formula.textoAuxiliar && (
-                  <p className="text-sm text-muted-foreground mt-4 pl-2 border-l-2 border-muted">
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-3 sm:mt-4 pl-2 border-l-2 border-muted">
                     <sup className="text-red-600 font-bold">* </sup>
                     {formula.textoAuxiliar}
                   </p>
@@ -398,66 +385,43 @@ export default function Eje3({ exercise: initialExercise }: Eje3Props) {
           ))}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 justify-center mt-8">
-          <Button variant="outline" onClick={handleReset} disabled={!verified}>
+        {/* Action Buttons - Responsive */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mt-6 sm:mt-8">
+          <Button 
+            variant="outline" 
+            onClick={handleReset} 
+            disabled={!verified}
+            className="w-full sm:w-auto"
+          >
             Reintentar
           </Button>
-          <Button onClick={handleVerify} disabled={verified}>
+          <Button 
+            onClick={handleVerify} 
+            disabled={verified}
+            className="w-full sm:w-auto"
+          >
             Verificar
           </Button>
         </div>
       </div>
 
       {/* Grade Modal */}
-      <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Resultado del Ejercicio</DialogTitle>
-            <DialogDescription>
-              Has obtenido una calificación de {(grade * 100).toFixed(0)}%
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <div className="text-center">
-              <div className="text-6xl font-bold text-primary mb-2">
-                {(grade * 100).toFixed(0)}%
-              </div>
-              <p className="text-muted-foreground">
-                {grade >= 0.7 ? '¡Excelente trabajo!' : 'Sigue practicando'}
-              </p>
-            </div>
-          </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setGradeModalOpen(false)}>
-              Cerrar
-            </Button>
-            <Button variant="secondary" onClick={() => handleSaveGrade(false)}>
-              Volver al Menú
-            </Button>
-            <Button onClick={() => handleSaveGrade(true)}>
-              Siguiente Ejercicio
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GradeModal
+        open={gradeModalOpen}
+        onOpenChange={setGradeModalOpen}
+        grade={grade}
+        saving={saving}
+        onClose={handleClose}
+        onGoBack={handleSaveAndBack}
+        onNextExercise={handleSaveAndContinue}
+      />
 
       {/* Explanation Modal */}
-      <Dialog open={explanationModalOpen} onOpenChange={setExplanationModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Explicación</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p dangerouslySetInnerHTML={{ __html: currentExplanation }} />
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setExplanationModalOpen(false)}>
-              Cerrar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ExplanationModal
+        open={explanationModalOpen}
+        onOpenChange={setExplanationModalOpen}
+        explanation={currentExplanation}
+      />
     </div>
   );
 }
