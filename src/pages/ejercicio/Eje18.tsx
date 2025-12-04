@@ -1,10 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { getVideoCredentials } from '@/data/unidades';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Play, CheckCircle2, RefreshCw, Loader2 } from 'lucide-react';
+import { Play, CheckCircle2, RefreshCw, Loader2, ArrowRight } from 'lucide-react';
 import { postUserPosition, postUserGrade } from '@/lib/api';
 import { toast } from 'sonner';
 import { Calculate_index_exercise } from '@/hooks/calculate_index.ts';
@@ -34,6 +33,8 @@ declare global {
 }
 
 export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
+  const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [exercise, setExercise] = useState<VideoExercise | null>(null);
@@ -45,13 +46,11 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
   const [progressSaved, setProgressSaved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Modal states
-  const [completionModalOpen, setCompletionModalOpen] = useState(false);
-  
   const playerRef = useRef<any>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize exercise
+  const currentExerciseIndex = parseInt(searchParams.get('exerciseIndex') || '0');
+
   useEffect(() => {
     if (initialExercise) {
       setExercise(initialExercise);
@@ -60,7 +59,6 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
     }
   }, [initialExercise]);
 
-  // Listener for video progress
   const checkVideoProgress = async () => {
     try {
       if (!playerRef.current) {
@@ -74,7 +72,6 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
         const duration = playerRef.current.video?.duration;
 
         if (totalPlayed && duration && totalPlayed >= duration * 0.75) {
-          // Video completed (75%)
           if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
@@ -83,7 +80,6 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
           if (!videoCompleted) {
             setVideoCompleted(true);
             await markExerciseCompleted();
-            setCompletionModalOpen(true);
           }
         }
       }
@@ -92,14 +88,12 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
     }
   };
 
-  // Fetch video credentials
   const fetchVideoData = async () => {
     if (!exercise?.videoID) {
       setError(true);
       return;
     }
 
-    // If videoID is a URL, open in new tab
     if (exercise.videoID.startsWith('http://') || exercise.videoID.startsWith('https://')) {
       window.open(exercise.videoID, '_blank');
       return;
@@ -118,7 +112,6 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
 
       setVideoData(credentials);
 
-      // Start monitoring progress if not completed
       if (!exercise.completedByUser && !videoCompleted) {
         intervalRef.current = setInterval(checkVideoProgress, 1000);
       }
@@ -146,14 +139,14 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
     if (progressSaved || !exercise) return;
 
     try {
-      const unidad = Number(exercise.unidad);
+      const unidad = Number(exercise.unidad) || Number(id) || 0;
 
       await postUserPosition({
-        unidad: unidad || 0,
+        unidad: unidad,
         position: await Calculate_index_exercise(exercise)
       });
 
-      await postUserGrade(exercise._id, 1, String(unidad || 0));
+      await postUserGrade(exercise._id, 1, String(unidad));
 
       setProgressSaved(true);
       toast.success('¡Video completado! Progreso guardado.');
@@ -169,16 +162,37 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
       if (!progressSaved && videoCompleted) {
         await markExerciseCompleted();
       }
-      const nextNumber = (exercise?.number || 0) + 1;
-      navigate(`/ejercicio/${nextNumber}`);
+      const nextExerciseIndex = currentExerciseIndex + 1;
+      navigate(`/modulo/${id || exercise?.unidad}?exerciseIndex=${nextExerciseIndex}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleGoBack = () => {
-    setCompletionModalOpen(false);
-    navigate(-1);
+    navigate(`/modulo/${id || exercise?.unidad}`);
+  };
+
+  const handleSkipVideo = async () => {
+    setIsSubmitting(true);
+    try {
+      // Para videos, si el usuario quiere saltar, guardamos progreso y avanzamos
+      if (!progressSaved && exercise) {
+        const unidad = Number(exercise.unidad) || Number(id) || 0;
+        await postUserPosition({
+          unidad: unidad,
+          position: await Calculate_index_exercise(exercise)
+        });
+        await postUserGrade(exercise._id, 1, String(unidad));
+        setProgressSaved(true);
+      }
+      const nextExerciseIndex = currentExerciseIndex + 1;
+      navigate(`/modulo/${id || exercise?.unidad}?exerciseIndex=${nextExerciseIndex}`);
+    } catch (err) {
+      toast.error('Error al avanzar');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!exercise) {
@@ -190,23 +204,40 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
     : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
+      {/* Botón de siguiente ejercicio en la parte superior para videos */}
+      <div className="flex justify-end">
+        <Button
+          onClick={handleSkipVideo}
+          disabled={isSubmitting}
+          variant="outline"
+          className="gap-2"
+        >
+          {isSubmitting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <ArrowRight className="h-4 w-4" />
+          )}
+          Siguiente Ejercicio
+        </Button>
+      </div>
+
       {/* Header Image */}
-      <div className="relative w-full h-48 rounded-lg overflow-hidden">
+      <div className="relative w-full h-32 sm:h-40 md:h-48 rounded-lg overflow-hidden">
         <img
           src="/ejercicio/grammar.png"
           alt="Video"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-          <Play className="h-16 w-16 text-white" />
+          <Play className="h-12 w-12 sm:h-16 sm:w-16 text-white" />
         </div>
       </div>
 
       {/* Title and Info */}
       <div className="space-y-2">
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <h1 className="text-2xl font-bold text-foreground">{exercise.title || 'Video Instructivo'}</h1>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{exercise.title || 'Video Instructivo'}</h1>
           <span className="text-sm text-muted-foreground">
             Ejercicio: {exercise.number || 0}
           </span>
@@ -220,7 +251,7 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
 
         {exercise.description && (
           <div
-            className="text-muted-foreground mt-2"
+            className="text-sm sm:text-base text-muted-foreground mt-2"
             dangerouslySetInnerHTML={{ __html: exercise.description }}
           />
         )}
@@ -228,16 +259,16 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
 
       {/* Video Player */}
       <Card>
-        <CardContent className="p-4">
+        <CardContent className="p-3 sm:p-4">
           {loading && !videoData && (
-            <div className="flex items-center justify-center py-24">
+            <div className="flex items-center justify-center py-16 sm:py-24">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           )}
 
           {error && (
-            <div className="text-center py-12">
-              <p className="text-destructive mb-4">No se pudo cargar el video.</p>
+            <div className="text-center py-8 sm:py-12">
+              <p className="text-destructive mb-4 text-sm sm:text-base">No se pudo cargar el video.</p>
               <Button variant="outline" onClick={fetchVideoData}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Reintentar
@@ -249,7 +280,7 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
             <div className="space-y-4">
               <div 
                 className="relative w-full bg-black rounded-lg overflow-hidden"
-                style={{ height: isMobile ? '40vh' : '70vh' }}
+                style={{ height: isMobile ? '45vh' : '60vh', maxHeight: '500px' }}
               >
                 <iframe
                   id="vdocipher-iframe"
@@ -263,8 +294,8 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
               </div>
 
               {/* Progress info */}
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <p className="text-sm text-muted-foreground">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {videoCompleted 
                     ? '✓ Has completado este video'
                     : 'Mira al menos el 75% del video para completar este ejercicio'
@@ -274,7 +305,7 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
                 {videoCompleted && (
                   <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                     <CheckCircle2 className="h-5 w-5" />
-                    <span className="font-medium">Completado</span>
+                    <span className="font-medium text-sm">Completado</span>
                   </div>
                 )}
               </div>
@@ -286,9 +317,9 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
       {/* Already completed notice */}
       {exercise.completedByUser && (
         <Card className="border-green-500/50 bg-green-500/10">
-          <CardContent className="p-4 flex items-center gap-3">
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
-            <span className="text-green-700 dark:text-green-300">
+          <CardContent className="p-3 sm:p-4 flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+            <span className="text-green-700 dark:text-green-300 text-sm sm:text-base">
               Ya completaste este ejercicio anteriormente
             </span>
           </CardContent>
@@ -296,64 +327,25 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
       )}
 
       {/* Navigation buttons */}
-      {videoCompleted && (
-        <div className="flex justify-end gap-4">
-          <Button variant="outline" onClick={handleGoBack}>
-            Volver al Menú
-          </Button>
-          <Button onClick={handleNextExercise} disabled={isSubmitting}>
-            {isSubmitting ? 'Cargando...' : 'Siguiente Ejercicio'}
-          </Button>
-        </div>
-      )}
-
-      {/* Completion Modal */}
-      <Dialog open={completionModalOpen} onOpenChange={setCompletionModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>¡Video Completado!</DialogTitle>
-            <DialogDescription>
-              Has visto el video correctamente
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-6 text-center">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <CheckCircle2 className="h-12 w-12 text-green-500" />
-            </div>
-            <p className="text-muted-foreground">
-              {progressSaved 
-                ? 'Tu progreso ha sido guardado correctamente.'
-                : 'Guardando tu progreso...'
-              }
-            </p>
-          </div>
-
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setCompletionModalOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Cerrar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleGoBack}
-              className="w-full sm:w-auto"
-            >
-              Volver al Menú
-            </Button>
-            <Button
-              onClick={handleNextExercise}
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              {isSubmitting ? 'Cargando...' : 'Siguiente Ejercicio'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4">
+        <Button variant="outline" onClick={handleGoBack} className="w-full sm:w-auto">
+          Volver al Menú
+        </Button>
+        <Button 
+          onClick={handleNextExercise} 
+          disabled={isSubmitting}
+          className="w-full sm:w-auto"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Cargando...
+            </>
+          ) : (
+            'Siguiente Ejercicio'
+          )}
+        </Button>
+      </div>
     </div>
   );
 };
