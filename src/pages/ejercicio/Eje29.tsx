@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,18 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Lightbulb, Volume2, MessageCircle } from 'lucide-react';
-import { postUserGrade, postUserPosition } from '@/lib/api';
-import { toast } from 'sonner';
-import { Calculate_index_exercise } from '@/hooks/calculate_index';
+import { Lightbulb, Volume2, CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
+import { GradeModal } from '@/components/ejercicio/GradeModal';
+import { ExplanationModal } from '@/components/ejercicio/ExplanationModal';
+import { useExerciseGrade } from '@/hooks/useExerciseGrade';
 import DashboardLoader from '@/components/dashboard/DashboardLoader';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -84,13 +76,11 @@ interface Eje29Props {
   exercise: Type29Exercise | any;
 }
 
-// Helper to get plain value (remove accents/normalize)
 const getPlainValue = (text: string): string => {
   if (!text) return '';
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 };
 
-// Build answer from sentence structure
 const getAnswer = (sentence: Sentence): string => {
   if (sentence?.answer) return getPlainValue(sentence.answer);
 
@@ -130,7 +120,6 @@ const getAnswer = (sentence: Sentence): string => {
   return 'Error: no matching rule';
 };
 
-// Get subject object for alternative N
 const getSujObj = (sentence: Sentence, n?: number) => ({
   wh: !n ? sentence.wh : (sentence as any)[`wh${n}`] || sentence.wh,
   adverbio: !n ? sentence.adverbio : (sentence as any)[`adverbio${n}`] || sentence.adverbio,
@@ -141,14 +130,9 @@ const getSujObj = (sentence: Sentence, n?: number) => ({
   pregunta: sentence.pregunta,
 });
 
-// Check answer with weighted scoring for S+V+C
-const checkAnswerType29 = (
-  userAnswer: string,
-  sentence: Sentence
-): number => {
+const checkAnswerType29 = (userAnswer: string, sentence: Sentence): number => {
   const normalizedUser = getPlainValue(userAnswer);
   
-  // If has direct answer, check against it
   if (!sentence.sujeto && sentence.answer) {
     const alternatives = [
       sentence.answer, sentence.answer2, sentence.answer3, sentence.answer4,
@@ -162,8 +146,6 @@ const checkAnswerType29 = (
     return 0;
   }
 
-  // Check with S+V+C structure (weighted)
-  // Build alternatives 1-12
   const alternatives = [];
   for (let i = 0; i <= 12; i++) {
     const obj = getSujObj(sentence, i || undefined);
@@ -181,11 +163,6 @@ const checkAnswerType29 = (
       return 1;
     }
     
-    // Weighted scoring
-    const userWords = normalizedUser.split(/\s+/);
-    const expectedWords = getPlainValue(expectedAnswer).split(/\s+/);
-    
-    // Check S+V+C components separately
     const sujeto = getPlainValue(alt.sujeto || '');
     const verbo = getPlainValue(alt.verbo || '');
     const complemento = getPlainValue(alt.complemento || '');
@@ -193,7 +170,6 @@ const checkAnswerType29 = (
     let score = 0;
     let total = 0;
     
-    // Weight: Sujeto 30%, Verbo 45%, Complemento 25%
     if (sujeto) {
       total += 0.3;
       if (normalizedUser.includes(sujeto)) score += 0.3;
@@ -214,17 +190,167 @@ const checkAnswerType29 = (
   return bestScore;
 };
 
-const getColor = (target: number | boolean | null): string => {
+const getColor = (target: number | null): string => {
   if (target === null) return 'gray';
-  if (typeof target === 'number') {
-    return target > 0.6 ? 'green' : 'red';
+  return target > 0.6 ? 'green' : 'red';
+};
+
+interface SentenceRowProps {
+  sentence: Sentence;
+  index: number;
+  responses: Record<number, string>;
+  selectState: (number | null)[];
+  verified: boolean;
+  options?: string[];
+  onChange: (index: number, value: string) => void;
+  showExplanation: (text?: string) => void;
+  shouldShowAnswer: boolean;
+  isMobile: boolean;
+}
+
+const SentenceRow = ({
+  sentence,
+  index,
+  responses,
+  selectState,
+  verified,
+  options,
+  onChange,
+  showExplanation,
+  shouldShowAnswer,
+  isMobile,
+}: SentenceRowProps) => {
+  const score = selectState[index];
+  const color = getColor(score);
+  const expectedAnswer = getAnswer(sentence);
+
+  const speakText = (text: string) => {
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.9;
+      speechSynthesis.speak(utterance);
+    }
+  };
+
+  if (sentence.shown) {
+    return (
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 py-2 sm:py-3 items-start sm:items-center">
+        <p className="flex-1 text-sm sm:text-base text-foreground">{sentence.sentence}</p>
+        <div className="flex items-center gap-2">
+          <div className="px-3 py-2 rounded-md border-2 border-green-500 bg-green-50 dark:bg-green-900/20 text-sm">
+            {sentence.answer || expectedAnswer}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0"
+            onClick={() => speakText(sentence.answer || expectedAnswer)}
+          >
+            <Volume2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
   }
-  return target ? 'green' : 'red';
+
+  return (
+    <Card className={`${
+      verified && color === 'green'
+        ? 'border-green-500 bg-green-50/50 dark:bg-green-900/10'
+        : verified && color === 'red'
+          ? 'border-red-500 bg-red-50/50 dark:bg-red-900/10'
+          : ''
+    }`}>
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <span className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full text-xs sm:text-sm font-bold shrink-0 ${
+              verified && color === 'green'
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                : verified && color === 'red'
+                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                  : 'bg-muted text-muted-foreground'
+            }`}>
+              {index + 1}
+            </span>
+            <p className="text-sm sm:text-base text-foreground">{sentence.sentence}</p>
+          </div>
+          
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {options && options.length > 0 ? (
+              <Select
+                value={responses[index] || ''}
+                onValueChange={(value) => onChange(index, value)}
+                disabled={verified}
+              >
+                <SelectTrigger className={`w-full sm:w-[180px] text-sm ${
+                  verified
+                    ? color === 'green'
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                      : 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                    : ''
+                }`}>
+                  <SelectValue placeholder="Seleccionar" />
+                </SelectTrigger>
+                <SelectContent>
+                  {options.map((opt) => (
+                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                value={responses[index] || ''}
+                onChange={(e) => onChange(index, e.target.value)}
+                disabled={verified}
+                placeholder="Escribe tu respuesta"
+                className={`flex-1 sm:min-w-[200px] text-sm ${
+                  verified
+                    ? color === 'green'
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                      : 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                    : ''
+                }`}
+              />
+            )}
+            
+            {verified && (
+              score !== null && score > 0.6 ? (
+                <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+              ) : (
+                <XCircle className="h-5 w-5 text-red-500 shrink-0" />
+              )
+            )}
+          </div>
+        </div>
+
+        {/* Score and correct answer */}
+        {verified && score !== null && (
+          <div className="mt-2 ml-8 sm:ml-9 flex flex-wrap items-center gap-2">
+            <span className={`text-xs font-medium ${
+              color === 'green' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+            }`}>
+              {Math.round(score * 100)}%
+            </span>
+            {shouldShowAnswer && score < 1 && (
+              <span 
+                className="text-xs text-red-600 dark:text-red-400 cursor-pointer flex items-center gap-1"
+                onClick={() => showExplanation(sentence.explanation)}
+              >
+                Correcto: {sentence.answer || expectedAnswer}
+                {sentence.explanation && <HelpCircle className="h-3 w-3" />}
+              </span>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 };
 
 export const Eje29 = ({ exercise: initialExercise }: Eje29Props) => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
   
   const [exercise, setExercise] = useState<Type29Exercise | null>(null);
@@ -232,13 +358,24 @@ export const Eje29 = ({ exercise: initialExercise }: Eje29Props) => {
   const [responses, setResponses] = useState<Record<number, string>>({});
   const [selectState, setSelectState] = useState<(number | null)[]>([]);
   const [verified, setVerified] = useState(false);
-  const [gradeModalOpen, setGradeModalOpen] = useState(false);
-  const [grade, setGrade] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [explanationModalOpen, setExplanationModalOpen] = useState(false);
   const [currentExplanation, setCurrentExplanation] = useState('');
 
-  // Initialize exercise
+  const {
+    grade,
+    gradeModalOpen,
+    saving,
+    setGradeModalOpen,
+    openGradeModal,
+    handleClose,
+    handleGoBack,
+    handleNextExercise,
+  } = useExerciseGrade({
+    exerciseId: exercise?._id || '',
+    unidad: exercise?.unidad || Number(id) || 0,
+    exerciseNumber: exercise?.number || 0,
+  });
+
   useEffect(() => {
     if (initialExercise) {
       setExercise(initialExercise);
@@ -283,14 +420,12 @@ export const Eje29 = ({ exercise: initialExercise }: Eje29Props) => {
     setSelectState(results);
     setVerified(true);
 
-    // Calculate grade excluding shown
     const computableResults = results.filter((_, i) => !isShown(i));
     const total = computableResults.length;
     const gradeTotal = computableResults.reduce((a, b) => a + b, 0);
     const calculatedGrade = total > 0 ? gradeTotal / total : 1;
 
-    setGrade(calculatedGrade);
-    setGradeModalOpen(true);
+    openGradeModal(calculatedGrade);
   };
 
   const handleReset = () => {
@@ -309,50 +444,6 @@ export const Eje29 = ({ exercise: initialExercise }: Eje29Props) => {
     setVerified(false);
   };
 
-  const handleSaveGrade = async () => {
-    if (!exercise) return;
-    setIsSubmitting(true);
-
-    try {
-      const position = await Calculate_index_exercise(exercise);
-      await postUserGrade(exercise._id, grade, String(exercise.unidad));
-      await postUserPosition({ unidad: exercise.unidad, position });
-
-      toast.success('Progreso guardado correctamente');
-      setGradeModalOpen(false);
-      navigate(-1);
-    } catch (error) {
-      console.error('Error saving grade:', error);
-      toast.error('Error al guardar el progreso');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleNextExercise = async () => {
-    if (!exercise) return;
-    setIsSubmitting(true);
-
-    try {
-      const position = await Calculate_index_exercise(exercise);
-      await postUserGrade(exercise._id, grade, String(exercise.unidad));
-      await postUserPosition({ unidad: exercise.unidad, position });
-
-      const nextNumber = exercise.number + 1;
-      navigate(`/ejercicio/${id}?exerciseIndex=${nextNumber}`);
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error al continuar');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleGoBack = () => {
-    setGradeModalOpen(false);
-    navigate(-1);
-  };
-
   const showExplanation = (text?: string) => {
     if (text) {
       setCurrentExplanation(text);
@@ -364,28 +455,10 @@ export const Eje29 = ({ exercise: initialExercise }: Eje29Props) => {
     return verified && selectState.some(x => x !== null && x < 1);
   };
 
-  const speakText = (text: string) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      utterance.rate = 0.9;
-      speechSynthesis.speak(utterance);
-    }
-  };
-
-  const getScoreLabel = (score: number): string => {
-    if (score >= 1) return 'Perfecto';
-    if (score >= 0.8) return 'Excelente';
-    if (score >= 0.6) return 'Bien';
-    if (score >= 0.4) return 'Regular';
-    return 'Incorrecto';
-  };
-
   if (loading || !exercise) {
     return <DashboardLoader />;
   }
 
-  // Group sentences by complementar
   const renderSentences = () => {
     const elements: JSX.Element[] = [];
     let skipNext = false;
@@ -399,12 +472,11 @@ export const Eje29 = ({ exercise: initialExercise }: Eje29Props) => {
       const nextSentence = exercise.sentences[i + 1];
       
       if (sentence.complementar && nextSentence) {
-        // Group two sentences together
         elements.push(
           <Card key={`group-${i}`} className="border-2 border-primary/30">
-            <CardContent className="p-4">
-              <p className="text-sm font-semibold text-primary mb-4">{sentence.complementar}</p>
-              <div className="space-y-4">
+            <CardContent className="p-3 sm:p-4">
+              <p className="text-xs sm:text-sm font-semibold text-primary mb-3 sm:mb-4">{sentence.complementar}</p>
+              <div className="space-y-3 sm:space-y-4">
                 <SentenceRow
                   sentence={sentence}
                   index={i}
@@ -457,19 +529,19 @@ export const Eje29 = ({ exercise: initialExercise }: Eje29Props) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Hero Image */}
-      <div className="relative w-full h-48 rounded-lg overflow-hidden">
+      <div className="relative w-full h-32 sm:h-40 md:h-48 rounded-lg overflow-hidden">
         <img
           src="/ejercicio/grammar.png"
           alt="Vocabulary"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex items-center">
-          <div className="px-6">
-            <h1 className="text-2xl md:text-3xl font-bold text-white">{exercise.title || 'Traducción'}</h1>
+          <div className="px-4 sm:px-6">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">{exercise.title || 'Traducción'}</h1>
             {exercise.skill && (
-              <span className="inline-block mt-2 px-3 py-1 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm">
+              <span className="inline-block mt-2 px-3 py-1 bg-white/20 backdrop-blur-sm text-white rounded-full text-xs sm:text-sm">
                 {exercise.skill}
               </span>
             )}
@@ -480,7 +552,7 @@ export const Eje29 = ({ exercise: initialExercise }: Eje29Props) => {
       {/* Description */}
       {exercise.description && (
         <div
-          className="text-muted-foreground"
+          className="text-sm sm:text-base text-muted-foreground"
           dangerouslySetInnerHTML={{ __html: exercise.description }}
         />
       )}
@@ -488,221 +560,67 @@ export const Eje29 = ({ exercise: initialExercise }: Eje29Props) => {
       {/* Vocabulary Info */}
       {(exercise.vocabularyType || exercise.vocabularyLevel || exercise.explanation || exercise.example) && (
         <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="p-4 space-y-4">
+          <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
             {(exercise.vocabularyType || exercise.vocabularyLevel) && (
-              <p className="text-sm">
+              <p className="text-xs sm:text-sm">
                 Este vocabulario es de tipo <span className="font-bold">{exercise.vocabularyType}</span> y pertenece al nivel <span className="font-bold">{exercise.vocabularyLevel}</span>.
               </p>
             )}
             
             {exercise.explanation && (
-              <div className="flex items-start gap-3 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                <Lightbulb className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                <p className="font-medium text-sm">{exercise.explanation}</p>
+              <div className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                <Lightbulb className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <p className="text-xs sm:text-sm text-foreground">{exercise.explanation}</p>
               </div>
             )}
-            
-            {exercise.example && (
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Veamos un ejemplo:</p>
-                <p className="font-medium italic">{exercise.example}</p>
-              </div>
-            )}
-            
-            <p className="text-sm font-medium text-primary">Ahora, ejercitemos:</p>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Audio Player */}
-      {exercise.audio && (
-        <Card>
-          <CardContent className="p-4">
-            <audio controls className="w-full">
-              <source src={exercise.audio} type="audio/mpeg" />
-              Tu navegador no soporta audio.
-            </audio>
+            {exercise.example && (
+              <p className="text-xs sm:text-sm italic text-muted-foreground">
+                Ejemplo: {exercise.example}
+              </p>
+            )}
           </CardContent>
         </Card>
       )}
 
       {/* Sentences */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {renderSentences()}
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-4 justify-center">
-        <Button variant="outline" onClick={handleReset} disabled={!verified}>
-          Reintentar
-        </Button>
-        <Button onClick={handleVerify} disabled={verified}>
-          Verificar
+      {/* Actions */}
+      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4">
+        {verified && (
+          <Button variant="outline" onClick={handleReset} className="w-full sm:w-auto">
+            Reintentar
+          </Button>
+        )}
+        <Button 
+          onClick={verified ? () => setGradeModalOpen(true) : handleVerify} 
+          size="lg"
+          className="w-full sm:w-auto"
+        >
+          {verified ? 'Ver Calificación' : 'Verificar'}
         </Button>
       </div>
 
       {/* Grade Modal */}
-      <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Resultado del Ejercicio</DialogTitle>
-            <DialogDescription>Tu puntuación en este ejercicio</DialogDescription>
-          </DialogHeader>
-
-          <div className="py-6 text-center">
-            <div className={`text-6xl font-bold mb-2 ${
-              grade >= 0.7 ? 'text-green-500' : grade >= 0.4 ? 'text-yellow-500' : 'text-red-500'
-            }`}>
-              {Math.round(grade * 100)}%
-            </div>
-            <p className="text-muted-foreground">
-              {grade >= 0.9 ? '¡Excelente trabajo!' :
-               grade >= 0.7 ? '¡Muy bien!' :
-               grade >= 0.5 ? 'Buen intento, sigue practicando' :
-               'Necesitas más práctica'}
-            </p>
-          </div>
-
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setGradeModalOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Cerrar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleGoBack}
-              className="w-full sm:w-auto"
-            >
-              Volver al Menú
-            </Button>
-            <Button
-              onClick={handleNextExercise}
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              {isSubmitting ? 'Cargando...' : 'Siguiente Ejercicio'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GradeModal
+        open={gradeModalOpen}
+        onOpenChange={setGradeModalOpen}
+        grade={grade}
+        saving={saving}
+        onClose={handleClose}
+        onGoBack={handleGoBack}
+        onNextExercise={handleNextExercise}
+      />
 
       {/* Explanation Modal */}
-      <Dialog open={explanationModalOpen} onOpenChange={setExplanationModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Explicación</DialogTitle>
-          </DialogHeader>
-          <p className="text-muted-foreground">{currentExplanation}</p>
-          <DialogFooter>
-            <Button onClick={() => setExplanationModalOpen(false)}>Cerrar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ExplanationModal
+        open={explanationModalOpen}
+        onOpenChange={setExplanationModalOpen}
+        explanation={currentExplanation}
+      />
     </div>
   );
 };
-
-// Sentence Row Component
-interface SentenceRowProps {
-  sentence: Sentence;
-  index: number;
-  responses: Record<number, string>;
-  selectState: (number | null)[];
-  verified: boolean;
-  options?: string[];
-  onChange: (index: number, value: string) => void;
-  showExplanation: (text?: string) => void;
-  shouldShowAnswer: boolean;
-  isMobile: boolean;
-}
-
-const SentenceRow = ({
-  sentence,
-  index,
-  responses,
-  selectState,
-  verified,
-  options,
-  onChange,
-  showExplanation,
-  shouldShowAnswer,
-  isMobile,
-}: SentenceRowProps) => {
-  const score = selectState[index];
-  const borderColor = score === null ? 'border-input' : 
-    score >= 0.6 ? 'border-green-500' : 'border-red-500';
-  const bgColor = score === null ? '' : 
-    score >= 0.6 ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20';
-
-  return (
-    <Card className={`${borderColor} border-2 transition-colors`}>
-      <CardContent className={`p-4 ${isMobile ? 'space-y-3' : 'flex items-center gap-4'}`}>
-        {/* Spanish sentence */}
-        <p className={`font-medium ${isMobile ? 'text-base' : 'flex-1 min-w-[200px]'}`}>
-          {sentence.sentence}
-        </p>
-
-        {/* Input/Select area */}
-        <div className={`${isMobile ? 'w-full' : 'w-[40%]'} space-y-2`}>
-          {sentence.shown ? (
-            <p className="text-muted-foreground italic py-2">{sentence.answer}</p>
-          ) : options ? (
-            <Select
-              value={responses[index] || ''}
-              onValueChange={(value) => onChange(index, value)}
-              disabled={verified}
-            >
-              <SelectTrigger className={`${bgColor}`}>
-                <SelectValue placeholder="Seleccionar" />
-              </SelectTrigger>
-              <SelectContent>
-                {options.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <Input
-              value={responses[index] || ''}
-              onChange={(e) => onChange(index, e.target.value)}
-              disabled={verified}
-              placeholder="Escribe la traducción..."
-              className={`${bgColor}`}
-            />
-          )}
-
-          {/* Show correct answer */}
-          {shouldShowAnswer && !sentence.shown && (
-            <div 
-              className={`text-sm flex items-center gap-2 cursor-pointer ${
-                (score ?? 0) >= 0.6 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-              }`}
-              onClick={() => showExplanation(sentence.explanation)}
-            >
-              <span className="font-medium">{getAnswer(sentence)}</span>
-              {sentence.explanation && (
-                <MessageCircle className="h-4 w-4" />
-              )}
-            </div>
-          )}
-
-          {/* Score indicator */}
-          {verified && !sentence.shown && score !== null && (
-            <div className={`text-xs ${
-              score >= 0.6 ? 'text-green-600' : 'text-red-600'
-            }`}>
-              {Math.round(score * 100)}% - {score >= 1 ? 'Perfecto' : score >= 0.6 ? 'Bien' : 'Incorrecto'}
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-export default Eje29;

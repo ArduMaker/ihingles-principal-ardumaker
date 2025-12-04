@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { BookOpen, CheckCircle2, Volume2 } from 'lucide-react';
+import { BookOpen, CheckCircle2, Volume2, ArrowRight, Loader2 } from 'lucide-react';
 import { postUserPosition, postUserGrade } from '@/lib/api';
 import { toast } from 'sonner';
 import { Calculate_index_exercise } from '@/hooks/calculate_index.ts';
 import DashboardLoader from '@/components/dashboard/DashboardLoader';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ReadingExercise {
   _id: string;
@@ -29,25 +29,17 @@ interface Eje30Props {
   exercise: ReadingExercise | any;
 }
 
-// Parse formatted text with special markers
 const parseFormattedText = (text: string): React.ReactNode[] => {
   if (!text) return [];
 
-  const result: React.ReactNode[] = [];
-  let currentText = text;
-  let keyIndex = 0;
+  let currentText = text.replace(/\.5/g, '<br/>');
 
-  // Replace .5 with line breaks
-  currentText = currentText.replace(/\.5/g, '<br/>');
-
-  // Process all formatting patterns
   const processPatterns = (input: string): React.ReactNode[] => {
     const nodes: React.ReactNode[] = [];
     let remaining = input;
     let idx = 0;
 
     while (remaining.length > 0) {
-      // Check for bold &texto&
       const boldMatch = remaining.match(/^&([^&]+)&/);
       if (boldMatch) {
         nodes.push(<strong key={`bold-${idx}`} className="font-bold text-foreground">{boldMatch[1]}</strong>);
@@ -56,7 +48,6 @@ const parseFormattedText = (text: string): React.ReactNode[] => {
         continue;
       }
 
-      // Check for highlight ~texto~
       const highlightMatch = remaining.match(/^~([^~]+)~/);
       if (highlightMatch) {
         nodes.push(<span key={`highlight-${idx}`} className="text-primary font-semibold">{highlightMatch[1]}</span>);
@@ -65,7 +56,6 @@ const parseFormattedText = (text: string): React.ReactNode[] => {
         continue;
       }
 
-      // Check for underline _u_texto_u_
       const underlineMatch = remaining.match(/^_u_([^_]+)_u_/);
       if (underlineMatch) {
         nodes.push(<span key={`underline-${idx}`} className="underline decoration-primary">{underlineMatch[1]}</span>);
@@ -74,7 +64,6 @@ const parseFormattedText = (text: string): React.ReactNode[] => {
         continue;
       }
 
-      // Check for color::verdetextocolor::verde
       const colorMatch = remaining.match(/^color::(\w+)([^c]+)color::\1/);
       if (colorMatch) {
         const colorName = colorMatch[1];
@@ -86,7 +75,6 @@ const parseFormattedText = (text: string): React.ReactNode[] => {
         continue;
       }
 
-      // Check for letra::cursivatextoletra::cursiva
       const italicMatch = remaining.match(/^letra::cursiva([^l]+)letra::cursiva/);
       if (italicMatch) {
         nodes.push(<em key={`italic-${idx}`} className="italic">{italicMatch[1]}</em>);
@@ -95,7 +83,6 @@ const parseFormattedText = (text: string): React.ReactNode[] => {
         continue;
       }
 
-      // Check for line break
       if (remaining.startsWith('<br/>')) {
         nodes.push(<br key={`br-${idx}`} />);
         remaining = remaining.slice(5);
@@ -103,7 +90,6 @@ const parseFormattedText = (text: string): React.ReactNode[] => {
         continue;
       }
 
-      // Find next special character or add regular text
       const nextSpecial = remaining.search(/(&|~|_u_|color::|letra::|<br\/>)/);
       if (nextSpecial === -1) {
         nodes.push(<span key={`text-${idx}`}>{remaining}</span>);
@@ -113,7 +99,6 @@ const parseFormattedText = (text: string): React.ReactNode[] => {
         remaining = remaining.slice(nextSpecial);
         idx++;
       } else {
-        // If pattern doesn't match, add single character and continue
         nodes.push(<span key={`char-${idx}`}>{remaining[0]}</span>);
         remaining = remaining.slice(1);
         idx++;
@@ -140,18 +125,21 @@ const getColorClass = (colorName: string): string => {
 };
 
 export const Eje30 = ({ exercise: initialExercise }: Eje30Props) => {
-  const navigate = useNavigate();
+  const { id } = useParams();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  
   const [exercise, setExercise] = useState<ReadingExercise | null>(null);
   const [loading, setLoading] = useState(true);
   const [isCompleted, setIsCompleted] = useState(false);
   const [progressSaved, setProgressSaved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [completionModalOpen, setCompletionModalOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
 
-  // Initialize exercise
+  const currentExerciseIndex = parseInt(searchParams.get('exerciseIndex') || '0');
+
   useEffect(() => {
     if (initialExercise) {
       setExercise(initialExercise);
@@ -160,7 +148,6 @@ export const Eje30 = ({ exercise: initialExercise }: Eje30Props) => {
     }
   }, [initialExercise]);
 
-  // Cleanup audio on unmount
   useEffect(() => {
     return () => {
       if (audioElement) {
@@ -194,14 +181,14 @@ export const Eje30 = ({ exercise: initialExercise }: Eje30Props) => {
     if (progressSaved || !exercise) return;
 
     try {
-      const unidad = Number(exercise.unidad);
+      const unidad = Number(exercise.unidad) || Number(id) || 0;
 
       await postUserPosition({
-        unidad: unidad || 0,
+        unidad: unidad,
         position: await Calculate_index_exercise(exercise)
       });
 
-      await postUserGrade(exercise._id, 1, String(unidad || 0));
+      await postUserGrade(exercise._id, 1, String(unidad));
 
       setProgressSaved(true);
       toast.success('¡Lectura completada! Progreso guardado.');
@@ -216,7 +203,6 @@ export const Eje30 = ({ exercise: initialExercise }: Eje30Props) => {
     try {
       await markExerciseCompleted();
       setIsCompleted(true);
-      setCompletionModalOpen(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -225,26 +211,24 @@ export const Eje30 = ({ exercise: initialExercise }: Eje30Props) => {
   const handleNextExercise = async () => {
     setIsSubmitting(true);
     try {
-      if (!progressSaved && isCompleted) {
+      if (!progressSaved) {
         await markExerciseCompleted();
       }
-      const nextIndex = Number(searchParams.get('exerciseIndex') || 0) + 1;
-      navigate(`/ejercicio/${exercise?.unidad}?exerciseIndex=${nextIndex}`);
+      const nextExerciseIndex = currentExerciseIndex + 1;
+      navigate(`/modulo/${id || exercise?.unidad}?exerciseIndex=${nextExerciseIndex}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleGoBack = () => {
-    setCompletionModalOpen(false);
-    navigate(-1);
+    navigate(`/modulo/${id || exercise?.unidad}`);
   };
 
   if (loading || !exercise) {
     return <DashboardLoader />;
   }
 
-  // Collect all descriptions
   const descriptions = [
     exercise.description,
     exercise.description2,
@@ -254,23 +238,40 @@ export const Eje30 = ({ exercise: initialExercise }: Eje30Props) => {
   ].filter(Boolean);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
+      {/* Botón de siguiente ejercicio en la parte superior para lecturas */}
+      <div className="flex justify-end">
+        <Button
+          onClick={handleNextExercise}
+          disabled={isSubmitting}
+          variant="outline"
+          className="gap-2"
+        >
+          {isSubmitting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <ArrowRight className="h-4 w-4" />
+          )}
+          Siguiente Ejercicio
+        </Button>
+      </div>
+
       {/* Header Image */}
-      <div className="relative w-full h-48 rounded-lg overflow-hidden">
+      <div className="relative w-full h-32 sm:h-40 md:h-48 rounded-lg overflow-hidden">
         <img
           src="/ejercicio/grammar.png"
           alt="Lectura"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-          <BookOpen className="h-16 w-16 text-white" />
+          <BookOpen className="h-12 w-12 sm:h-16 sm:w-16 text-white" />
         </div>
       </div>
 
       {/* Title and Info */}
       <div className="space-y-2">
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <h1 className="text-2xl font-bold text-foreground">{exercise.title || 'Lectura'}</h1>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{exercise.title || 'Lectura'}</h1>
           <span className="text-sm text-muted-foreground">
             Ejercicio: {exercise.number || 0}
           </span>
@@ -298,10 +299,10 @@ export const Eje30 = ({ exercise: initialExercise }: Eje30Props) => {
 
       {/* Reading Content */}
       <Card>
-        <CardContent className="p-6">
-          <div className="prose prose-lg dark:prose-invert max-w-none space-y-4">
+        <CardContent className="p-4 sm:p-6">
+          <div className="prose prose-sm sm:prose-lg dark:prose-invert max-w-none space-y-3 sm:space-y-4">
             {descriptions.map((desc, index) => (
-              <p key={index} className="text-foreground leading-relaxed text-base md:text-lg">
+              <p key={index} className="text-foreground leading-relaxed text-sm sm:text-base md:text-lg">
                 {parseFormattedText(desc || '')}
               </p>
             ))}
@@ -310,80 +311,46 @@ export const Eje30 = ({ exercise: initialExercise }: Eje30Props) => {
       </Card>
 
       {/* Already completed notice */}
-      {exercise.completedByUser && (
+      {(exercise.completedByUser || isCompleted) && (
         <Card className="border-green-500/50 bg-green-500/10">
-          <CardContent className="p-4 flex items-center gap-3">
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
-            <span className="text-green-700 dark:text-green-300">
-              Ya completaste esta lectura anteriormente
+          <CardContent className="p-3 sm:p-4 flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+            <span className="text-green-700 dark:text-green-300 text-sm sm:text-base">
+              {exercise.completedByUser ? 'Ya completaste esta lectura anteriormente' : '¡Lectura completada!'}
             </span>
           </CardContent>
         </Card>
       )}
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-4">
-        <Button variant="outline" onClick={handleGoBack}>
+      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4">
+        <Button variant="outline" onClick={handleGoBack} className="w-full sm:w-auto">
           Volver al Menú
         </Button>
         {!isCompleted && !exercise.completedByUser ? (
-          <Button onClick={handleMarkAsRead} disabled={isSubmitting}>
-            {isSubmitting ? 'Guardando...' : 'Marcar como Leído'}
+          <Button onClick={handleMarkAsRead} disabled={isSubmitting} className="w-full sm:w-auto">
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Guardando...
+              </>
+            ) : (
+              'Marcar como Leído'
+            )}
           </Button>
         ) : (
-          <Button onClick={handleNextExercise} disabled={isSubmitting}>
-            {isSubmitting ? 'Cargando...' : 'Siguiente Ejercicio'}
+          <Button onClick={handleNextExercise} disabled={isSubmitting} className="w-full sm:w-auto">
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Cargando...
+              </>
+            ) : (
+              'Siguiente Ejercicio'
+            )}
           </Button>
         )}
       </div>
-
-      {/* Completion Modal */}
-      <Dialog open={completionModalOpen} onOpenChange={setCompletionModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>¡Lectura Completada!</DialogTitle>
-            <DialogDescription>
-              Has completado esta lectura correctamente
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-6 text-center">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <CheckCircle2 className="h-12 w-12 text-green-500" />
-            </div>
-            <p className="text-muted-foreground">
-              {progressSaved 
-                ? 'Tu progreso ha sido guardado correctamente.'
-                : 'Guardando tu progreso...'
-              }
-            </p>
-          </div>
-
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setCompletionModalOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Cerrar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleGoBack}
-              className="w-full sm:w-auto"
-            >
-              Volver al Menú
-            </Button>
-            <Button
-              onClick={handleNextExercise}
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              {isSubmitting ? 'Cargando...' : 'Siguiente Ejercicio'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
