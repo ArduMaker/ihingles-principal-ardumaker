@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { HelpCircle, CheckCircle2, XCircle } from 'lucide-react';
-import { postUserGrade, postUserPosition } from '@/lib/api';
-import { toast } from 'sonner';
-import { Calculate_index_exercise } from '@/hooks/calculate_index.ts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { HelpCircle, CheckCircle2, XCircle, ChevronLeft, RotateCcw } from 'lucide-react';
 import DashboardLoader from '@/components/dashboard/DashboardLoader';
+import { useExerciseGrade } from '@/hooks/useExerciseGrade';
+import { GradeModal } from '@/components/ejercicio/GradeModal';
+import { ExplanationModal } from '@/components/ejercicio/ExplanationModal';
 
 interface FieldData {
   answer: string;
@@ -88,8 +87,12 @@ const checkAnswerType12 = (userAnswer: string, field: FieldData): boolean => {
 
 export function Eje12({ exercise: initialExercise }: Eje12Props) {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const [exercise, setExercise] = useState<Type12Exercise | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  const currentExerciseIndex = parseInt(searchParams.get('exerciseIndex') || '0');
   
   // State for user responses and verification
   const [userResponses, setUserResponses] = useState<string[]>([]);
@@ -97,11 +100,24 @@ export function Eje12({ exercise: initialExercise }: Eje12Props) {
   const [verifiedResponses, setVerifiedResponses] = useState<Record<number, boolean | 'shown'>>({});
   
   // Modal states
-  const [gradeModalOpen, setGradeModalOpen] = useState(false);
-  const [grade, setGrade] = useState(0);
   const [explanationModalOpen, setExplanationModalOpen] = useState(false);
   const [currentExplanation, setCurrentExplanation] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Hook modular de calificación
+  const {
+    grade,
+    gradeModalOpen,
+    saving,
+    openGradeModal,
+    setGradeModalOpen,
+    handleClose,
+    handleGoBack,
+    handleNextExercise,
+  } = useExerciseGrade({
+    exerciseId: initialExercise?._id || initialExercise?.number?.toString() || '0',
+    unidad: initialExercise?.unidad || Number(id) || 1,
+    exerciseNumber: initialExercise?.number || currentExerciseIndex,
+  });
 
   // Initialize exercise data
   useEffect(() => {
@@ -164,11 +180,10 @@ export function Eje12({ exercise: initialExercise }: Eje12Props) {
     const total = exercise.calificationSobre ?? computableResults.length;
     const successes = computableResults.filter(x => x).length;
     
-    let calculatedGrade = successes / total;
+    let calculatedGrade = total > 0 ? successes / total : 0;
     if (calculatedGrade > 1) calculatedGrade = 1;
     
-    setGrade(calculatedGrade);
-    setGradeModalOpen(true);
+    openGradeModal(calculatedGrade);
   };
 
   const handleReset = () => {
@@ -197,40 +212,6 @@ export function Eje12({ exercise: initialExercise }: Eje12Props) {
     return verified && Object.values(verifiedResponses).some(x => x === false);
   };
 
-  const handleSaveGrade = async () => {
-    setIsSubmitting(true);
-    try {
-      await postUserGrade(
-        exercise._id,
-        grade,
-        exercise.unidad?.toString() || '0'
-      );
-
-      await postUserPosition({
-        unidad: exercise.unidad || 0,
-        position: await Calculate_index_exercise(exercise)
-      });
-
-      toast.success('Progreso guardado correctamente');
-      setGradeModalOpen(false);
-    } catch (error) {
-      toast.error('Error al guardar el progreso');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleNextExercise = async () => {
-    await handleSaveGrade();
-    const nextNumber = (exercise.number || 0) + 1;
-    navigate(`/ejercicio/${nextNumber}`);
-  };
-
-  const handleGoBack = () => {
-    setGradeModalOpen(false);
-    navigate(-1);
-  };
-
   const getInputClassName = (index: number): string => {
     if (!verified) return '';
     
@@ -242,9 +223,9 @@ export function Eje12({ exercise: initialExercise }: Eje12Props) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       {/* Header Image */}
-      <div className="relative w-full h-48 rounded-lg overflow-hidden">
+      <div className="relative w-full h-32 sm:h-48 rounded-lg overflow-hidden">
         <img 
           src="/ejercicio/grammar.png" 
           alt="Grammar"
@@ -253,29 +234,40 @@ export function Eje12({ exercise: initialExercise }: Eje12Props) {
       </div>
 
       {/* Title and Info */}
-      <div className="space-y-2">
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <h1 className="text-2xl font-bold text-foreground">{exercise.title || 'Ejercicio Tipo 12'}</h1>
-          <span className="text-sm text-muted-foreground">
-            Ejercicio: {exercise.number || 0}
-          </span>
-        </div>
-        
-        {exercise.description && (
-          <div 
-            className="text-muted-foreground"
-            dangerouslySetInnerHTML={{ __html: exercise.description }}
-          />
-        )}
-      </div>
-
-      {/* Fields */}
       <Card>
-        <CardContent className="p-4 md:p-6 space-y-4">
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+            <div className="space-y-2 flex-1">
+              <CardTitle className="text-xl sm:text-2xl">{exercise.title || 'Ejercicio Tipo 12'}</CardTitle>
+              <span className="text-xs sm:text-sm text-muted-foreground">
+                Ejercicio: {exercise.number || 0}
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/modulo/${id}`)}
+              className="gap-2 w-full sm:w-auto"
+              size="sm"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Atrás
+            </Button>
+          </div>
+          
+          {exercise.description && (
+            <div 
+              className="text-muted-foreground mt-4 text-sm sm:text-base"
+              dangerouslySetInnerHTML={{ __html: exercise.description }}
+            />
+          )}
+        </CardHeader>
+
+        {/* Fields */}
+        <CardContent className="p-4 sm:p-6 pt-0 space-y-3 sm:space-y-4">
           {exercise.fields.map((field, index) => (
-            <div key={index} className="flex items-center gap-2 md:gap-4">
+            <div key={index} className="flex items-center gap-2 sm:gap-4">
               {/* Index number */}
-              <span className="w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-full font-semibold text-sm shrink-0">
+              <span className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-primary/10 text-primary rounded-full font-semibold text-xs sm:text-sm shrink-0">
                 {index + 1}
               </span>
               
@@ -286,34 +278,34 @@ export function Eje12({ exercise: initialExercise }: Eje12Props) {
                   onChange={(e) => handleChange(index, e.target.value)}
                   disabled={verified || field.shown}
                   placeholder={field.shown ? '' : 'Escribe tu respuesta'}
-                  className={`flex-1 min-w-[150px] ${getInputClassName(index)}`}
+                  className={`flex-1 min-w-[120px] sm:min-w-[150px] text-sm sm:text-base ${getInputClassName(index)}`}
                 />
                 
                 {/* Verification icon */}
                 {verified && (
                   <div className="shrink-0">
                     {verifiedResponses[index] === 'shown' || verifiedResponses[index] === true ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
                     ) : (
-                      <XCircle className="h-5 w-5 text-red-500" />
+                      <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
                     )}
                   </div>
                 )}
                 
                 {/* Show correct answer when wrong */}
                 {shouldShowAnswer() && verifiedResponses[index] === false && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-red-500 font-medium">
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <span className="text-xs sm:text-sm text-red-500 font-medium">
                       {getPlainValue(field.answer)}
                     </span>
                     {field.explanation && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-6 w-6 sm:h-8 sm:w-8"
                         onClick={() => showExplanation(field.explanation)}
                       >
-                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                        <HelpCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                       </Button>
                     )}
                   </div>
@@ -321,82 +313,42 @@ export function Eje12({ exercise: initialExercise }: Eje12Props) {
               </div>
             </div>
           ))}
+
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 pt-4">
+            {verified && (
+              <Button variant="outline" onClick={handleReset} className="gap-2 w-full sm:w-auto">
+                <RotateCcw className="h-4 w-4" />
+                Reintentar
+              </Button>
+            )}
+            <Button 
+              onClick={verified ? () => setGradeModalOpen(true) : handleVerify} 
+              className="w-full sm:w-auto"
+            >
+              {verified ? 'Ver Calificación' : 'Verificar'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Actions */}
-      <div className="flex justify-end gap-4">
-        {verified && (
-          <Button variant="outline" onClick={handleReset}>
-            Reintentar
-          </Button>
-        )}
-        <Button onClick={verified ? () => setGradeModalOpen(true) : handleVerify} size="lg">
-          {verified ? 'Ver Calificación' : 'Verificar'}
-        </Button>
-      </div>
-
       {/* Grade Modal */}
-      <Dialog open={gradeModalOpen} onOpenChange={setGradeModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Calificación</DialogTitle>
-            <DialogDescription>
-              Resultado de tu ejercicio
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-6 text-center">
-            <div className="text-6xl font-bold text-primary mb-4">
-              {Math.round(grade * 100)}%
-            </div>
-            <p className="text-muted-foreground">
-              {grade >= 0.8 ? '¡Excelente trabajo!' : grade >= 0.6 ? '¡Bien hecho!' : 'Sigue practicando'}
-            </p>
-          </div>
-
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button 
-              variant="outline"
-              onClick={() => setGradeModalOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Cerrar
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={handleGoBack}
-              className="w-full sm:w-auto"
-            >
-              Volver al Menú
-            </Button>
-            <Button 
-              onClick={handleNextExercise}
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              {isSubmitting ? 'Guardando...' : 'Siguiente Ejercicio'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GradeModal
+        open={gradeModalOpen}
+        onOpenChange={setGradeModalOpen}
+        grade={grade}
+        saving={saving}
+        onClose={handleClose}
+        onGoBack={handleGoBack}
+        onNextExercise={handleNextExercise}
+      />
 
       {/* Explanation Modal */}
-      <Dialog open={explanationModalOpen} onOpenChange={setExplanationModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Explicación</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-foreground">{currentExplanation}</p>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setExplanationModalOpen(false)}>
-              Cerrar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ExplanationModal
+        open={explanationModalOpen}
+        onOpenChange={setExplanationModalOpen}
+        explanation={currentExplanation}
+      />
     </div>
   );
 }
