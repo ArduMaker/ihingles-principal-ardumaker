@@ -205,6 +205,20 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
 
   return (
     <div className="space-y-4 md:space-y-6">
+
+      {/* Header Image */}
+      <div className="relative w-full h-32 sm:h-40 md:h-48 rounded-lg overflow-hidden">
+        <img
+          src="/ejercicio/grammar.png"
+          alt="Video"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+          <Play className="h-12 w-12 sm:h-16 sm:w-16 text-white" />
+        </div>
+      </div>
+
+      
       {/* Botón de siguiente ejercicio en la parte superior para videos */}
       <div className="flex justify-end">
         <Button
@@ -222,17 +236,7 @@ export const Eje18 = ({ exercise: initialExercise }: Eje18Props) => {
         </Button>
       </div>
 
-      {/* Header Image */}
-      <div className="relative w-full h-32 sm:h-40 md:h-48 rounded-lg overflow-hidden">
-        <img
-          src="/ejercicio/grammar.png"
-          alt="Video"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-          <Play className="h-12 w-12 sm:h-16 sm:w-16 text-white" />
-        </div>
-      </div>
+      
 
       {/* Title and Info */}
       <div className="space-y-2">
